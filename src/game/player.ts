@@ -90,7 +90,9 @@ export class Player {
   updateEcho(dt:number):void{this.fire(dt);this.updateShots(dt);}
   private primaryDamage(e:Enemy,amount:number,x:number,y:number,source:WeaponColor):void{
     const hit=this.w.targetable(e)&&amount>0;
-    if(hit&&source==='red')this.w.progression.onRedHit(e,amount);
+    // 三色平射伤害 +30%；Boss 战时长按既有预算走，不加成。
+    if(!this.w.progression.isBossPart(e))amount*=1.3;
+    if(hit&&!this.echo)this.w.aura.gun.onHit(e,source);
     this.w.damage(e,amount,x,y,this.echo,source);
     if(hit)this.hitBurst(x,y,source,e.id);
     if(hit&&!this.echo)this.w.skills.primaryHit(e.id,source);
@@ -316,9 +318,7 @@ export class Player {
     if (this.weapon === 'purple' && this.firing) {
       const n = Math.max(1, this.thunderTargets.length);
       const per = (20 + (lv-1)*34/7) * (n === 1 ? 1 : 1.25 / n)*(w.skills.boosted?1.6:1);
-      let main:Enemy|null=null;
       for (const e of this.thunderTargets) {
-        if(!main&&w.targetable(e)&&!e.invulnerable)main=e;
         this.primaryDamage(e, per * dt, e.x, e.y + e.radius*.65,'purple');
 
       }
@@ -329,11 +329,10 @@ export class Player {
         for (const side of [-1, 1]) {
           const ex = g.x + side * 70, ey = g.y - 280;
           for (const e of w.enemies) {
-            if (!struck.has(e) && w.targetable(e,true) && w.hitSegment(e,g.x,g.y,ex,ey,18)) {struck.add(e);if(!main&&!e.invulnerable)main=e;this.primaryDamage(e,per*.6*dt,w.hitX,w.hitY,'purple');}
+            if (!struck.has(e) && w.targetable(e,true) && w.hitSegment(e,g.x,g.y,ex,ey,18)) {struck.add(e);this.primaryDamage(e,per*.6*dt,w.hitX,w.hitY,'purple');}
           }
         }
       }
-      if(main&&!this.echo)w.progression.onElectricHit(dt,main,this.thunderDps);
     }
   }
 
