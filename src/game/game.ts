@@ -166,13 +166,15 @@ export class Game implements UIEvents {
     const w = this.world;
     if (!label.startsWith('成长 ')) { w.restLabel = ''; return; }
     const talents = w.progression.offerTalents();
+    // 天赋已学全（测试模式默认全开）时不弹空窗口，飘字提示后直接继续。
+    if (!talents.length) { w.progression.pendingChoices = Math.max(0, w.progression.pendingChoices - 1); w.restLabel = ''; w.ui.popup(w.player.x, w.player.y - 70, '天赋已学全', 'info'); return; }
     if (this.debug.bot) {if(talents[0])w.progression.choose(talents[0].id);w.restLabel='';return;}
     this.restMode='talent';this.state='growth';
     if(w.progression.talents.size===0)w.say('算盘','平静','三项挑一项，照着示意行动就会生效。',3);
     this.ui.screen('growth', {choiceTitle:`天赋 · ${label}`,choiceHint:'看图标和说明，选一项；之后按条件自动生效',choices:talents.map(t=>({id:t.id,name:t.name,description:t.description,detail:t.route,preview:t.preview,icon:t.icon}))});
   }
 
-  private openInkScore(name:string):void{const w=this.world;if(w.allSkills){w.inkScore.pending=false;return;}if(this.debug.bot){w.inkScore.choose(INK_COLORS.filter(c=>w.inkScore.levels[c]<3).sort((a,b)=>w.inkScore.levels[a]-w.inkScore.levels[b])[0]);return;}this.restMode='inkScore';this.state='growth';this.ui.screen('growth',{choiceTitle:'墨谱',choiceHint:`${name}的驱动符补全山门笔法，选一色升一级`,choices:w.inkScore.cards()});}
+  private openInkScore(name:string):void{const w=this.world;if(w.allSkills){w.inkScore.pending=false;return;}if(this.debug.bot){w.inkScore.choose(INK_COLORS.filter(c=>w.inkScore.levels[c]<3).sort((a,b)=>w.inkScore.levels[a]-w.inkScore.levels[b])[0]);return;}const cards=w.inkScore.cards().filter(c=>w.inkScore.levels[c.id as keyof typeof w.inkScore.levels]<3);if(!cards.length){w.inkScore.pending=false;return;}this.restMode='inkScore';this.state='growth';this.ui.screen('growth',{choiceTitle:'墨谱',choiceHint:`${name}的驱动符补全山门笔法，选一色升一级`,choices:cards});}
 
   onChoice(id: string): void {
     if (this.state !== 'growth') return;
