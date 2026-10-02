@@ -156,7 +156,7 @@ export const Sparrow: EnemyDef = {
 
 // 纸龙沿用铜雀的受击、单血条、段名、顿帧和碎片通道。
 const PAPER_SCALE = 2.18;/* 放大约 1.5 倍 */
-const PAPER_SEG = 123;
+const PAPER_SEG = 180;/* 放大后节间距也要拉开，从 123 改到 180 */
 interface PaperClaw { part:Enemy; broken:boolean; at:number; x:number; y:number }
 interface PaperRow { part:Enemy; name:string; burnedAt:number; ship:number }
 interface PaperChain { claw:PaperClaw; nodes:Enemy[]; ship:number; warnUntil:number; cut:boolean; nextHit:number }
@@ -326,20 +326,25 @@ function* paper(e:Enemy,g:G):Co {
   e.invulnerable=true;mode(g,'纸龙巡检','对白演出');yield* move(g,e,205,300,start===1?1:.3);r.fly.on=true;e.invulnerable=false;
   if(start<=1){begin(1,'巡检');route(e);
    yield* g.phase(e,{hp:BOSS1_BALANCE.paper[0].hp/.85,time:Infinity,clock:'boss',transitionTime:0,complete:()=>e.hp<=0},function*(){
-    const at=clock(g);let next=g.t,weaks=0,weakAt=0;
+    const at=clock(g);let next=g.t,weaks=0,weakAt=0,sprayNext=g.t;
     for(;;){const t=(clock(g)-at)%6;r.open=t<3;r.scanAge=t;r.eye.data.targetDisabled=!r.open;r.scanAngle=PI/2+.48*Math.sin(Math.max(0,t-1)*PI);
      if(r.open&&t>=1){const dx=g.player.x-r.eye.x,dy=g.player.y-r.eye.y,a=Math.atan2(dy,dx);if(Math.abs(Math.atan2(Math.sin(a-r.scanAngle),Math.cos(a-r.scanAngle)))<.15&&w.player.invuln<=0&&!w.brush.protected){w.player.die();event(e,'scanner-hit',g);}}
-     burnTick();if(r.burns.length>=5&&weaks<2&&clock(g)>=weakAt){weaks++;weakAt=clock(g)+12;w.bossCaps.openWeak(e,'纸甲烧透');}if(g.t>=next){volley(g,[{x:e.x,y:e.y+60,n:4,angle:PI/2,spread:.5}],40,speed(g,140),4,'rice','gold');next=g.t+1.8;}yield;
+     burnTick();if(r.burns.length>=5&&weaks<2&&clock(g)>=weakAt){weaks++;weakAt=clock(g)+12;w.bossCaps.openWeak(e,'纸甲烧透');}if(g.t>=next){volley(g,[{x:e.x,y:e.y+60,n:4,angle:PI/2,spread:.5}],40,speed(g,140),4,'rice','gold');next=g.t+1.8;}
+     // 近身攻击：朱雀靠近龙头或龙尾，喷纸片
+     if(g.t>=sprayNext){const hd={x:e.x,y:e.y},tl=r.bodies[4]?{x:r.bodies[4].x,y:r.bodies[4].y}:hd;const dh=Math.hypot(g.player.x-hd.x,g.player.y-hd.y),dt=Math.hypot(g.player.x-tl.x,g.player.y-tl.y);if(dh<220||dt<220){const src=dh<dt?hd:tl,ang=Math.atan2(g.player.y-src.y,g.player.x-src.x);volley(g,[{x:src.x,y:src.y,n:7,angle:ang,spread:1.1}],35,speed(g,190),3,'rice','gold');sprayNext=g.t+2.4;}}
+     yield;
     }
    });(e.data.phaseResults??=[]).push({phase:1,broken:true,real:g.real});yield* transition();
   }
   if(start<=2){begin(2,'钩船');r.open=false;
    yield* g.phase(e,{hp:BOSS1_BALANCE.paper[1].hp/.85,time:Infinity,clock:'boss',transitionTime:0,complete:()=>r.claws.every(a=>a.broken)},function*(){
     for(const a of r.claws){a.part.hp=a.part.maxHp=e.maxHp/2;a.part.alpha=1;a.part.data.damageTarget=a.part;a.part.data.targetDisabled=false;}
-    let next=clock(g)+.5,index=0;
+    let next=clock(g)+.5,index=0,sprayNext=g.t;
     for(;;){for(const a of r.claws)if(!a.broken&&a.part.hp<=0){a.broken=true;w.bossCaps.openWeak(e,'龙爪被拆');a.at=g.presentationTime;a.x=a.part.x;a.y=a.part.y;a.part.parent=null;a.part.data.targetDisabled=true;copperBreak(e,g,a.part);for(const c of r.chains)if(c.claw===a)paperCut(g,c);event(e,a===r.claws[0]?'left-claw-off':'right-claw-off',g);}
      const intact=r.claws.filter(a=>!a.broken);for(const p of surfaces)p.data.damageTarget=intact.reduce<PaperClaw|undefined>((a,b)=>!a||Math.abs(p.x-b.part.x)<Math.abs(p.x-a.part.x)?b:a,undefined)?.part??e;
      if(clock(g)>=next&&intact.length){for(const c of r.chains)if(!c.cut)paperCut(g,c);paperChain(e,g,r,intact[index%intact.length],index++);next=clock(g)+5;}
+     // 近身攻击：朱雀靠近龙头或龙尾，喷纸片
+     if(g.t>=sprayNext){const hd={x:e.x,y:e.y},tl=r.bodies[4]?{x:r.bodies[4].x,y:r.bodies[4].y}:hd;const dh=Math.hypot(g.player.x-hd.x,g.player.y-hd.y),dt=Math.hypot(g.player.x-tl.x,g.player.y-tl.y);if(dh<220||dt<220){const src=dh<dt?hd:tl,ang=Math.atan2(g.player.y-src.y,g.player.x-src.x);volley(g,[{x:src.x,y:src.y,n:7,angle:ang,spread:1.1}],35,speed(g,190),3,'rice','gold');sprayNext=g.t+2.4;}}
      burnTick();yield;
     }
    });(e.data.phaseResults??=[]).push({phase:2,broken:true,real:g.real});yield* transition();

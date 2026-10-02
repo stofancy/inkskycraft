@@ -24,8 +24,14 @@ export function burnEmit(w: { fx: World['fx'] }, e: Enemy, age: number, dt: numb
   // 同一敌机再次出现即进入下一帧
   if (frameFirst === null || frameFirst === e || frameFirst.dead) { frameFirst = e; frameCount = 0; }
   const s = burnStrength(age), fx = w.fx, rng = Math.random, r = e.radius, k = Math.max(0.7, Math.min(2, r / 28));
-  const n = (rate: number) => {
-    const v = rate * k * dt;
+  // 纸龙特殊处理：火焰缩小到 0.4 倍，朱红暗金色，粒子减半
+  const isPaper = e.def.sprite === 'pd-head' || e.def.sprite === 'pd-body';
+  const sizeScale = isPaper ? 0.4 : 0.5; // 纸龙 0.4 倍，其他 0.5 倍
+  const rMul = isPaper ? 1.4 : 1.6, gMul = isPaper ? 0.8 : 1.5, bMul = isPaper ? 0.3 : 1.4;
+  const r1Mul = isPaper ? 1.2 : 1.0, g1Mul = isPaper ? 0.65 : 0.55, b1Mul = isPaper ? 0.25 : 0.4;
+  const rate = isPaper ? 0.5 : 0.6; // 纸龙减半，其他 0.6 倍
+  const n = (baseRate: number) => {
+    const v = baseRate * rate * k * dt;
     let c = Math.floor(v) + (rng() < v % 1 ? 1 : 0);
     c = Math.min(c, FRAME_CAP - frameCount);
     frameCount += c;
@@ -36,12 +42,12 @@ export function burnEmit(w: { fx: World['fx'] }, e: Enemy, age: number, dt: numb
   // 火舌：从图集随机挑格，往上窜、左右卷，边升边缩小变淡
   for (let i = n(26 + 34 * s); i > 0; i--) {
     const [x, y] = edge(), side = (rng() - 0.5) * 90;
-    fx.emit({ x, y: y - 6 * k, vx: side, vy: -(80 + 110 * s * rng()), drag: 0.8, life: 0.45 + 0.4 * rng(), size: (17 + 11 * s) * k * (0.75 + 0.5 * rng()), sizeEnd: 7 * k, r: 1.6, g: 1.5, b: 1.4, r1: 1.0, g1: 0.55, b1: 0.4, a: 0.95, kind: PK.FlameTex });
+    fx.emit({ x, y: y - 6 * k * sizeScale, vx: side, vy: -(80 + 110 * s * rng()), drag: 0.8, life: 0.45 + 0.4 * rng(), size: (17 + 11 * s) * k * sizeScale * (0.75 + 0.5 * rng()), sizeEnd: 7 * k * sizeScale, r: rMul, g: gMul, b: bMul, r1: r1Mul, g1: g1Mul, b1: b1Mul, a: 0.95, kind: PK.FlameTex });
   }
   // 烟：图集第 4 行，缓慢上升
   for (let i = n(7 + 9 * s); i > 0; i--) {
     const [x, y] = edge();
-    fx.emit({ x, y: y - r * 0.6, vx: (rng() - 0.5) * 24, vy: -(24 + 22 * rng()), drag: 0.4, life: 1.1 + 0.6 * rng(), size: (13 + 6 * rng()) * k, sizeEnd: (30 + 14 * s) * k, r: 0.9, g: 0.85, b: 0.85, a: 0.7, kind: PK.SmokeTex });
+    fx.emit({ x, y: y - r * 0.6, vx: (rng() - 0.5) * 24, vy: -(24 + 22 * rng()), drag: 0.4, life: 1.1 + 0.6 * rng(), size: (13 + 6 * rng()) * k * sizeScale, sizeEnd: (30 + 14 * s) * k * sizeScale, r: 0.9, g: 0.85, b: 0.85, a: 0.7, kind: PK.SmokeTex });
   }
   // 火星：零星往外迸
   for (let i = n(9 + 14 * s); i > 0; i--) {
