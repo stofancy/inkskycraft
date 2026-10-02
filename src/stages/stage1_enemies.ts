@@ -30,7 +30,7 @@ export const Hornet: EnemyDef = {
 
 /** 纸鹤：从侧面滑入编队位置（data.slot），悬停撒慢速圆弹环，然后向侧面离场。 */
 export const Crane: EnemyDef = {
-  sprite: 'e_crane', hp: 20, score: 400,
+  sprite: 'e_crane', hp: 20, score: 400, anim: 6,
   *ai(e, g) {
     const d = e.data;
     const [sx, sy] = d.slot as [number, number];

@@ -7,7 +7,7 @@ import type { G } from './api';
 import { oscillate, type BoneAnimation } from '../core/animation';
 import type { SpriteDeform } from '../gl/sprites';
 
-export type ItemKind = 'p' | 'bomb' | 'missile' | 'medal' | 'ink';
+export type ItemKind = 'p' | 'bomb' | 'medal' | 'ink';
 export type ExplosionSize = 's' | 'm' | 'l' | 'xl';
 
 export interface EnemyDef {

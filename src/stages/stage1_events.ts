@@ -155,14 +155,14 @@ export function* escortEnd(g:G,s:RouteState):Co{
   if(shield){strike.x=450+(shield.x-450)*Math.min(1,t/3);}if(shield&&!blocked&&Math.abs(strike.x-shield.x)<=84&&strike.y>=shield.y-25){blocked=true;strike.dead=true;g.fx.burst(shield.x,shield.y,25,160,[.3,1.5,.8]);}if(blocked){s.lastStrikeBlocked=true;if(!s.events.includes('TQ.POST.lastStrikeBlocked')){s.events.push('TQ.POST.lastStrikeBlocked');director(g).event('TQ.POST.lastStrikeBlocked',true);}}
  });strike.dead=true;s.cart.y=1260;yield* conversation(g,s,'TQ.POST.lastStrikeBlocked','TQ.POST.reunion','TQ.POST.partSalvaged','TQ.POST.escortComplete','H.lampsStillDark','H.interlude');
 }
-export interface Ch1Segment {id:string;label:string;speed:number;bg:number;corrosion:number;fog:number;flow:number;run:(g:G,s:RouteState)=>Co}
+export interface Ch1Segment {id:string;label:string;speed:number;bg:number;run:(g:G,s:RouteState)=>Co}
 export const CH1_SEGMENTS:Ch1Segment[]=[
- {id:'S1',label:'出港',speed:200,bg:.1,corrosion:0,fog:.45,flow:1.2,run:depart},
- {id:'S2',label:'第一波',speed:80,bg:.15,corrosion:.05,fog:.48,flow:1.1,run:wave},
- {id:'S3',label:'屏障',speed:30,bg:.22,corrosion:.12,fog:.52,flow:1.0,run:barrier},
- {id:'S4',label:'劫机',speed:90,bg:.28,corrosion:.18,fog:.55,flow:0.9,run:hijack},
- {id:'S5',label:'喘息',speed:45,bg:.35,corrosion:.25,fog:.58,flow:0.85,run:breather},
- {id:'S6',label:'大场面',speed:120,bg:.45,corrosion:.38,fog:.65,flow:0.75,run:battery},
- {id:'S7',label:'急行',speed:160,bg:.55,corrosion:.52,fog:.72,flow:0.65,run:rush},
- {id:'S8',label:'关前',speed:30,bg:.65,corrosion:.68,fog:.82,flow:0.55,run:gate},
+ {id:'S1',label:'出港',speed:200,bg:.1,run:depart},
+ {id:'S2',label:'第一波',speed:80,bg:.1,run:wave},
+ {id:'S3',label:'屏障',speed:30,bg:.2,run:barrier},
+ {id:'S4',label:'劫机',speed:90,bg:.3,run:hijack},
+ {id:'S5',label:'喘息',speed:45,bg:.3,run:breather},
+ {id:'S6',label:'大场面',speed:120,bg:.5,run:battery},
+ {id:'S7',label:'急行',speed:160,bg:.5,run:rush},
+ {id:'S8',label:'关前',speed:30,bg:.5,run:gate},
 ];

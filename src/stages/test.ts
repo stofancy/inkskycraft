@@ -25,7 +25,7 @@ const Hornet: EnemyDef = {
 
 /** 纸鹤：缓慢飘入、悬停撒一圈弹、再离开。 */
 const Crane: EnemyDef = {
-  sprite: 'e_crane', hp: 10, score: 400, drops: 'medal',
+  sprite: 'e_crane', hp: 10, score: 400, anim: 6, drops: 'medal',
   *ai(e, g) {
     yield* e.moveTo(e.x, 180 + g.rng.next() * 120, 1.2);
     for (let k = 0; k < 3; k++) {

@@ -17,7 +17,7 @@ export const STAGE1:StageDef={
   for(let i=0;i<CH1_SEGMENTS.length;i++){
    const seg=CH1_SEGMENTS[i];
    if(g.checkpoint(seg.id)){
-    g.bg(0,seg.corrosion,3);g.bg(1,seg.flow,3);g.bg(2,seg.fog,3);g.bg(3,seg.bg,3);if(i>0)g.scrollSpeed(seg.speed,1.8);
+    g.bg(0,seg.bg,3);g.bg(2,.45,3);if(i>0)g.scrollSpeed(seg.speed,1.8);
     s.ship.follow=true;w.density.normalLimitOverride=null;s.times[`${seg.id}.start`]=g.t;s.times[`${seg.id}.realStart`]=g.real;(g as World).fodder!.begin(seg.id);yield* seg.run(g,s);(g as World).fodder!.end();s.times[`${seg.id}.end`]=g.t;s.times[`${seg.id}.realEnd`]=g.real;
    }
    if(seg.id==='S5'&&g.checkpoint('SERPENT')){director(g).brief(2);s.ship.protected=true;s.ship.follow=false;yield* moveShip(g,s.cart,200,1000);yield* conversation(g,s,'PD.arrival');s.times['paper.start']=g.t;s.ship.follow=true;g.scrollSpeed(25,2);yield* g.boss(storyBoss(Serpent,'paper',s),450,-100,{resumeMusic:'stage1b',startPhase:g.testBossPhase('SERPENT')});s.times['paper.end']=g.t;yield* paperTimeoutFollowup(g,s);s.ship.follow=false;yield* moveShip(g,s.cart,450,860);s.ship.protected=false;yield* g.growthChoice(1);yield* g.wait(4);}
