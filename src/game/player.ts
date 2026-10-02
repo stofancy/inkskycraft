@@ -412,12 +412,12 @@ export class Player {
       }
       const speed=Math.hypot(s.vx,s.vy),dx=s.vx/speed,dy=s.vy/speed;
       const size=w.skills.boosted?1.65:1;
-      r.shots.add('player_primary_art',{x:s.x-dx*21*size,y:s.y-dy*21*size,
+      r.shotArt.add('player_primary_art',{x:s.x-dx*21*size,y:s.y-dy*21*size,
         rot:Math.atan2(s.vy,s.vx)+Math.PI/2,frame:PRIMARY_SHOT_FRAME[s.color],sx:42/72*size,sy:42/72*size,glow:0});
     }
     if(!this.echo)for(const hit of this.primaryHits){
       const spread=clamp((hit.age-.06)/.1,0,1),size=hit.size*(1+spread*.55);
-      r.shots.add('player_primary_art',{x:hit.x,y:hit.y,frame:PRIMARY_HIT_FRAME[hit.color]+(hit.age>=.06?1:0),
+      r.shotArt.add('player_primary_art',{x:hit.x,y:hit.y,frame:PRIMARY_HIT_FRAME[hit.color]+(hit.age>=.06?1:0),
         sx:size,sy:size,alpha:1-spread,glow:0});
     }
     if (!this.alive) return;

@@ -160,7 +160,7 @@ const player: SpriteDef = {
 };
 
 // 制作人原画：前三格为朝上的紫、青、朱弹，后六格为各色两帧命中。
-// 同一 WebP 只在 Atlas.build 初始化时加载、烘焙一次；命中走纯加色层。
+// 同一 WebP 只在 Atlas.build 初始化时加载、烘焙一次；原画带透明，走普通混合层 shotArt。
 export const PRIMARY_SHOT_FRAME = { purple: 0, blue: 1, red: 2 };
 export const PRIMARY_HIT_FRAME = { purple: 3, blue: 5, red: 7 };
 const primaryArt: SpriteDef = {

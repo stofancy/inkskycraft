@@ -78,6 +78,7 @@ export class Renderer {
   shadows!: SpriteLayer;
   air!: SpriteLayer;
   shots!: SpriteLayer;   // 玩家子弹（加色）
+  shotArt!: SpriteLayer; // 玩家主炮原画与命中（带透明，普通混合）
   player!: SpriteLayer;
   items!: SpriteLayer;
   top!: SpriteLayer;     // 印章等最上层
@@ -158,6 +159,7 @@ export class Renderer {
     this.shadows = this.sprites.layer();
     this.air = this.sprites.layer();
     this.shots = this.sprites.layer(4096);
+    this.shotArt = this.sprites.layer(1024);
     this.player = this.sprites.layer(64);
     this.items = this.sprites.layer();
     this.top = this.sprites.layer(64);
@@ -320,6 +322,7 @@ precision highp float;uniform float dim;out vec4 o;void main(){o=vec4(vec3(dim),
     this.inkBursts.draw(visualTime);
     S.draw(this.inkBursts.layer);
     this.inkBursts.layer.clear();
+    S.draw(this.shotArt);
     S.draw(this.shots, 2);
     this.ribbons.draw(this.ribbonMid, time);
     this.thunder.draw(visualTime, this.scene);
@@ -355,7 +358,7 @@ precision highp float;uniform float dim;out vec4 o;void main(){o=vec4(vec3(dim),
     this.post.render(this.scene, real, pp.x, flipY, pp.w, pp.h);
     this.post.zoom=zoom;this.post.shake=shake;
 
-    for (const l of [this.ground, this.shadows, this.air, this.shots, this.player, this.items, this.top]) l.clear();
+    for (const l of [this.ground, this.shadows, this.air, this.shots, this.shotArt, this.player, this.items, this.top]) l.clear();
     this.ribbonMid.clear();
     this.ribbonPlayer.clear();
     this.ribbonTop.clear();
@@ -373,8 +376,8 @@ precision highp float;uniform float dim;out vec4 o;void main(){o=vec4(vec3(dim),
       const o = i * 12, a = BD[o + 9] * 0.5;
       LB.blob(BD[o], BD[o + 1], BD[o + 3] * 3.4 + 10, BD[o + 5] * a, BD[o + 6] * a, BD[o + 7] * a);
     }
-    const S = this.shots, SD = S.data, sl = this.shotLight;
-    for (let i = 0; i < S.count; i++) LB.blob(SD[i * 16], SD[i * 16 + 1], 46, sl[0] * 0.3, sl[1] * 0.3, sl[2] * 0.3);
+    const sl = this.shotLight;
+    for (const S of [this.shots, this.shotArt]) for (let i = 0, SD = S.data; i < S.count; i++) LB.blob(SD[i * 16], SD[i * 16 + 1], 46, sl[0] * 0.3, sl[1] * 0.3, sl[2] * 0.3);
     const beams = (b: RibbonBatch): void => b.scanSegments(RS.Beam, (ax, ay, bx, by, r, g, bl, a) => {
       if (a >= 0.3) LB.seg(ax, ay, bx, by, 70, r * a * 0.5, g * a * 0.5, bl * a * 0.5);
     });
@@ -404,9 +407,8 @@ precision highp float;uniform float dim;out vec4 o;void main(){o=vec4(vec3(dim),
     beams(this.ribbonMid, 0.25);
     beams(this.ribbonTop, 0.35);
     // 枪口光：最靠近玩家（y 最大）的两发玩家子弹
-    const S = this.shots, D = S.data;
     let y1 = -1e9, x1 = 0, y2 = -1e9, x2 = 0;
-    for (let i = 0; i < S.count; i++) {
+    for (const S of [this.shots, this.shotArt]) for (let i = 0, D = S.data; i < S.count; i++) {
       const x = D[i * 16], y = D[i * 16 + 1];
       if (y > y1) { y2 = y1; x2 = x1; y1 = y; x1 = x; } else if (y > y2) { y2 = y; x2 = x; }
     }
