@@ -234,6 +234,16 @@ export class FxSystem implements Fx {
     this.emitHigh({ x, y, life: 0.08, size: 9, sizeEnd: 16, r: c[0] * 0.6, g: c[1] * 0.6, b: c[2] * 0.6, a: 0.8, kind: PK.Dot });
   }
 
+  /** 斩击火花：沿刀光方向甩出的亮线，带一道白色斩弧。 */
+  slashSpark(x: number, y: number, angle: number, c: RGB = [2.4, 2.1, 1.6]): void {
+    for (let i = 0; i < 12; i++) {
+      const a = angle + (i % 2 ? 0 : Math.PI) + this.rr(-.5, .5), sp = this.rr(250, 650);
+      this.emitHigh({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, drag: 5, life: this.rr(.15, .32), size: 2.5, r: c[0], g: c[1], b: c[2], kind: PK.Spark });
+    }
+    this.emitHigh({ x, y, life: .1, size: 14, sizeEnd: 30, r: c[0] * .7, g: c[1] * .7, b: c[2] * .7, a: .85, kind: PK.Dot });
+    this.emitHigh({ x, y, life: .2, size: 8, sizeEnd: 40, r: c[0] * .5, g: c[1] * .5, b: c[2] * .5, a: .6, kind: PK.Ring });
+  }
+
   /** 子弹化金的闪光。 */
   gold(x: number, y: number): void {
     this.emitHigh({ x, y, life: 0.35, size: 5, sizeEnd: 16, r: 2.2, g: 1.6, b: 0.5, a: 0.8, kind: PK.Ring });

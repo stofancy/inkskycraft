@@ -15,6 +15,7 @@ import { identifyStroke, type BrushForm } from './brush-shape';
 export const BRUSH_POWER=[{level:1,slow:.6,maxLength:1200},{level:2,slow:.5,maxLength:1600},{level:3,slow:.4,maxLength:2000}] as const;
 const STEP = 7;
 const HALF_W = 18;
+const SLASH_LIFE = .25;
 
 interface Stroke { pts: number[]; t: number; dur: number; route:boolean; color:WeaponColor }
 interface Stamp { x: number; y: number; scale: number; t: number; rot: number; reduced: boolean; color:WeaponColor; radius:number; white:boolean }
@@ -56,6 +57,8 @@ export class Brush {
   }
   private strokes: Stroke[] = [];
   private stamps: Stamp[] = [];
+  /** 斩的刀光：沿笔迹一道亮白带墨色，0.25 秒收掉。 */
+  private slashes: {pts:number[];t:number}[] = [];
   private readonly motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
   /** 本关封印计数（结算用）。 */
   sealed = 0;
@@ -77,6 +80,8 @@ export class Brush {
     this.strokes = this.strokes.filter((s) => s.t < s.dur);
     for (const s of this.stamps) s.t += realDt;
     this.stamps = this.stamps.filter((s) => s.t < 1.6);
+    for (const s of this.slashes) s.t += realDt;
+    this.slashes = this.slashes.filter((s) => s.t < SLASH_LIFE);
   }
 
   private sample(x:number,y:number,force=false):void {
@@ -132,13 +137,13 @@ export class Brush {
 
     // ---- 斩：沿笔画 ----
     let slashed = 0, erased = 0;
-    const hitSet = new Set<Enemy>();
+    const hitSet = new Set<Enemy>(),hitAngle = new Map<Enemy,number>();
     for (const e of w.enemies) {
       if (!w.targetable(e)) continue;
       const rr = (e.radius + w.progression.brushMods.width) ** 2;
       for (let i = 0; i < n - 1; i++) {
         if (segDist2(e.x, e.y, pts[i * 2], pts[i * 2 + 1], pts[i * 2 + 2], pts[i * 2 + 3]) < rr) {
-          hitSet.add(e);
+          hitSet.add(e);hitAngle.set(e,Math.atan2(pts[i * 2 + 3] - pts[i * 2 + 1], pts[i * 2 + 2] - pts[i * 2]));
           break;
         }
       }
@@ -200,6 +205,7 @@ export class Brush {
     if(form)w.ui.popup(w.player.x,w.player.y-55,form==='横'?'横 · 墨堤':'竖 · 贯','seal','brush:form');
     if(form==='竖')this.paths.spear(pts,cast);
     if(form==='横')this.colors.wall(pts,cast);
+    if(!closed&&!form)this.slashes.push({pts:pts.slice(),t:0});
     let sealedEnemies = 0, sealedBullets = 0, rewardedEnemies=0;
     const sealSet=new Set<Enemy>(),freshTargets:Enemy[]=[];
     let hasBoss=false;
@@ -249,10 +255,11 @@ export class Brush {
     for (const e of hitSet) {
       slashed++;
       if(!closed&&form!=='竖')this.colors.damage(e,70,cast);
-      w.fx.hit(e.x, e.y, BRUSH_COLORS[cast.color], 10);
+      if(!closed&&!form)w.fx.slashSpark(e.x,e.y,hitAngle.get(e)??0);
+      else w.fx.hit(e.x, e.y, BRUSH_COLORS[cast.color], 10);
       w.r.fluid.splat({ x: e.x, y: e.y, r: 20, radial: true, vx: 300, ink: [0.02, 0.015, 0.015, 0.6] });
     }
-    if (slashed) w.audio.sfx('slash');
+    if (slashed) {w.audio.sfx('slash');if(!closed&&!form)w.hitstop(.05);}
     // 笔锋墨迹注入流体：顺着笔势甩出
     for (let k = 0; k < n - 1; k += 3) {
       const x = pts[k * 2], y = pts[k * 2 + 1];
@@ -307,6 +314,17 @@ export class Brush {
       const hot = Math.max(0, 1 - u * 6);
       r.ribbonTop.strip(s.pts, wd, RS.Brush, cin[0] + hot * 2, cin[1] + hot * 1.6, cin[2] + hot, 1 - u * u);
     }
+    for (const s of this.slashes) {
+      const n = s.pts.length / 2, u = s.t / SLASH_LIFE;
+      const wd = new Float32Array(n), dark = new Float32Array(n);
+      for (let i = 0; i < n; i++) {
+        const taper = Math.sin(Math.PI * (i + .5) / n) ** .6;
+        wd[i] = HALF_W * .75 * (1 - u * .7) * taper;
+        dark[i] = wd[i] * 2.1;
+      }
+      r.ribbonTop.strip(s.pts, dark, RS.InkArrow, .03, .025, .035, .75 * (1 - u));
+      r.ribbonTop.strip(s.pts, wd, RS.Brush, 2.6, 2.6, 2.8, Math.min(1, (1 - u) * 1.6));
+    }
     for (const s of this.stamps) {
       const scale=s.scale*(s.reduced?1:1+.6*(1-clamp(s.t/.1,0,1)));
       const a=Math.min(1,(1.6-s.t)/.5);
@@ -326,6 +344,6 @@ export class Brush {
     this.cancel();this.paths.clear();
     this.strokes = [];
     this.lastStroke=null;
-    this.stamps = [];this.colors.clear();this.lastYongResult=null;this.yongJudge=null;
+    this.stamps = [];this.slashes = [];this.colors.clear();this.lastYongResult=null;this.yongJudge=null;
   }
 }

@@ -27,7 +27,13 @@ const NAMES: Record<CompanionKind,string> = { chiyan:'赤燕',laodun:'老盾',mo
 const SKILLS = { chiyan:['俯冲斩','chiyan-dive'],laodun:['护盾','laodun-shield'],moyuan:['墨网','moyuan-net'],suanpan:['截流','suanpan-intercept'] } as const;
 const COLORS: Record<CompanionKind,[number,number,number]> = { chiyan:[1.8,.55,.15],laodun:[.2,1.3,.85],moyuan:[.65,.5,1.3],suanpan:[1.1,.8,.25] };
 interface Area { kind:'laodun'|'moyuan'; x:number; y:number; left:number; age:number; fromX:number; fromY:number }
-interface Dash { x:number; y:number; returning:boolean; seen:Set<Enemy>; startX:number; startY:number }
+interface Dash {
+ x:number; y:number; returning:boolean; seen:Set<Enemy>; startX:number; startY:number;
+ phase:'wind'|'rush'|'back'; t:number; ux:number; uy:number; fromX:number; fromY:number; toX:number; toY:number; span:number;
+}
+const easeInOutQuart=(k:number)=>k<.5?8*k**4:1-(-2*k+2)**4/2;
+const easeInOutCubic=(k:number)=>k<.5?4*k**3:1-(-2*k+2)**3/2;
+const DASH_WIND=.1,DASH_PUSH=70,DASH_PUSH_TIME=.18,DASH_TRAIL=.18;
 
 interface Shot {x:number;y:number;vx:number;vy:number}
 export type JointKind = 'shield-dive'|'tiewang'|'zhaoying';
@@ -58,6 +64,9 @@ export class CompanionSystem {
  private animations = new Map<CompanionKind,SpritePlayback>();
  private areas: Area[] = [];
  private dash: Dash|null = null;
+ private dashTrail:{x:number;y:number;angle:number;age:number}[]=[];
+ private dashArcs:{x:number;y:number;angle:number;age:number}[]=[];
+ private pushes:{e:Enemy;vx:number;vy:number;left:number}[]=[];
  private marked: Enemy|null = null;
  private slowed = new Set<Enemy>();
  private shots:Shot[]=[];
@@ -84,7 +93,7 @@ export class CompanionSystem {
  resetRun():void {this.present.clear();this.charge=0;Object.assign(this.stats,{damage:0,blocked:0,bound:0,ink:0,interfered:0,shots:0,shotHits:0,chargeGained:0});for(const id of Object.keys(this.stats.jointCasts) as JointKind[])this.stats.jointCasts[id]=0;for(const kind of Object.keys(this.stats.casts) as CompanionKind[])this.stats.casts[kind]=0;this.resetStage();}
  resetStage():void {this.flights.clear();this.clearEffects();Object.assign(this.stageChargeTiming,{pairAt:null,fullAt:null,chargeAtPair:null});this.shotTimer=0;this.absorbTimer=0;this.interferenceTimer=COMPANION_RULES.suanpan.interval;for(const s of this.roster){s.x=this.w.player.x;s.y=this.w.player.y-60;s.cooldown=0;s.count=0;s.penFlight=false;s.angle=0;const def=companionSprites.find(d=>d.id===`companion_${s.kind}`)!;this.animations.set(s.kind,new SpritePlayback(def.sheet??{count:def.frames??1,fps:12,mode:'loop'}));}}
  reset(full=false):void {if(full)this.resetRun();else this.resetStage();}
- private clearEffects():void {for(const e of this.slowed)e.companionSpeed=1;this.slowed.clear();this.areas=[];this.copperPass=null;this.passCooldown=0;this.dash=null;this.marked=null;this.drops=[];this.shots=[];this.joint=null;for(const s of this.roster)s.active=0;}
+ private clearEffects():void {for(const e of this.slowed)e.companionSpeed=1;this.slowed.clear();this.areas=[];this.copperPass=null;this.passCooldown=0;this.dash=null;this.dashTrail=[];this.dashArcs=[];this.pushes=[];this.marked=null;this.drops=[];this.shots=[];this.joint=null;for(const s of this.roster)s.active=0;}
  beginPenFlight():void {this.dash=null;}
  gain(kind:CompanionKind,amount:number):void {const s=this.team.find(c=>c.kind===kind);if(s)s.effective+=amount;}
  isMarked(e:Enemy):boolean {return this.marked===e;}
@@ -109,7 +118,8 @@ export class CompanionSystem {
   const s=this.team[key==='Q'?0:1];
   s.cooldown=COMPANION_RULES[s.kind].cooldown*this.w.skillCooldownScale;this.stats.casts[s.kind]++;
   if(s.kind==='chiyan') {const all=this.targets(),parts=all.filter(e=>this.isBossPart(e)),weak=parts.filter(e=>!e.data.hitArmor&&(e.armorLoose>0||e.data.weakWeapon||e.data.copperPart||e.data.damageBonus>1)),front=all.filter(e=>e.y<p.y);const candidates=weak.length?weak:parts.length?parts:front;
-   const target=candidates.sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];this.dash={x:target?.x??x,y:target?.y??Math.max(50,y-360),returning:false,seen:new Set(),startX:s.x,startY:s.y};}
+   const target=candidates.sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];const tx=target?.x??x,ty=target?.y??Math.max(50,y-360),len=Math.max(1,Math.hypot(tx-s.x,ty-s.y));
+   this.dash={x:tx,y:ty,returning:false,seen:new Set(),startX:s.x,startY:s.y,phase:'wind',t:0,ux:(tx-s.x)/len,uy:(ty-s.y)/len,fromX:s.x,fromY:s.y,toX:tx,toY:ty,span:len};}
 
   else if(s.kind==='laodun'||s.kind==='moyuan') {const kind=s.kind,front=this.targets().filter(e=>e.y<y);let tx=x,ty=Math.max(60,y-280);
    if(kind==='moyuan'&&front.length){const best=front.sort((a,b)=>front.filter(e=>Math.hypot(e.x-b.x,e.y-b.y)<=140).length-front.filter(e=>Math.hypot(e.x-a.x,e.y-a.y)<=140).length||Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y))[0];tx=best.x;ty=best.y;}
@@ -186,6 +196,42 @@ export class CompanionSystem {
  }
  /** 不改弹池中的原始 speed；新弹和离场弹按位置逐帧判断，到期自然恢复。 */
  bulletSpeedScale(b:Bullet):number {return this.joint?.kind==='zhaoying'&&this.joint.age<5&&b.x>=0&&b.x<=900&&b.y>=0&&b.y<=1200?.5:1;}
+/** 俯冲斩：后缩蓄力 0.1s，急加速冲过目标，减速停住，再缓出回位。 */
+ private updateDash(dt:number,targets:Enemy[]):void {
+  const d=this.dash!,s=this.roster[0],p=this.w.player,w=this.w;
+  d.t+=dt;
+  if(d.phase==='wind') {
+   const k=clamp(d.t/DASH_WIND,0,1),back=1-(1-k)**2;
+   s.x=d.fromX-d.ux*45*back;s.y=d.fromY-d.uy*45*back;s.angle=Math.atan2(d.uy,d.ux)+Math.PI/2;
+   if(d.t>=DASH_WIND){d.phase='rush';d.t=0;d.fromX=s.x;d.fromY=s.y;const len=Math.max(1,Math.hypot(d.x-s.x,d.y-s.y));d.ux=(d.x-s.x)/len;d.uy=(d.y-s.y)/len;d.toX=d.x+d.ux*90;d.toY=d.y+d.uy*90;d.span=len+90;w.fx.burst(s.x,s.y,10,260,COLORS.chiyan,.2);}
+   return;
+  }
+  if(d.phase==='rush') {
+   const T=clamp(d.span/2400,.16,.3),k=clamp(d.t/T,0,1),f=easeInOutQuart(k),ox=s.x,oy=s.y;
+   s.x=d.fromX+(d.toX-d.fromX)*f;s.y=d.fromY+(d.toY-d.fromY)*f;s.angle=Math.atan2(d.uy,d.ux)+Math.PI/2;
+   this.dashTrail.push({x:s.x,y:s.y,angle:s.angle,age:0});
+   w.fx.emitHigh({x:s.x,y:s.y,life:.22,size:13,sizeEnd:1,r:2,g:.6,b:.08,a:.9,kind:PK.Flame});
+   for(const e of targets)if(!d.seen.has(e)&&segDist2(e.x,e.y,ox,oy,s.x,s.y)<=40**2){
+    d.seen.add(e);const before=e.hp;w.damage(e,120,e.x,e.y,true,'companion');this.stats.damage+=Math.max(0,before-e.hp);
+    const ang=Math.atan2(d.uy,d.ux);w.fx.slashSpark(e.x,e.y,ang+Math.PI/2,[2.4,1.2,.5]);w.fx.hit(e.x,e.y,COLORS.chiyan,6);
+    e.data.hitFlashUntil=w.real+.14;e.flash=1;this.dashArcs.push({x:e.x,y:e.y,angle:ang,age:0});
+    if(!e.def.boss&&!e.parent&&!e.phaseLock&&!this.isBossPart(e))this.pushes.push({e,vx:d.ux*DASH_PUSH/DASH_PUSH_TIME*2,vy:d.uy*DASH_PUSH/DASH_PUSH_TIME*2,left:DASH_PUSH_TIME});
+    w.hitstop(.05);
+   }
+   if(k>=1){d.phase='back';d.t=0;d.fromX=s.x;d.fromY=s.y;d.returning=true;}
+   return;
+  }
+  const hx=p.x,hy=p.y-60,dur=clamp(Math.hypot(hx-d.fromX,hy-d.fromY)/1600,.3,.55),k=clamp(d.t/dur,0,1),f=easeInOutCubic(k);
+  const ox=s.x,oy=s.y;s.x=d.fromX+(hx-d.fromX)*f;s.y=d.fromY+(hy-d.fromY)*f;
+  if(Math.hypot(s.x-ox,s.y-oy)>.01)s.angle=Math.atan2(s.y-oy,s.x-ox)+Math.PI/2;
+  if(k>=1)this.dash=null;
+ }
+ private updatePushes(dt:number):void {
+  for(const v of this.pushes){const f=Math.max(0,v.left/DASH_PUSH_TIME);v.e.x+=v.vx*f*dt;v.e.y+=v.vy*f*dt;v.left-=dt;}
+  this.pushes=this.pushes.filter(v=>v.left>0&&!v.e.dead);
+  for(const t of this.dashTrail)t.age+=dt;this.dashTrail=this.dashTrail.filter(t=>t.age<DASH_TRAIL);
+  for(const a of this.dashArcs)a.age+=dt;this.dashArcs=this.dashArcs.filter(a=>a.age<.2);
+ }
  private updateJoint(dt:number):void {
   const j=this.joint!;j.age+=dt;
   for(const v of j.pushed)if(!v.enemy.dead){if(j.age<2)v.enemy.stunned=Math.max(v.enemy.stunned,2-j.age+dt);if(j.age<=.4+dt){const t=clamp(j.age/.4,0,1);v.enemy.y=v.y-160*(1-(1-t)**3);}}
@@ -249,11 +295,8 @@ export class CompanionSystem {
    else if(s.kind!=='laodun')x+=s.kind==='moyuan'?82:-82;
    s.x=approach(s.x,x,10,dt);s.y=approach(s.y,y,10,dt);
   }
-  if(this.dash&&!this.joint){const d=this.dash,s=this.roster[0],tx=d.returning?p.x:d.x,ty=d.returning?p.y-60:d.y,dist=Math.hypot(tx-s.x,ty-s.y),k=Math.min(1,COMPANION_RULES.chiyan.speed*dt/Math.max(dist,.0001)),ox=s.x,oy=s.y;if(dist>.001)s.angle=Math.atan2(ty-s.y,tx-s.x)+Math.PI/2;s.x+=(tx-s.x)*k;s.y+=(ty-s.y)*k;
-   if(!d.returning){this.w.fx.emitHigh({x:s.x,y:s.y,life:.22,size:13,sizeEnd:1,r:2,g:.6,b:.08,a:.9,kind:PK.Flame});}
-   if(!d.returning)for(const e of targets)if(!d.seen.has(e)&&segDist2(e.x,e.y,ox,oy,s.x,s.y)<=40**2){d.seen.add(e);const before=e.hp;this.w.damage(e,120,e.x,e.y,true,'companion');this.stats.damage+=Math.max(0,before-e.hp);this.w.fx.hit(e.x,e.y,COLORS.chiyan,5);}
-   if(k===1){if(d.returning)this.dash=null;else d.returning=true;}
-  }
+  if(this.dash&&!this.joint)this.updateDash(dt,targets);
+  this.updatePushes(dt);
   if(this.copperPass&&bird){const f=this.copperPass;f.age+=dt;const k=Math.min(1,f.age/.6),back=Math.max(0,Math.min(1,(f.age-.6)/.65)),tx=f.target.x,ty=f.target.y+25;bird.x=f.x+(tx-f.x)*k;bird.y=f.y+(ty-f.y)*k;if(back){bird.x=tx+(p.x+90-tx)*back;bird.y=ty+(p.y-80-ty)*back;}bird.angle=back?Math.PI:0;if(f.age>=1.25||f.target.dead)this.copperPass=null;}
   this.updateShots(dt);
   if(this.joint)this.updateJoint(dt);else this.fireChiyan(dt,targets);
@@ -275,7 +318,12 @@ export class CompanionSystem {
   for(const s of this.team)r.air.add(`companion_${s.kind}`,{x:s.x,y:s.y,frame:this.animations.get(s.kind)?.frame??0,sx:.85,sy:.85,rot:(s.angle??0)+Math.sin(time*2)*.06,glow:.7});
   for(const [kind,f] of this.flights)if(!f.joining)r.air.add(`companion_${kind}`,{x:f.state.x,y:f.state.y,frame:this.animations.get(kind)?.frame??0,sx:.85,sy:.85,glow:.7});
   if(this.copperPass){const f=this.copperPass,s=this.team.find(s=>s.kind==='chiyan');if(s)r.ribbonMid.line(f.x,f.y,s.x,s.y,6,RS.Trail,...COLORS.chiyan,.85);}
-  if(this.dash&&!this.joint){const d=this.dash,s=this.roster[0];r.ribbonMid.line(d.startX,d.startY,s.x,s.y,6,RS.Trail,...COLORS.chiyan,.8);}
+  for(let i=0;i<this.dashTrail.length;i++){const t=this.dashTrail[i],k=1-t.age/DASH_TRAIL,n=this.dashTrail[i+1];
+   r.air.add('companion_chiyan',{x:t.x,y:t.y,frame:0,sx:.85,sy:.85,rot:t.angle,alpha:k*.4,glow:1.4});
+   if(n)r.ribbonMid.line(t.x,t.y,n.x,n.y,14*k+2,RS.Trail,...COLORS.chiyan,.85*k);}
+  for(const a of this.dashArcs){const u=a.age/.2,pts:number[]=[],wd:number[]=[],R=62+30*u,span=1.3;
+   for(let i=0;i<=14;i++){const q=i/14,th=a.angle-span/2+span*q+(u-.5)*.5;pts.push(a.x+Math.cos(th)*R,a.y+Math.sin(th)*R);wd.push(10*Math.sin(Math.PI*q)*(1-u));}
+   r.ribbonTop.strip(pts,new Float32Array(wd),RS.Brush,2.6,2.3,1.8,1-u*u);}
   for(const b of this.shots){r.ribbonMid.line(b.x-b.vx/900*22,b.y-b.vy/900*22,b.x,b.y,4,RS.Glow,...COLORS.chiyan,.9);r.bullets.add(b.x,b.y,Math.atan2(b.vy,b.vx),4,0,1.8,.55,.15,1,1,.1);}
   this.drawJoint(r,time);
   for(const a of this.areas){const radius=COMPANION_RULES[a.kind].radius,c=COLORS[a.kind];
