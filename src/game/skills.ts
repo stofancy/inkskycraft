@@ -6,19 +6,20 @@ import { RS } from '../gl/ribbons';
 import { PLAY_W, PLAY_H, type SkillSlot, type WeaponColor } from '../types';
 import { Player } from './player';
 import type { Enemy } from './enemy';
+import type { Bullet } from './bullets';
 import type { World } from './world';
 import { auraLine, auraRing } from './aura';
 export const SKILL_IDS=['chaifa','tishen','zhongpao','shenying','bilei'] as const;
 export type SkillId=typeof SKILL_IDS[number];
 export const SKILL_RULES={
- chaifa:{name:'拆阀',key:'1',cooldown:20,duration:5},
+ chaifa:{name:'炽翼',key:'1',cooldown:20,duration:5},
  tishen:{name:'替身',key:'2',cooldown:16,duration:6},
  zhongpao:{name:'重炮',key:'3',cooldown:0,duration:0},
  shenying:{name:'蜃影',key:'4',cooldown:22,duration:8},
- bilei:{name:'避雷',key:'5',cooldown:10,duration:1.5},
+ bilei:{name:'雷池',key:'5',cooldown:14,duration:3},
 } as const;
 export function filterSkills(value:unknown):SkillId[]{return Array.isArray(value)?[...new Set(value.filter((id):id is SkillId=>SKILL_IDS.includes(id)))]:[];}
-interface Decoy {x:number;y:number;vx:number;hits:number;left:number;expires:number;age:number;fromX:number;fromY:number;openX:number;openY:number;rushing:boolean}
+interface Decoy {x:number;y:number;vx:number;hits:number;left:number;expires:number;age:number;fromX:number;fromY:number;openX:number;openY:number;rushing:boolean;dx:number;dy:number}
 interface Cannon {x:number;y:number;level:1|2|3;hits:Set<number>;smoke:number}
 interface ReturnShot {x:number;y:number;vx:number;vy:number;target:Enemy|null;damage:number;homing:boolean}
 interface Unlock {id:SkillId;x:number;y:number;age:number}
@@ -31,6 +32,7 @@ export class Skills {
  decoys:Decoy[]=[];cannons:Cannon[]=[];returns:ReturnShot[]=[];
  readonly echo:Player;
  unlocks:Unlock[]=[];
+ private flashes:{x:number;y:number;left:number}[]=[];
  private arcs:{pts:number[];left:number}[]=[];
  private heatClock=0;private mirrorAim=0;
  private mirrorAge=0;private pearls=0;
@@ -45,9 +47,9 @@ export class Skills {
  constructor(readonly w:World){this.echo=new Player(w,true);}
  get boosted(){return this.boostLeft>0;}
  get cannonLevel():0|1|2|3{return this.charge>=180?3:this.charge>=100?2:this.charge>=40?1:0;}
- get shieldRadius(){return 90;}
+ get shieldRadius(){return 110;}
  resetRun():void{for(const id of SKILL_IDS)delete this.arrivalTimes[id];this.unlocked.clear();this.unlocked.add('chaifa');this.charge=0;for(const id of SKILL_IDS){this.cooldowns[id]=0;this.stats.uses[id]=0;}this.stats.primaryHits=this.stats.decoyHits=this.stats.reflected=this.stats.perfect=this.stats.damage=0;this.clearEffects();}
- clearEffects():void{this.boostLeft=this.mirrorLeft=this.shieldLeft=this.mirrorFlash=0;this.decoys=[];this.cannons=[];this.returns=[];this.arcs=[];this.unlocks=[];this.echo.reset(false);this.heatClock=this.mirrorAim=0;this.continuousNext.clear();this.continuousTargets.clear();this.windup=null;this.blasts=[];this.scars=[];this.pearls=this.mirrorAge=this.muzzle=this.valveLeft=this.rodAfter=this.cannonGlow=0;this.readiness.clear();}
+ clearEffects():void{this.boostLeft=this.mirrorLeft=this.shieldLeft=this.mirrorFlash=0;this.decoys=[];this.cannons=[];this.returns=[];this.arcs=[];this.flashes=[];this.unlocks=[];this.echo.reset(false);this.heatClock=this.mirrorAim=0;this.continuousNext.clear();this.continuousTargets.clear();this.windup=null;this.blasts=[];this.scars=[];this.pearls=this.mirrorAge=this.muzzle=this.valveLeft=this.rodAfter=this.cannonGlow=0;this.readiness.clear();}
  setUnlocked(ids:unknown):void{this.unlocked.clear();for(const id of filterSkills(ids))this.unlocked.add(id);}
  unlock(id:SkillId,x=this.w.player.x,y=this.w.player.y):void{
   if(this.unlocked.has(id))return;
@@ -85,7 +87,7 @@ export class Skills {
   if(id==='zhongpao'&&(!this.cannonLevel||this.windup))return false;
   this.cooldowns[id]=rules.cooldown*w.skillCooldownScale;this.stats.uses[id]++;
   if(id==='chaifa')this.boostLeft=rules.duration;
-  if(id==='tishen')this.decoys=[[-95,-20],[95,-20],[0,-120]].map(([dx,dy],i)=>({x:p.x,y:p.y,vx:i,hits:0,left:rules.duration,expires:w.real+rules.duration,age:0,fromX:p.x,fromY:p.y,openX:clamp(p.x+dx,26,874),openY:Math.max(30,p.y+dy),rushing:false}));
+  if(id==='tishen')this.decoys=[[-95,-20],[95,-20],[0,-120]].map(([dx,dy],i)=>({x:p.x,y:p.y,vx:i,hits:0,left:rules.duration,expires:w.real+rules.duration,age:0,fromX:p.x,fromY:p.y,openX:clamp(p.x+dx,26,874),openY:Math.max(30,p.y+dy),rushing:false,dx,dy}));
   if(id==='shenying'){this.mirrorLeft=rules.duration;this.mirrorAge=0;this.pearls=0;this.echo.syncEcho(p,true);this.echo.x=p.x;w.fx.shockwave(p.x,p.y,100,3,.3);}
   if(id==='bilei')this.shieldLeft=rules.duration;
   if(id==='zhongpao'){
@@ -133,7 +135,7 @@ export class Skills {
    if(e){this.deal(e,shot.damage);shot.y=-500;}
   }
   this.returns=this.returns.filter(s=>s.x>-80&&s.x<980&&s.y>-80&&s.y<1280);
-  this.arcs=this.arcs.filter(a=>(a.left-=realDt)>0);
+  this.arcs=this.arcs.filter(a=>(a.left-=realDt)>0);this.flashes=this.flashes.filter(f=>(f.left-=realDt)>0);
 
  }
  updateUnlocks(realDt:number):void {const w=this.w,p=w.player;
@@ -144,12 +146,29 @@ export class Skills {
   const w=this.w;
   for(const d of this.decoys){const oldX=d.x,oldY=d.y;d.age+=dt;d.left=Math.max(0,d.expires-w.real);if(d.left<=1e-9||d.hits>=14)d.rushing=true;
    if(d.age<.25){const k=CURVES.cubic(d.age/.25);d.x=d.fromX+(d.openX-d.fromX)*k;d.y=d.fromY+(d.openY-d.fromY)*k;continue;}
-   const target=this.nearest(d.x,d.y,new Set());
-   if(target){const dx=target.x-d.x,dy=target.y-d.y,dist=Math.hypot(dx,dy),k=Math.min(1,(d.rushing?1200:420)*dt/Math.max(.001,dist));d.x+=dx*k;d.y+=dy*k;
-    if(w.hitSegment(target,oldX,oldY,d.x,d.y,24)||dist<=target.radius+24){this.explodeDecoy(d);d.left=-1;}}
-   else if(d.rushing){this.explodeDecoy(d);d.left=-1;}
+   if(d.rushing){
+    const target=this.nearest(d.x,d.y,new Set());
+    if(target){const dx=target.x-d.x,dy=target.y-d.y,dist=Math.hypot(dx,dy),k=Math.min(1,1200*dt/Math.max(.001,dist));d.x+=dx*k;d.y+=dy*k;
+     if(w.hitSegment(target,oldX,oldY,d.x,d.y,24)||dist<=target.radius+24){this.explodeDecoy(d);d.left=-1;}}
+    else{this.explodeDecoy(d);d.left=-1;}
+    continue;
+   }
+   const p=w.player,b=this.pickBullet(d);let tx=clamp(p.x+d.dx,26,874),ty=Math.max(30,p.y+d.dy),speed=700;
+   if(b){tx=b.x;ty=b.y;speed=1500;}
+   const dx=tx-d.x,dy=ty-d.y,dist=Math.hypot(dx,dy);if(dist>1e-6){const k=Math.min(1,speed*dt/dist);d.x+=dx*k;d.y+=dy*k;}
   }
   this.decoys=this.decoys.filter(d=>d.left>=0);
+ }
+ /** 各管一个方向：左右扇区各占一侧，前方扇区朝上；挑离主角最近的普通敌弹。 */
+ private pickBullet(d:Decoy):Bullet|null{
+  const p=this.w.player,center=[Math.PI,0,-Math.PI/2];let best:Bullet|null=null,bd=220*220;
+  for(const b of this.w.bullets.list){
+   if(b.dead||b.hard||b.age<b.delay)continue;
+   const dx=b.x-p.x,dy=b.y-p.y,dist=dx*dx+dy*dy;if(dist>=bd)continue;
+   const a=Math.atan2(dy,dx);let own=0,bestDiff=9;for(let i=0;i<3;i++){const diff=Math.abs(angleDiff(a,center[i]));if(diff<bestDiff){bestDiff=diff;own=i;}}
+   if(own!==d.vx)continue;best=b;bd=dist;
+  }
+  return best;
  }
  private explodeDecoy(d:Decoy):void {const w=this.w;w.fx.explosion(d.x,d.y,'m','fire');w.fx.shockwave(d.x,d.y,120,4,.3);w.audio.sfx('explode_m');for(let i=0;i<20;i++)w.fx.emit({x:d.x,y:d.y,vx:(Math.random()-.5)*240,vy:(Math.random()-.5)*240,life:.6,size:5,sizeEnd:0,r:.8,g:.65,b:.35,kind:PK.Shard});for(const e of w.enemies)if(w.targetable(e,true)&&Math.hypot(e.x-d.x,e.y-d.y)<=120+e.radius)this.deal(e,220);}
  private endMirror():void {const w=this.w,e=this.echo;for(let i=0;i<20;i++)w.fx.emitHigh({x:e.x,y:e.y,vx:(Math.random()-.5)*180,vy:(Math.random()-.5)*130,life:.65,size:15,sizeEnd:48,r:.55,g:.75,b:.85,a:.65,kind:PK.Smoke});
@@ -169,15 +188,12 @@ export class Skills {
    const ax=b.prevX,ay=b.prevY,bx=b.x,by=b.y;
    if(this.shieldLeft>0){
     const steps=Math.max(1,Math.ceil(Math.hypot(bx-ax,by-ay)/4));let point:{x:number;y:number}|null=null;
-    for(let i=0;i<=steps;i++){const x=ax+(bx-ax)*i/steps,y=ay+(by-ay)*i/steps;if(Math.hypot(x-p.x,y-p.y)<=this.shieldRadius+b.radius&&y<=p.y&&Math.abs(angleDiff(Math.atan2(y-p.y,x-p.x),-Math.PI/2))<=Math.PI/3){point={x,y};break;}}
+    for(let i=0;i<=steps;i++){const x=ax+(bx-ax)*i/steps,y=ay+(by-ay)*i/steps;if(Math.hypot(x-p.x,y-p.y)<=this.shieldRadius+b.radius){point={x,y};break;}}
     if(point){
-     const {x,y}=point;
-     const perfect=SKILL_RULES.bilei.duration-this.shieldLeft<=.25+1e-9;
-     const tip={x:p.x,y:p.gun('gun').y-55};this.arcs.push({pts:[x,y,(x+tip.x)/2+12,(y+tip.y)/2,tip.x,tip.y],left:.16});
-     b.dead=true;this.stats.reflected++;
-     if(perfect){this.stats.perfect++;const seen=new Set<number>();let ox=tip.x,oy=tip.y;for(let i=0;i<3;i++){const e=this.nearest(ox,oy,seen);if(!e)break;seen.add(e.id);this.arcs.push({pts:[ox,oy,(ox+e.x)/2+18,(oy+e.y)/2,e.x,e.y],left:.16});this.deal(e,30);w.fx.hit(e.x,e.y,[.6,1.2,1.8],4);ox=e.x;oy=e.y;}w.hitstop(.06);w.audio.sfx('thunder',{vol:1.2});}
-     else this.returns.push({x:tip.x,y:tip.y,vx:-b.vx*3,vy:-b.vy*3,homing:false,target:null,damage:30});
-     w.fx.burst(tip.x,tip.y,8,100,[.6,1.2,1.8],.2);continue;
+     const {x,y}=point;b.dead=true;this.stats.reflected++;
+     const e=w.enemies.filter(e=>w.targetable(e)&&Math.hypot(e.x-x,e.y-y)<=300).sort((a,b)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y))[0];
+     if(e){this.arcs.push({pts:[x,y,(x+e.x)/2+14,(y+e.y)/2-10,e.x,e.y],left:.16});this.deal(e,15);w.fx.hit(e.x,e.y,[.6,1.2,1.8],3);}
+     this.flashes.push({x,y,left:.14});w.fx.burst(x,y,8,110,[.8,1.1,1.9],.2);continue;
     }
    }
    for(const d of this.decoys)if(d.hits<14&&segDist2(d.x,d.y,ax,ay,bx,by)<(p.sprite.w*.22+b.radius)**2){b.dead=true;d.hits++;this.stats.decoyHits++;w.fx.burst(b.x,b.y,5,70,[1.5,.6,.12],.15);if(d.hits===14)d.rushing=true;break;}
@@ -204,11 +220,11 @@ export class Skills {
   for(const s of this.cannons){r.bullets.add(s.x,s.y,0,10+s.level*7,6,2.2,1.3,.4,w.real,1,.4);r.ribbonMid.line(s.x,s.y+55+s.level*20,s.x,s.y,8+s.level*3,RS.FireShot,2.1,.5,.08,.95);}
   for(const s of this.returns){r.bullets.add(s.x,s.y,Math.atan2(s.vy,s.vx),7,1,.45,.9,1.8,w.real,1,.2);r.ribbonMid.line(s.x-s.vx*.025,s.y-s.vy*.025,s.x,s.y,2,s.homing?RS.Trail:RS.Lightning,.6,1.1,1.9,.9);}
   for(const a of this.arcs)auraLine(r.ribbonMid,a.pts,3,[.6,1.1,1.8],a.left/.16,RS.Lightning);
-  if(this.shieldLeft>0||this.rodAfter>0){const tipY=gun.y-55,k=this.shieldLeft>0?Math.min(1,(SKILL_RULES.bilei.duration-this.shieldLeft)/.06):this.rodAfter/.3,white=this.shieldLeft>0&&SKILL_RULES.bilei.duration-this.shieldLeft<=.25;
-   r.ribbonTop.line(p.x,gun.y+5,p.x,gun.y-55*k,5,RS.Brush,.25,.3,.36,1);r.ribbonTop.line(p.x-1,gun.y,p.x-1,gun.y-55*k,2,RS.Glow,.7,1.2,1.8,.9);
-   r.bullets.add(p.x,tipY,0,white?13:8,0,white?2.5:.5,white?2.5:1.2,2.5,1,1,.5);
-   const pts:number[]=[];for(let i=0;i<=24;i++){const a=-Math.PI/2-Math.PI/3+i/24*Math.PI*2/3;pts.push(p.x+Math.cos(a)*this.shieldRadius,p.y+Math.sin(a)*this.shieldRadius);}auraLine(r.ribbonTop,pts,2,[.3,.9,1.8],.4,RS.Lightning);
-   for(let i=0;i<3;i++){const x=p.x+Math.sin(w.real*35+i*2)*28,y=tipY+15+i*12;r.ribbonTop.line(p.x,tipY,x,y,2,RS.Lightning,.6,1.2,2,.8*k);}
+  for(const f of this.flashes){const k=f.left/.14;r.bullets.add(f.x,f.y,0,10+14*(1-k),0,1.8,1.6,2.6,1,1,.6);auraRing(r.ribbonTop,f.x,f.y,6+16*(1-k),6+16*(1-k),[1.3,1,2.2],k,0,1.5);}
+  if(this.shieldLeft>0||this.rodAfter>0){const R=this.shieldRadius,k=this.shieldLeft>0?Math.min(1,(SKILL_RULES.bilei.duration-this.shieldLeft)/.15):this.rodAfter/.3,fade=this.shieldLeft>0&&this.shieldLeft<.5?this.shieldLeft/.5:1;
+   auraRing(r.ribbonTop,p.x,p.y,R*k,R*k,[.9,.6,1.9],.5*fade,w.real*.6,2.5);auraRing(r.ribbonTop,p.x,p.y,R*k*.93,R*k*.93,[1.6,1.5,2.2],.3*fade,-w.real*.4,1.2);
+   const t=Math.floor(w.real*30);
+   for(let j=0;j<5;j++){const a0=(t*1.7+j*Math.PI*2/5)%(Math.PI*2),pts:number[]=[];for(let i=0;i<=6;i++){const a=a0+i*.09,rr=R*k+(i&&i<6?Math.sin(t*3+i*5+j*2)*7:0);pts.push(p.x+Math.cos(a)*rr,p.y+Math.sin(a)*rr);}auraLine(r.ribbonTop,pts,2,[1.5,1.2,2.4],.8*fade,RS.Lightning);}
   }
   if(this.boosted){for(const side of [-1,1]){const pts:number[]=[];for(let i=0;i<=8;i++)pts.push(p.x+side*(38+Math.sin(w.real*25+i)*5),p.y-45+i*15);auraLine(r.ribbonTop,pts,2,[2,.45,.08],.65);}r.ribbonMid.line(p.x,p.y+35,p.x,p.y+130,17,RS.FireShot,2.4,.65,.12,.85);}
   if(this.valveLeft>0)for(const side of [-1,1])r.ribbonTop.line(p.x+side*22*this.valveLeft/.3,p.y+14,p.x+side*4,p.y+14,5,RS.Brush,.45,.3,.12,.9);
