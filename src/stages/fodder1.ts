@@ -1,4 +1,5 @@
 // P4-22 第一章炮灰：复用普通敌机预算，短气泡独立于通讯队列。
+import { normal } from './ordinary';
 import type { World } from '../game/world';
 import type { Enemy,EnemyDef,ItemKind } from '../game/enemy';
 import type { Scenery } from '../game/scenery';
@@ -78,7 +79,8 @@ export class FodderChapter {
   const mult:Record<FodderName,number>={周网:1.5,钱耗:1.5,老鸹:2,小铃:1.5,大牛:1.5,二牛:1.5,赵怂:2,吴领队:3,麻三:2,阿豆:1,老耿:1};
   const base=name==='吴领队'?900:['大牛','二牛'].includes(name)?700:name==='老鸹'?500:200;
   const drops:Partial<Record<FodderName,ItemKind>>={周网:'p',老鸹:'medal',大牛:'ink',二牛:'ink',吴领队:'medal',麻三:'ink'};
-  return {name,sprite:CH1_FODDER_ART[name].sprite,hp:hp[name],score:base*mult[name],anim:CH1_FODDER_ART[name].asset?.sheet?.fps,noCollide:['老鸹','大牛','二牛'].includes(name),drops:drops[name],
+  const kind: 'L'|'M'|'F' = ['钱耗','小铃','阿豆'].includes(name)?'L':['周网','老耿'].includes(name)?'F':'M';
+  return {name,sprite:CH1_FODDER_ART[name].sprite,hp:hp[name],normalHp:[name==='吴领队'?170:hp[name],kind],score:base*mult[name],anim:CH1_FODDER_ART[name].asset?.sheet?.fps,noCollide:['老鸹','大牛','二牛'].includes(name),drops:drops[name],
    ai:name==='吴领队'?Bomber.ai:undefined,onHit:(e,g,x,y,source)=>{this.hit(e);if(name==='大牛'||name==='二牛')BridgeTurret.onHit?.(e,g,x,y,source);},onDeath:e=>this.death(e)};
  }
  spawn(name:FodderName,x:number,y:number,data:Record<string,unknown>={}):Enemy|null{
@@ -100,7 +102,7 @@ export class FodderChapter {
   switch(event){
    case 'S2':for(let i=0;i<4;i++)add('egret',300+i*65,620+i*15).alpha=.5;this.schedule('钱耗',5,260,180);this.schedule('老鸹',18,810,620);this.schedule('小铃',24,100,160);break;
    case 'S3':this.schedule('周网',10,150,40);break;
-   case 'S4':add('leaves',420,580);this.schedule('赵怂',6,720,320);this.schedule('大牛',13,200,430);this.schedule('二牛',15,700,430);break;
+   case 'S4':add('leaves',420,580);this.schedule('赵怂',6,720,320);this.schedule('大牛',13,200,430);this.schedule('二牛',normal(this.w)?13.8:15,700,430);break;
    case 'S6':add('flag',450,860).layer='front';for(let i=0;i<4;i++)add('lamp',90+i*225,650);this.schedule('阿豆',24,650,280);this.schedule('麻三',26,450,200,()=>({target:this.w.liveEnemies().find(e=>e.def.name==='堡垒钳臂')}));this.schedule('吴领队',30,450,-80);break;
    case 'S7':this.schedule('小铃',10,100,160);break;
   }
@@ -109,50 +111,54 @@ export class FodderChapter {
  scene(key:string,x:number,y:number){const s=this.w.scene(CH1_DECOR_ART[key].sprite,x,y);s.layer='ground';s.fps=CH1_DECOR_ART[key].asset?.sheet?.fps??0;this.decor.push(s);return s;}
  splash(x:number,y:number){this.w.fx.burst(x,y,14,100,[.6,.85,.9],.6);this.record('环境','splash',{x,y});}
  update(){const w=this.w,dt=w.dt,now=w.real;
+  const shotSpeed=(n:number)=>normal(w)?n/w.enemyBulletSpeed:n;
   this.bubbles=this.bubbles.filter(b=>this.retainBubble(b));this.maxBubbles=Math.max(this.maxBubbles,this.bubbles.length);this.maxEnemies=Math.max(this.maxEnemies,w.density.count(w.enemies));this.maxBullets=Math.max(this.maxBullets,w.bulletCount());
-  for(const a of this.actors){const e=a.e;if(e.dead||e.data.densityQueued||e.sealed>0||e.stunned>0)continue;
+  for(const a of this.actors){const e=a.e;if(e.dead||e.data.densityQueued||e.sealed>0||e.stunned>0)continue;const now=normal(w)?(e.data.fodderClock=(e.data.fodderClock??a.at)+dt):w.real;
    const move=(x:number,y:number,speed:number)=>{const dx=x-e.x,dy=y-e.y,d=Math.hypot(dx,dy),step=Math.min(d,speed*dt);if(d){e.x+=dx/d*step;e.y+=dy/d*step;}return d<=step+1;};
    if(a.name==='周网'){
-    if(a.state==='enter'){a.target=this.route.gatePosts?.find(p=>p.dead);if(a.target&&this.route.gatePosts?.some(p=>!p.dead)&&move(a.target.x+(a.target.x>450?-65:65),a.target.y-70,180)){a.state='repair';a.at=now;a.startHp=e.hp;e.data.repairProgress=0;this.record(a.name,'repairStart');}}
+    if(a.state==='enter'){a.target=this.route.gatePosts?.find(p=>p.dead);if(a.target&&this.route.gatePosts?.some(p=>!p.dead)&&move(a.target.x+(a.target.x>450?-65:65),a.target.y-70,180)){a.state='repair';a.at=normal(w)?now+.5:now;if(normal(w))w.fx.charge(e.x,e.y,22,.5,[1.2,1,.4]);a.startHp=e.hp;e.data.repairProgress=0;this.record(a.name,'repairStart');}}
     if(a.state==='repair'){const ended=w.chapterDialogue?.lineEnds['031'];if(this.route.events.includes('E01.gateOpened')||(ended!==undefined&&now-ended>=25)){a.state='cancelled';e.data.repairProgress=0;this.record(a.name,'repairCancelled');}
-     else {e.data.repairProgress=Math.min(1,(now-a.at)/3);if(now-a.at>=3&&a.target){if(w.density.count(w.enemies)>=w.density.limit(w.stageIndex)){a.state='cancelled';e.data.repairProgress=0;this.record(a.name,'repairCancelled','修复网桩会超出同屏预算');continue;}const posts=this.route.gatePosts!,idx=posts.indexOf(a.target);const p=w.spawn(NetPost,a.target.x,a.target.y,n=>{n.data.contentRole='normal';n.data.noSupplementFire=true;n.hp=n.maxHp=300/w.difficulty.hp;});p.hp=p.maxHp*.5;if(a.target.data.remains)a.target.data.remains.dead=true;posts[idx]=p;this.repairBodies++;this.bubble(a.name,'03',e);this.record(a.name,'repaired',{hp:p.hp});a.state='done';e.data.repairProgress=0;}}
+     else {e.data.repairProgress=Math.max(0,Math.min(1,(now-a.at)/3));if(now-a.at>=3&&a.target){if(w.density.count(w.enemies)>=w.density.limit(w.stageIndex)){a.state='cancelled';e.data.repairProgress=0;this.record(a.name,'repairCancelled','修复网桩会超出同屏预算');continue;}const posts=this.route.gatePosts!,idx=posts.indexOf(a.target);const p=w.spawn(NetPost,a.target.x,a.target.y,n=>{n.data.contentRole='normal';n.data.noSupplementFire=true;n.hp=n.maxHp=300/w.difficulty.hp;});p.hp=p.maxHp*.5;if(a.target.data.remains)a.target.data.remains.dead=true;posts[idx]=p;this.repairBodies++;this.bubble(a.name,'03',e);this.record(a.name,'repaired',{hp:p.hp});a.state='done';e.data.repairProgress=0;}}
     }
     if(['done','interrupted','cancelled'].includes(a.state)){move(e.x,0,180);if(e.y<=2)w.remove(e);}
    }else if(a.name==='钱耗'){
-    if(a.state==='enter'&&now>=a.next){const targets=w.items.list.filter(i=>!i.dead&&!i.tutorial&&['p','bomb','ink','medal'].includes(i.kind));const it=targets.sort((a,b)=>Math.hypot(a.x-e.x,a.y-e.y)-Math.hypot(b.x-e.x,b.y-e.y))[0];if(it&&move(it.x,it.y,180)){it.dead=true;a.stolen=it;a.state='escape';this.bubble(a.name,'02',e);this.record(a.name,'stole',it.kind);}}
+    if(a.state==='enter'&&now>=a.next){const targets=w.items.list.filter(i=>!i.dead&&!i.tutorial&&['p','bomb','ink','medal'].includes(i.kind));const it=targets.sort((a,b)=>Math.hypot(a.x-e.x,a.y-e.y)-Math.hypot(b.x-e.x,b.y-e.y))[0];if(it&&move(it.x,it.y,180)){if(normal(w)){if(e.data.stealTarget!==it){e.data.stealTarget=it;e.data.stealAt=now+.5;}if(now<e.data.stealAt)continue;}it.dead=true;a.stolen=it;a.state='escape';this.bubble(a.name,'02',e);this.record(a.name,'stole',it.kind);}}
     if(a.state==='escape'){const edges=[{x:0,y:e.y},{x:900,y:e.y},{x:e.x,y:0},{x:e.x,y:1200}].sort((a,b)=>Math.hypot(a.x-e.x,a.y-e.y)-Math.hypot(b.x-e.x,b.y-e.y));if(move(edges[0].x,edges[0].y,200)){this.bubble(a.name,'04',e,true);this.record(a.name,'escaped',a.stolen?.kind);a.stolen=undefined;w.remove(e);}}
    }else if(a.name==='老鸹'){
     const phase=(now-a.at)%5;e.data.peek=phase<1.8;e.invulnerable=!e.data.peek;e.alpha=e.data.peek?1:.3;e.data.glint=phase<.8;
-    if(a.count<3&&phase>=.8&&phase<1.8&&a.next<=now){a.count++;a.next=a.at+a.count*5+.8;const self=this,ship=this.route.ship,p=ship.scene;if(w.bulletCount()<60){const shot=w.shoot(e.x,e.y,Math.atan2(p.y-e.y,p.x-e.x),300,{shape:'needle',color:'white',update(b){if(!ship.protected&&Math.abs(b.x-p.x)<=100+b.radius&&Math.abs(b.y-p.y)<=135+b.radius){ship.hit(4);self.bubble(a.name,'02',e);self.record(a.name,'shipShot',{damage:4,count:a.count});if(!e.data.shipHitSaid){e.data.shipHitSaid=true;self.reaction(a.name);}return false;}}});shot.data.fodder=1;}else w.density.skippedShots++;w.fx.burst(e.x,e.y,5,40,[2,2,2]);this.record(a.name,'coldShot');}
+    if(normal(w)&&phase<.8&&e.data.peekCount!==a.count){e.data.peekCount=a.count;const p=this.route.ship.scene;e.data.crowAngle=Math.atan2(p.y-e.y,p.x-e.x);w.laser(e.x,e.y,e.data.crowAngle,{warn:.8/w.difficulty.warn,duration:0,width:2,color:'amber'});}
+    if(a.count<3&&phase>=.8&&phase<1.8&&a.next<=now){a.count++;a.next=a.at+a.count*5+.8;const self=this,ship=this.route.ship,p=ship.scene;if(w.bulletCount()<60){const shot=w.shoot(e.x,e.y,normal(w)?e.data.crowAngle:Math.atan2(p.y-e.y,p.x-e.x),shotSpeed(normal(w)?240:300),{shape:'needle',color:'white',update(b){if(!ship.protected&&Math.abs(b.x-p.x)<=100+b.radius&&Math.abs(b.y-p.y)<=135+b.radius){ship.hit(4);self.bubble(a.name,'02',e);self.record(a.name,'shipShot',{damage:4,count:a.count});if(!e.data.shipHitSaid){e.data.shipHitSaid=true;self.reaction(a.name);}return false;}}});shot.data.fodder=1;}else w.density.skippedShots++;w.fx.burst(e.x,e.y,5,40,[2,2,2]);this.record(a.name,'coldShot');}
     if(a.count>=3&&phase>=1.8){w.remove(e);this.record(a.name,'left');}
    }else if(a.name==='小铃'){
     const x=940,y=1080;e.data.smoke=true;
     if(move(x,y,260)){this.bubble(a.name,'03',e,true);const signal=this.scene('signal',x-30,y-40);this.record(a.name,'signal');const serial=this.serial,self=this,event=this.event;w.remove(e);
-     w.root.run((function*():Co{const at=w.real;while(w.real-at<2&&serial===self.serial)yield;if(serial!==self.serial)return;signal.dead=true;const n=event==='E04'?2:1;for(let i=0;i<n;i++){let delay=0;while(w.density.count(w.enemies)>=w.density.limit(w.stageIndex)||w.chapterDialogue?.spawnPaused){if(!w.chapterDialogue?.spawnPaused)delay+=w.lastRealDt;if(delay>=3||self.serial!==serial)break;yield;}if(self.serial!==serial)return;if(delay<3){w.spawn(RouteHornet,i?650:250,-60,e=>{e.data.contentRole='normal';e.data.tx=i?600:300;});self.reinforcements++;self.record('小铃','reinforcement');}else self.cancelled.push({name:'小铃援兵',event,at:w.real,reason:'普通敌机上限延后3秒'});}})());}
+     w.root.run((function*():Co{const at=w.real;while(w.real-at<2&&serial===self.serial)yield;if(serial!==self.serial)return;signal.dead=true;const n=event==='E04'?2:1;for(let i=0;i<n;i++){let delay=0;while(w.density.count(w.enemies)>=w.density.limit(w.stageIndex)||w.chapterDialogue?.spawnPaused){if(!w.chapterDialogue?.spawnPaused)delay+=w.lastRealDt;if(delay>=3||self.serial!==serial)break;yield;}if(self.serial!==serial)return;if(delay<3){w.spawn(RouteHornet,i?650:250,-60,e=>{e.data.contentRole='normal';e.data.tx=i?600:300;if(normal(w)){e.data.sweep=true;e.data.ang=Math.PI/2;e.data.spd=180;}});self.reinforcements++;self.record('小铃','reinforcement');}else self.cancelled.push({name:'小铃援兵',event,at:w.real,reason:'普通敌机上限延后3秒'});}})());}
    }else if(a.name==='大牛'||a.name==='二牛'){
     e.data.x0??=e.x;e.x=e.data.x0+Math.sin((now-a.at)*.9+(a.name==='二牛'?Math.PI:0))*70;
-    if(a.state==='enter'&&now>=a.next){const p=w.player;a.count++;e.data.target='player';e.data.lockedX=p.x;e.data.lockedY=p.y;e.data.lockedAngle=Math.atan2(p.y-e.y,p.x-e.x);e.data.lockAt=now;e.charging=true;a.state='aim';a.next=now+.6;
+    if(a.state==='enter'&&now>=a.next){const p=w.player;a.count++;e.data.target='player';e.data.lockedX=p.x;e.data.lockedY=p.y;e.data.lockedAngle=Math.atan2(p.y-e.y,p.x-e.x);e.data.lockAt=now;e.charging=true;a.state='aim';a.next=now+.6;if(normal(w))w.laser(e.x,e.y,e.data.lockedAngle,{warn:.6/w.difficulty.warn,duration:0,width:2,color:'amber'});
      this.bubble(a.name,e.data.angry?'04':a.name==='大牛'&&p.x>=450?'06':'01',e);this.record(a.name,'aimLock',{target:e.data.target,x:p.x});}
-    else if(a.state==='aim'&&now>=a.next){if(e.charging&&w.bulletCount()+Math.max(1,Math.round(Math.round(2/w.difficulty.count)*w.difficulty.count))<=60){const self=this;const shots=w.fan(e.x,e.y+20,e.data.lockedAngle,Math.round(2/w.difficulty.count),.12,190,{shape:'rice',color:'amber',update(b){if(b.y>=e.data.lockedY){if(Math.abs(b.x-e.data.lockedX)>20||Math.hypot(w.player.x-e.data.lockedX,w.player.y-e.data.lockedY)>45){self.splash(b.x,b.y);self.bubble(a.name,'02',e);const other=self.actors.find(n=>n.e!==e&&!n.e.dead&&['大牛','二牛'].includes(n.name));if(other&&a.name==='大牛'){self.bubble(other.name,'03',other.e);}return false;}}}});e.data.firedAt=now;e.data.shots=shots.length;this.record(a.name,'fire');}e.charging=false;a.state='enter';a.next=now+(e.data.angry?2.5:3)-.6;}
+    else if(a.state==='aim'&&now>=a.next){if(e.charging&&w.bulletCount()+Math.max(1,Math.round(Math.round(2/w.difficulty.count)*w.difficulty.count))<=60){const self=this;const shots=w.fan(e.x,e.y+20,e.data.lockedAngle,Math.round(2/w.difficulty.count),normal(w)?.24:.12,shotSpeed(normal(w)?170:190),{shape:'rice',color:'amber',update(b){if(b.y>=e.data.lockedY){if(Math.abs(b.x-e.data.lockedX)>20||Math.hypot(w.player.x-e.data.lockedX,w.player.y-e.data.lockedY)>45){self.splash(b.x,b.y);self.bubble(a.name,'02',e);const other=self.actors.find(n=>n.e!==e&&!n.e.dead&&['大牛','二牛'].includes(n.name));if(other&&a.name==='大牛'){self.bubble(other.name,'03',other.e);}return false;}}}});e.data.firedAt=now;e.data.shots=shots.length;this.record(a.name,'fire');}e.charging=false;a.state='enter';a.next=now+(e.data.angry?2.5:3)-.6;}
    }else if(a.name==='赵怂'){
-    if(a.state==='enter'){e.data.x0??=e.x;e.x=e.data.x0+Math.sin((now-a.at)*1.1)*90;if(now>=(e.data.nextShot??=now+1.5)){e.data.nextShot=now+2.6;if(w.bulletCount()<60)w.fan(e.x,e.y,w.aim(e.x,e.y),Math.round(3/.7),.4,170,{shape:'rice',color:'cyan'});}}
+    if(a.state==='enter'){e.data.x0??=e.x;e.x=e.data.x0+Math.sin((now-a.at)*1.1)*90;if(now>=(e.data.nextShot??=now+(normal(w)?.8:1.5))){e.data.nextShot=now+2.6;if(w.bulletCount()<60)w.fan(e.x,e.y,w.aim(e.x,e.y),Math.round(3/.7),.4,shotSpeed(170),{shape:'rice',color:'cyan'});}}
     if(a.state==='enter'&&e.hp/e.maxHp<=.6){a.state='flag';a.at=now;this.bubble(a.name,'02',e);this.record(a.name,'whiteFlag');}
-    if(a.state==='flag'){if(Math.hypot(w.player.x-e.x,w.player.y-e.y)<250&&e.data.trickAt===undefined)e.data.trickAt=now+1;
-     if(e.data.trickAt!==undefined&&now>=e.data.trickAt){if(w.bulletCount()<60)w.shoot(e.x,e.y,w.aim(e.x,e.y),200/w.difficulty.speed,{shape:'rice',color:'cyan'});else w.density.skippedShots++;this.bubble(a.name,'03',e);a.state='tricked';this.record(a.name,'trickShot');}
+    if(a.state==='flag'){if(Math.hypot(w.player.x-e.x,w.player.y-e.y)<250&&e.data.trickAt===undefined){e.data.trickAt=now+(normal(w)?.6:1);if(normal(w)){e.data.trickAngle=w.aim(e.x,e.y);w.fx.charge(e.x,e.y,20,.6,[1.4,.8,.3]);}}
+     if(e.data.trickAt!==undefined&&now>=e.data.trickAt){if(w.bulletCount()<60)w.shoot(e.x,e.y,normal(w)?e.data.trickAngle:w.aim(e.x,e.y),normal(w)?shotSpeed(220):200/w.difficulty.speed,{shape:'rice',color:'cyan'});else w.density.skippedShots++;this.bubble(a.name,'03',e);a.state='tricked';this.record(a.name,'trickShot');}
      else if(now-a.at>=3){a.state='leave';this.record(a.name,'peacefulExit');}}
     if(a.state==='tricked'||a.state==='leave'){move(e.x,0,200);if(e.y<=1)w.remove(e);}
    }else if(a.name==='吴领队'){
     if(e.data.releaseAt&&!e.data.fodderReleaseSaid){this.bubble(a.name,'02',e);e.data.fodderReleaseSaid=true;}
-    if(e.hpFrac<=.3&&a.rage===undefined){a.rage=now;e.data.rage=true;this.bubble(a.name,'03',e);const s=this.route.ship.scene;a.warnings=[-45,0,45].map(d=>({x:s.x+d,y:s.y,started:now,dead:false}));this.route.ship.warnings.push(...a.warnings);this.record(a.name,'rageWarn');}
+    if(e.hpFrac<=.3&&a.rage===undefined){a.rage=now;e.data.rage=true;this.bubble(a.name,'03',e);const s=this.route.ship.scene;a.warnings=(normal(w)?[-250,0,250]:[-45,0,45]).map(d=>({x:s.x+d,y:s.y,started:now,dead:false}));this.route.ship.warnings.push(...a.warnings);this.record(a.name,'rageWarn');}
     if(a.rage!==undefined&&now-a.rage>=1.2&&a.state!=='rageDone'){a.state='rageDone';a.warnings!.forEach(v=>{v.dead=true;w.spawn(AirBomb,e.x,e.y,b=>{b.data.contentRole='hazard';b.data.noSupplementFire=true;b.data.landX=v.x;b.data.landY=v.y;});});this.record(a.name,'rageBombs',{count:3,warning:now-a.rage});}
    }else if(a.name==='麻三'){
     const t=a.target;if(t&&!t.dead&&!t.data.cargoOpen){const side=w.player.x-t.x;if(Math.abs(side)>70&&a.state!=='exposed'&&now>=(e.data.nextExposure??0)){a.state='exposed';a.exposedUntil=now+2;this.record(a.name,'exposed');}
      if(a.state==='exposed'&&now>=(a.exposedUntil??0)){a.state='cover';e.data.nextExposure=now+.8;}move(t.x+(a.state==='exposed'?Math.sign(side||1)*105:0),t.y-90,120);e.data.covered=a.state!=='exposed';
     }else {e.data.covered=false;move(e.x,320,120);}
-    if(now>=a.next){if(w.bulletCount()<60)w.shoot(e.x,e.y,w.aim(e.x,e.y),190,{shape:'rice',color:'cyan'});else w.density.skippedShots++;if(e.data.covered)this.bubble(a.name,'02',e);a.next=now+3;}
+    if(normal(w)&&!e.data.covered&&now>=a.next-.4&&e.data.tellAt!==a.next){a.next=Math.max(a.next,now+.4);e.data.tellAt=a.next;e.data.shotAngle=w.aim(e.x,e.y);w.fx.charge(e.x,e.y,18,.4,[1.4,.8,.3]);}
+    if(now>=a.next&&(!normal(w)||(!e.data.covered&&e.data.tellAt===a.next))){if(w.bulletCount()<60)w.shoot(e.x,e.y,normal(w)?e.data.shotAngle:w.aim(e.x,e.y),shotSpeed(normal(w)?170:190),{shape:'rice',color:'cyan'});else w.density.skippedShots++;if(e.data.covered)this.bubble(a.name,'02',e);a.next=now+3;}
    }else if(a.name==='阿豆'){
     if(a.state==='enter'&&e.data.fodderHit){a.state='flee';a.at=now;}
-    if(a.state==='enter'&&now>=a.next){if(w.bulletCount()<60)w.shoot(e.x,e.y,w.aim(e.x,e.y),180,{shape:'rice',color:'cyan'});else w.density.skippedShots++;a.next=now+3;}
+    if(normal(w)&&a.state==='enter'&&now>=a.next-.3&&e.data.tellAt!==a.next){e.data.tellAt=a.next;e.data.shotAngle=w.aim(e.x,e.y);w.fx.charge(e.x,e.y,18,.3,[1.4,.8,.3]);}
+    if(a.state==='enter'&&now>=a.next){if(w.bulletCount()<60)w.shoot(e.x,e.y,normal(w)?e.data.shotAngle:w.aim(e.x,e.y),shotSpeed(normal(w)?165:180),{shape:'rice',color:'cyan'});else w.density.skippedShots++;a.next=now+3;}
     if(a.state==='flee'||now-a.at>=3){a.state='flee';if(move(e.x,20,200)){this.bubble(a.name,'03',e,true);this.reaction(a.name);this.record(a.name,'escaped');w.remove(e);}}
    }
   }
@@ -171,6 +177,7 @@ export class FodderChapter {
   for(const l of this.labels){c.save();c.font='bold 46px InkskyFangsong, serif';c.textAlign='center';c.lineWidth=7;c.strokeStyle='#201010';c.fillStyle='#ffe9a8';const y=l.owner.y-l.owner.info.h*Math.abs(l.owner.scaleY)/2-44;c.strokeText(l.text,l.owner.x,y);c.fillText(l.text,l.owner.x,y);c.restore();}
   for(const a of this.actors){const e=a.e;if(e.dead||e.data.densityQueued)continue;
    if(a.name==='周网'&&a.state==='repair'){if(a.target)r.ribbonMid.line(e.x,e.y,a.target.x,a.target.y,2,RS.Brush,.8,.65,.25,.8);c.strokeStyle='#dbc579';c.lineWidth=5;c.beginPath();c.arc(e.x,e.y-52,24,-Math.PI/2,-Math.PI/2+(e.data.repairProgress??0)*Math.PI*2);c.stroke();c.font='18px InkskyFangsong';c.fillStyle='#f6e6b5';c.fillText('补网',e.x-18,e.y-52);c.font='23px InkskyFangsong';}
+   if(a.name==='钱耗'&&e.data.stealTarget&&!a.stolen&&!e.data.stealTarget.dead){const it=e.data.stealTarget;r.ribbonMid.line(e.x,e.y,it.x,it.y,2,RS.Brush,1,.8,.3,.9);}
    if(a.name==='钱耗'&&a.stolen)r.items.add(a.stolen.spriteOverride??({'p':'item_p','bomb':'item_bomb','ink':'item_ink','medal':'item_medal'} as Record<string,string>)[a.stolen.kind],{x:e.x,y:e.y-55,sx:.8,sy:.8});
    if(a.name==='老鸹'&&e.data.glint){c.fillStyle='#fffae2';c.beginPath();c.arc(e.x,e.y,9+Math.sin(w.real*35)*4,0,7);c.fill();}
    if(a.name==='小铃')r.items.add(CH1_DECOR_ART.signal.sprite,{x:e.x-20,y:e.y-40,sx:.35,sy:.6,frame:Math.floor(w.real*8)%4,alpha:.5});

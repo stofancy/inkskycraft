@@ -1,3 +1,4 @@
+import { normal, speed, count, visible, charge } from './ordinary';
 import type { Co, G } from '../game/api';
 import type { Enemy, EnemyDef } from '../game/enemy';
 export const PI = Math.PI;
@@ -15,29 +16,53 @@ function artAttack(e:Enemy,delay=0):void {e.data.artAttackAt=e.age-(delay?0:.4);
 function shot(e: Enemy, g: G, shape: 'rice'|'orb'|'needle'|'crystal' = 'rice'): void {
   if (e.y > 60 && e.y < 780) {artAttack(e);g.shoot(e.x, e.y, target(e, g), 210, { shape, color: 'cyan' });}
 }
-export const Lantern: EnemyDef = { sprite:'e_lantern', hp:16, score:180,
-  *ai(e,g): Co { e.vy=100; for (;;) { e.vx=Math.sin(e.age)*20; yield* g.wait(cadence(g,3)); if(e.y<800) {artAttack(e);g.ring(e.x,e.y,5,90,{shape:'orb',color:'amber'});} } } };
-export const Junk: EnemyDef = { sprite:'e_junk', hp:84, ground:true, score:1000, drops:'ink',
+export const Lantern: EnemyDef = {normalHp:[16,'L'], sprite:'e_lantern', hp:16, score:180,
+  *ai(e,g): Co {if(normal(g)){e.vy=100;yield* visible(e,g);if(e.data.leader===false){for(;;){e.vx=Math.sin(e.age)*20;yield;}}
+ yield* g.wait(.25);for(;;){artAttack(e,.45);yield* charge(e,g,.45);g.ring(e.x,e.y,count(g,4),speed(g,85),{shape:'orb',color:'amber'},PI/4);yield* g.wait(2.35);}}
+  e.vy=100; for (;;) { e.vx=Math.sin(e.age)*20; yield* g.wait(cadence(g,3)); if(e.y<800) {artAttack(e);g.ring(e.x,e.y,5,90,{shape:'orb',color:'amber'});} } } };
+export const Junk: EnemyDef = {normalHp:[72,'M'], sprite:'e_junk', hp:84, ground:true, score:1000, drops:'ink',
   *ai(e,g): Co { e.vy=58; e.data.weakWeapon='red'; for (;;) { artAttack(e,1);g.laser(e.x,e.y,PI/2,{warn:1,duration:0.5,width:7,color:'cyan',follow:e}); yield* g.wait(cadence(g,3.6)); } } };
-export const Rotor: EnemyDef = { sprite:'e_rotor', hp:18, score:200, anim:16,
-  *ai(e,g): Co { const x=e.x; e.vy=185; let next=1.2; for (;;) { e.x=x+Math.sin(e.age*1.6)*(e.data.amp??85); if(e.age>next){shot(e,g);next+=cadence(g,2.5);} yield; } } };
-export const Moth: EnemyDef = {sprite:'e_moth',hp:18,score:220,anim:9,
+export const Rotor: EnemyDef = {normalHp:[18,'L'], sprite:'e_rotor', hp:18, score:200, anim:16,
+  *ai(e,g): Co {if(normal(g)){const x=e.x;e.vy=185;e.run((function*():Co{for(;;){e.x=x+Math.sin(e.age*1.6)*(e.data.amp??85);yield;}})());yield* visible(e,g);yield* g.wait(.15);
+ for(;;){const a=g.aim(e.x,e.y);artAttack(e,.3);yield* charge(e,g,.3);g.shoot(e.x,e.y,a,speed(g,165),{shape:'rice',color:'cyan'});yield* g.wait(1.9);}}
+  const x=e.x; e.vy=185; let next=1.2; for (;;) { e.x=x+Math.sin(e.age*1.6)*(e.data.amp??85); if(e.age>next){shot(e,g);next+=cadence(g,2.5);} yield; } } };
+export const Moth: EnemyDef = {normalHp:[18,'L'],sprite:'e_moth',hp:18,score:220,anim:9,
   *ai(e,g): Co {e.vy=145;let cd=2;for(;;){const p=g.brush.pts; const tx=g.brush.active&&p.length>1?p[p.length-2]:e.data.entryX; e.vx=Math.max(-85,Math.min(85,(tx-e.x)*0.7));cd-=g.dt;if(cd<0){shot(e,g,'needle');cd=cadence(g,3);}yield;}}};
-export const LampBoat: EnemyDef = {sprite:'e_lampboat',hp:72,score:900,drops:'ink',
-  *ai(e,g): Co {e.vy=120;e.data.weakWeapon='purple';for(;;){yield* g.wait(cadence(g,2.9));if(e.y<750){artAttack(e);g.fan(e.x,e.y,PI/2,3,0.8,135,{shape:'orb',color:'amber'});}}},
+export const LampBoat: EnemyDef = {normalHp:[72,'M'],sprite:'e_lampboat',hp:72,score:900,drops:'ink',
+  *ai(e,g): Co {if(normal(g)){e.vy=70;e.data.weakWeapon='purple';yield* visible(e,g);yield* g.wait(.3);
+ for(;;){artAttack(e,.6);yield* charge(e,g,.6);
+ // 三束灯火之间各留一条航道，整墙保持相同向下速度。
+ for(const dx of [-150,0,150])for(let j=0;j<3;j++)g.shoot(e.x+dx,e.y-j*25,PI/2,speed(g,90),{shape:'orb',color:'amber',size:10});
+ yield* g.wait(2.4);}}
+ e.vy=120;e.data.weakWeapon='purple';for(;;){yield* g.wait(cadence(g,2.9));if(e.y<750){artAttack(e);g.fan(e.x,e.y,PI/2,3,0.8,135,{shape:'orb',color:'amber'});}}},
   onDeath(e,g){g.clearBullets();g.fx.shockwave(e.x,e.y,100,2,0.4);}};
-export const PaperRay: EnemyDef = {sprite:'e_paperray',hp:16,score:210,
-  *ai(e,g): Co {e.vy=175;e.vx=(e.data.flank??1)*40;for(;;){yield* g.wait(cadence(g,2.1));if(e.y<800){artAttack(e);g.fan(e.x,e.y,PI/2,3,1.15,160,{shape:'rice',color:'cyan'});}}}};
-export const TaxCrab: EnemyDef = {sprite:'e_taxcrab',hp:78,score:950,ground:true,
-  *ai(e,g): Co {e.vy=70;e.data.weakWeapon='red';for(;;){e.vx=(e.x<450?1:-1)*60;yield* g.wait(1.1);e.vx=0;artAttack(e,1);g.laser(e.x,e.y,PI/2+(e.x<450?-0.23:0.23),{warn:1,duration:0.5,width:8,color:'red',follow:e});yield* g.wait(cadence(g,2.5));}}};
-export const MirrorFish: EnemyDef = {sprite:'e_mirrorfish',hp:22,score:300,
-  *ai(e,g): Co {e.vy=135;e.data.weakWeapon='blue';for(;;){const a=target(e,g);artAttack(e,1.1);g.laser(e.x,e.y,a,{warn:1.1,duration:0.35,width:6,color:'cyan',follow:e});yield* g.wait(cadence(g,3.5));e.vx=-e.vx+(e.x<450?35:-35);}}};
-export const NetSpider: EnemyDef = {sprite:'e_netspider',hp:20,score:350,
-  *ai(e,g): Co {e.vy=125;e.data.weakWeapon='purple';for(;;){yield* g.wait(cadence(g,2.5));const side=e.x<450?1:-1;artAttack(e,1.1);g.laser(e.x,e.y,side>0?0:PI,{warn:1.1,duration:0.45,length:210,width:6,color:'violet',follow:e});}}};
-export const TideShuttle: EnemyDef = {sprite:'e_tideshuttle',hp:14,score:240,
-  *ai(e,g): Co {e.vy=135;yield* g.wait(1.1);const a=target(e,g);artAttack(e,.9);g.laser(e.x,e.y,a,{warn:0.9,duration:0.05,width:4,color:'cyan',follow:e});e.stop();yield* g.wait(0.95);e.vel(a,330);yield* g.wait(1.4);e.vy=-140;e.vx*=0.4;yield* g.wait(0.8);e.vy=230;}};
-export const BellEel: EnemyDef = {sprite:'e_belleel',hp:20,score:320,
-  *ai(e,g): Co {e.vy=165;for(;;){yield* g.wait(cadence(g,3));artAttack(e,1);g.fx.charge(e.x,e.y,48,1,[0.3,1.3,1.6]);yield* g.wait(1);shot(e,g,'crystal');if(g.difficulty.intelligence>0.3){for(const ally of g.liveEnemies().filter(a=>a!==e&&a.data.contentRole==='normal'&&Math.abs(a.y-e.y)<90).slice(0,2))shot(ally,g);}}}};
-export const Umbrella: EnemyDef = {sprite:'e_umbrellaguest',hp:76,score:850,
-  *ai(e,g): Co {e.vy=100;for(;;){e.data.bodyPhase='伞开';if(e.data.artClosedAt!==undefined)e.data.artOpenedAt=e.age;e.data.weakWeapon='blue';g.fan(e.x,e.y,PI/2,3,1.1,95,{shape:'orb',color:'violet'});yield* g.wait(cadence(g,2.5));e.scaleX=0.55;e.data.bodyPhase='伞合';e.data.artClosedAt=e.age;shot(e,g,'needle');yield* g.wait(2);e.scaleX=1;}}};
+export const PaperRay: EnemyDef = {normalHp:[18,'L'],sprite:'e_paperray',hp:16,score:210,
+  *ai(e,g): Co {if(normal(g)){e.vy=150;const side=e.data.flank??(e.x<450?1:-1);e.vx=side*40;yield* visible(e,g);yield* g.wait(.25);
+ for(;;){artAttack(e,.35);yield* charge(e,g,.35);for(let j=0;j<(e.data.single?1:3);j++)g.shoot(e.x+side*j*24,e.y-j*24,PI/2-side*.45,speed(g,165),{shape:'rice',color:'cyan'});yield* g.wait(2.05);}}
+ e.vy=175;e.vx=(e.data.flank??1)*40;for(;;){yield* g.wait(cadence(g,2.1));if(e.y<800){artAttack(e);g.fan(e.x,e.y,PI/2,3,1.15,160,{shape:'rice',color:'cyan'});}}}};
+export const TaxCrab: EnemyDef = {normalHp:[72,'M'],sprite:'e_taxcrab',hp:78,score:950,ground:true,
+  *ai(e,g): Co {if(normal(g)){e.vy=35;e.data.weakWeapon='red';yield* visible(e,g);yield* g.wait(.2+(e.data.attackDelay??0));let side=e.x<450?1:-1;
+ for(;;){e.vx=0;artAttack(e,.8);g.laser(e.x,e.y,PI/2-side*.35,{warn:.8/g.difficulty.warn,duration:.45,width:8,color:'red',follow:e});yield* g.wait(1.3);e.vx=side*45;yield* g.wait(1.5);side=-side;}}
+ e.vy=70;e.data.weakWeapon='red';for(;;){e.vx=(e.x<450?1:-1)*60;yield* g.wait(1.1);e.vx=0;artAttack(e,1);g.laser(e.x,e.y,PI/2+(e.x<450?-0.23:0.23),{warn:1,duration:0.5,width:8,color:'red',follow:e});yield* g.wait(cadence(g,2.5));}}};
+export const MirrorFish: EnemyDef = {normalHp:[24,'L'],sprite:'e_mirrorfish',hp:22,score:300,
+  *ai(e,g): Co {if(normal(g)){e.vy=105;e.data.weakWeapon='blue';yield* visible(e,g);yield* g.wait(.2+(e.data.attackDelay??0));
+ for(;;){const a=g.aim(e.x,e.y);e.vx=0;artAttack(e,.8);g.laser(e.x,e.y,a,{warn:.8/g.difficulty.warn,duration:.35,width:6,color:'cyan',follow:e});yield* g.wait(1.15);e.vx=e.x<450?60:-60;yield* g.wait(2.35);}}
+ e.vy=135;e.data.weakWeapon='blue';for(;;){const a=target(e,g);artAttack(e,1.1);g.laser(e.x,e.y,a,{warn:1.1,duration:0.35,width:6,color:'cyan',follow:e});yield* g.wait(cadence(g,3.5));e.vx=-e.vx+(e.x<450?35:-35);}}};
+export const NetSpider: EnemyDef = {normalHp:[32,'M'],sprite:'e_netspider',hp:20,score:350,
+  *ai(e,g): Co {if(normal(g)){e.vy=80;e.data.weakWeapon='purple';yield* visible(e,g);yield* g.wait(.2+(e.data.attackDelay??0));
+ for(;;){artAttack(e,.8);g.laser(e.x,e.y,e.x<450?0:PI,{warn:.8/g.difficulty.warn,duration:.45,length:210,width:6,color:'violet',follow:e});yield* g.wait(3.2);}}
+ e.vy=125;e.data.weakWeapon='purple';for(;;){yield* g.wait(cadence(g,2.5));const side=e.x<450?1:-1;artAttack(e,1.1);g.laser(e.x,e.y,side>0?0:PI,{warn:1.1,duration:0.45,length:210,width:6,color:'violet',follow:e});}}};
+export const TideShuttle: EnemyDef = {normalHp:[18,'L'],sprite:'e_tideshuttle',hp:14,score:240,
+  *ai(e,g): Co {if(normal(g)){e.vy=135;yield* visible(e,g);const a=g.aim(e.x,e.y);e.stop();artAttack(e,.9);g.laser(e.x,e.y,a,{warn:.9/g.difficulty.warn,duration:0,width:4,color:'cyan',follow:e});yield* g.wait(.9);e.vel(a,330);yield* g.wait(2.5);g.remove(e);return;}
+ e.vy=135;yield* g.wait(1.1);const a=target(e,g);artAttack(e,.9);g.laser(e.x,e.y,a,{warn:0.9,duration:0.05,width:4,color:'cyan',follow:e});e.stop();yield* g.wait(0.95);e.vel(a,330);yield* g.wait(1.4);e.vy=-140;e.vx*=0.4;yield* g.wait(0.8);e.vy=230;}};
+export const BellEel: EnemyDef = {normalHp:[22,'L'],sprite:'e_belleel',hp:20,score:320,
+  *ai(e,g): Co {if(normal(g)){e.vy=100;yield* visible(e,g);yield* g.wait(.4+(e.data.slot??0)*.2);
+ for(;;){const a=g.aim(e.x,e.y);artAttack(e,.6);yield* charge(e,g,.6);g.shoot(e.x,e.y,a,speed(g,170),{shape:'crystal',color:'cyan'});yield* g.wait(2.4);}}
+ e.vy=165;for(;;){yield* g.wait(cadence(g,3));artAttack(e,1);g.fx.charge(e.x,e.y,48,1,[0.3,1.3,1.6]);yield* g.wait(1);shot(e,g,'crystal');if(g.difficulty.intelligence>0.3){for(const ally of g.liveEnemies().filter(a=>a!==e&&a.data.contentRole==='normal'&&Math.abs(a.y-e.y)<90).slice(0,2))shot(ally,g);}}}};
+export const Umbrella: EnemyDef = {normalHp:[68,'M'],sprite:'e_umbrellaguest',hp:76,score:850,
+  *ai(e,g): Co {if(normal(g)){e.vy=75;e.data.weakWeapon='blue';yield* visible(e,g);yield* g.wait(.3+(e.data.attackDelay??0));
+ for(;;){e.scaleX=1;e.data.bodyPhase='伞开';e.data.artOpenedAt=e.age;artAttack(e,.5);yield* charge(e,g,.5);
+ g.fan(e.x,e.y,PI/2,count(g,5),1.3,speed(g,90),{shape:'orb',color:'violet'});yield* g.wait(2);
+ e.scaleX=.55;e.data.bodyPhase='伞合';e.data.artClosedAt=e.age;const a=g.aim(e.x,e.y);yield* charge(e,g,.5);g.shoot(e.x,e.y,a,speed(g,240),{shape:'needle',color:'cyan'});yield* g.wait(1.5);}}
+ e.vy=100;for(;;){e.data.bodyPhase='伞开';if(e.data.artClosedAt!==undefined)e.data.artOpenedAt=e.age;e.data.weakWeapon='blue';g.fan(e.x,e.y,PI/2,3,1.1,95,{shape:'orb',color:'violet'});yield* g.wait(cadence(g,2.5));e.scaleX=0.55;e.data.bodyPhase='伞合';e.data.artClosedAt=e.age;shot(e,g,'needle');yield* g.wait(2);e.scaleX=1;}}};
 export const STAGE2_ENEMIES = {lantern:Lantern,junk:Junk,rotor:Rotor,moth:Moth,lampboat:LampBoat,paperray:PaperRay,taxcrab:TaxCrab,mirrorfish:MirrorFish,netspider:NetSpider,tideshuttle:TideShuttle,belleel:BellEel,umbrellaguest:Umbrella};

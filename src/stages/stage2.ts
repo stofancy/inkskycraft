@@ -1,4 +1,5 @@
 // P5-01：十二段手写空战剧情；检查点与段落计时共用同一顺序。
+import { normal } from './ordinary';
 import type { Co,G } from '../game/api';
 import type { World } from '../game/world';
 import type { Enemy } from '../game/enemy';
@@ -16,27 +17,52 @@ export const C2_PARTS=names.map((label,i)=>({id:`C2.P${i+1}`,label}));
 function clear(w:World){for(const e of [...w.enemies])w.remove(e);w.clearBullets(false);}
 function* untilPart(c:Chapter2,start:number,seconds:number):Co{while(c.w.real-start<seconds)yield;}
 function spawn(c:Chapter2,kind:keyof typeof STAGE2_ENEMIES,x:number,y:number,data:Record<string,unknown>={}):Enemy{return c.w.spawn(chapterEnemy(kind,c.part),x,y,e=>{noSupplement(e);e.data.entryX=x;Object.assign(e.data,data);});}
-function* batch(c:Chapter2,kind:keyof typeof STAGE2_ENEMIES,n:number,positions:(i:number)=>[number,number],data:(i:number)=>Record<string,unknown>=()=>({})):Co{for(let i=0;i<Math.round(n*c.w.difficulty.quantity);i++){const [x,y]=positions(i);spawn(c,kind,x,y,data(i));yield* c.wait(.45);}}
+function* batch(c:Chapter2,kind:keyof typeof STAGE2_ENEMIES,n:number,positions:(i:number)=>[number,number],data:(i:number)=>Record<string,unknown>=()=>({})):Co{for(let i=0;i<(normal(c.w)?n:Math.round(n*c.w.difficulty.quantity));i++){const [x,y]=positions(i);spawn(c,kind,x,y,{leader:i===0,slot:i,...data(i)});yield* c.wait(.45);}}
 function* part(c:Chapter2,n:number):Co{const w=c.w,start=w.real;c.part=n;
  switch(n){
- case 1:w.scrollSpeed(45,1);c.mission(1);yield* c.conversation('C2.P1.riverNight');w.scrollSpeed(80,2);yield* untilPart(c,start,15);yield* batch(c,'lantern',5,i=>[190+(i%2)*510,210+i*75]);yield* batch(c,'rotor',3,i=>[150+i*300,-60-i*40],i=>({flank:i%2?1:-1,amp:120}));yield* untilPart(c,start,30);yield* batch(c,'lantern',5,i=>[190+(i%2)*510,210+i*75]);yield* batch(c,'rotor',3,i=>[750-i*300,-60-i*40]);yield* untilPart(c,start,45);c.short(2);yield* batch(c,'lampboat',2,i=>[260+i*380,-70]);yield* untilPart(c,start,60);break;
+ case 1:w.scrollSpeed(45,1);c.mission(1);yield* c.conversation('C2.P1.riverNight');w.scrollSpeed(80,2);if(normal(w)){
+ yield* untilPart(c,start,15);yield* batch(c,'lantern',4,i=>[250+(i%2)*400,140+Math.floor(i/2)*70]);
+ yield* untilPart(c,start,23);spawn(c,'lampboat',300,100);
+ yield* untilPart(c,start,36);spawn(c,'lampboat',580,90);yield* c.wait(1.2);yield* batch(c,'lantern',4,i=>[170+(i%2)*520,100+Math.floor(i/2)*60]);
+ yield* untilPart(c,start,48);yield* batch(c,'rotor',3,i=>[i%2?720:180,-60],i=>({amp:100}));yield* untilPart(c,start,60);
+ }else{yield* untilPart(c,start,15);yield* batch(c,'lantern',5,i=>[190+(i%2)*510,210+i*75]);yield* batch(c,'rotor',3,i=>[150+i*300,-60-i*40],i=>({flank:i%2?1:-1,amp:120}));yield* untilPart(c,start,30);yield* batch(c,'lantern',5,i=>[190+(i%2)*510,210+i*75]);yield* batch(c,'rotor',3,i=>[750-i*300,-60-i*40]);yield* untilPart(c,start,45);c.short(2);yield* batch(c,'lampboat',2,i=>[260+i*380,-70]);yield* untilPart(c,start,60);}break;
  case 2:c.mission(2);w.scrollSpeed(80,1.5);c.fleet.visible=true;c.fleet.protected=false;c.fleet.scene.y=860;c.log('fleet.depart');
- yield* batch(c,'paperray',5,i=>[120+(i%2)*660,-60-i*45],i=>({flank:i%2?-1:1}));yield* batch(c,'junk',2,i=>[180+i*540,240]);yield* batch(c,'tideshuttle',4,i=>[150+i*190,-90]);yield* batch(c,'taxcrab',2,i=>[250+i*400,300]);yield* batch(c,'netspider',2,i=>[120+i*660,260]);c.short(5);yield* untilPart(c,start,28);c.fleet.scene.x=450;
- yield* batch(c,'paperray',5,i=>[780-(i%2)*660,-60-i*45],i=>({flank:i%2?1:-1}));yield* batch(c,'junk',2,i=>[720-i*540,260]);yield* batch(c,'tideshuttle',4,i=>[720-i*180,-60]);yield* untilPart(c,start,55);break;
- case 3:{w.scrollSpeed(110,1.5);yield* batch(c,'paperray',4,i=>[120+(i%2)*660,-60-i*45],i=>({flank:i%2?-1:1}));yield* batch(c,'taxcrab',2,i=>[300+i*300,300]);yield* untilPart(c,start,8);
- yield* beaconWave(w,[[90,330],[810,560]],true);yield* batch(c,'junk',2,i=>[180+i*540,240]);yield* batch(c,'tideshuttle',3,i=>[200+i*250,-90]);yield* untilPart(c,start,30);
- yield* beaconWave(w,[[90,330],[90,560],[810,450]],true);yield* batch(c,'netspider',2,i=>[120+i*660,270]);yield* batch(c,'lantern',3,i=>[200+i*220,-60]);yield* untilPart(c,start,52);break;}
+ if(normal(w)){
+ spawn(c,'taxcrab',200,170);yield* c.wait(4);yield* batch(c,'paperray',3,i=>[i%2?740:160,-60],i=>({flank:i%2?-1:1}));
+ yield* untilPart(c,start,14);spawn(c,'taxcrab',700,180);spawn(c,'taxcrab',200,180,{attackDelay:1});yield* c.wait(1.8);
+ yield* batch(c,'paperray',4,i=>[i%2?740:160,-60],i=>({flank:i%2?-1:1}));
+ yield* untilPart(c,start,28);spawn(c,'junk',240,180);yield* c.wait(4);yield* batch(c,'tideshuttle',3,i=>[220+i*220,-60]);
+ yield* untilPart(c,start,42);yield* batch(c,'netspider',2,i=>[i?780:120,180],i=>({attackDelay:i*.8}));c.short(5);yield* untilPart(c,start,55);
+ }else{yield* batch(c,'paperray',5,i=>[120+(i%2)*660,-60-i*45],i=>({flank:i%2?-1:1}));yield* batch(c,'junk',2,i=>[180+i*540,240]);yield* batch(c,'tideshuttle',4,i=>[150+i*190,-90]);yield* batch(c,'taxcrab',2,i=>[250+i*400,300]);yield* batch(c,'netspider',2,i=>[120+i*660,260]);c.short(5);yield* untilPart(c,start,28);c.fleet.scene.x=450;
+ yield* batch(c,'paperray',5,i=>[780-(i%2)*660,-60-i*45],i=>({flank:i%2?1:-1}));yield* batch(c,'junk',2,i=>[720-i*540,260]);yield* batch(c,'tideshuttle',4,i=>[720-i*180,-60]);yield* untilPart(c,start,55);}break;
+ case 3:{w.scrollSpeed(110,1.5);yield* batch(c,'paperray',4,i=>[120+(i%2)*660,-60-i*45],i=>({flank:i%2?-1:1,single:normal(w)}));if(!normal(w))yield* batch(c,'taxcrab',2,i=>[300+i*300,300]);yield* untilPart(c,start,8);
+ yield* beaconWave(w,[[90,330],[810,560]],true);if(normal(w))yield* batch(c,'paperray',3,i=>[i%2?740:160,-60],()=>({single:true}));else{yield* batch(c,'junk',2,i=>[180+i*540,240]);yield* batch(c,'tideshuttle',3,i=>[200+i*250,-90]);}yield* untilPart(c,start,30);
+ yield* beaconWave(w,[[90,330],[90,560],[810,450]],true);if(normal(w))yield* batch(c,'paperray',3,i=>[i%2?740:160,-60],()=>({single:true}));else{yield* batch(c,'netspider',2,i=>[120+i*660,270]);yield* batch(c,'lantern',3,i=>[200+i*220,-60]);}yield* untilPart(c,start,52);break;}
  case 4:w.scrollSpeed(45,2);yield* batch(c,'lantern',2,i=>[250+i*400,-60]);yield* c.conversation('C2.P4.origin');yield* untilPart(c,start,15);break;
- case 5:{w.scrollSpeed(80,1.5);const towers=[w.spawn(GateTower,200,300,noSupplement),w.spawn(GateTower,700,300,noSupplement)];c.short(20);
- yield* batch(c,'umbrellaguest',3,i=>[180+i*270,-60]);yield* batch(c,'lampboat',2,i=>[250+i*400,-80]);yield* batch(c,'rotor',3,i=>[170+i*280,-60]);yield* untilPart(c,start,16);
+ case 5:{w.scrollSpeed(80,1.5);const towers=[w.spawn(GateTower,200,300,noSupplement),w.spawn(GateTower,700,300,e=>{noSupplement(e);e.data.attackDelay=normal(w)?1.8:0;})];c.short(20);
+ if(normal(w)){
+ // 闸炮先单独亮相，伞客在下一轮主炮间隙张伞。
+ yield* c.wait(6);spawn(c,'umbrellaguest',450,80,{attackDelay:.4});
+ yield* untilPart(c,start,18);spawn(c,'umbrellaguest',700,80);yield* c.wait(3);yield* batch(c,'rotor',3,i=>[i%2?720:180,-60]);
+ yield* untilPart(c,start,34);spawn(c,'umbrellaguest',200,80);yield* c.wait(3);yield* batch(c,'rotor',3,i=>[i%2?180:720,-60]);
+ }else{yield* batch(c,'umbrellaguest',3,i=>[180+i*270,-60]);yield* batch(c,'lampboat',2,i=>[250+i*400,-80]);yield* batch(c,'rotor',3,i=>[170+i*280,-60]);yield* untilPart(c,start,16);
  yield* batch(c,'umbrellaguest',3,i=>[720-i*270,-60]);yield* batch(c,'lampboat',2,i=>[650-i*400,-80]);yield* batch(c,'netspider',2,i=>[120+i*660,270]);yield* untilPart(c,start,34);
  yield* batch(c,'umbrellaguest',3,i=>[200+i*250,-60]);yield* batch(c,'lampboat',2,i=>[300+i*300,-80]);yield* batch(c,'rotor',3,i=>[750-i*280,-60]);
+ }
  while(towers.some(t=>!t.dead)&&w.real-start<60)yield;for(const tower of towers)if(!tower.dead){w.damage(tower,10000,tower.x,tower.y,true,'companion');c.log('gate.chiyanAssist');}
  yield* c.wait(1.5);for(const tower of towers)if(tower.data.wreck)tower.data.wreck.dead=true;yield* c.conversation('C2.P6.bellSilence');c.leave('chiyan');yield* c.wait(.8);break;}
- case 6:{w.scrollSpeed(150,1.5);c.short(17);yield* batch(c,'mirrorfish',7,i=>[120+i*100,-60-Math.abs(3-i)*60]);yield* batch(c,'tideshuttle',4,i=>[180+i*180,-70]);yield* untilPart(c,start,15);spawn(c,'mirrorfish',840,520,{flank:-1});c.join('moyuan',{x:900,y:520});yield* c.conversation('C2.moyuanJoin');for(let i=1;i<Math.round(7*w.difficulty.quantity);i++){spawn(c,'mirrorfish',750-i*100,-60-Math.abs(3-i)*60);yield* c.wait(.45);}while(w.real-start<45&&w.enemies.some(e=>!e.dead&&e.def.sprite==='e_mirrorfish'))yield;yield* c.conversation('C2.moyuanIntro');yield* untilPart(c,start,50);break;}
+ case 6:{w.scrollSpeed(150,1.5);c.short(17);yield* batch(c,'mirrorfish',7,i=>[120+i*100,-60-Math.abs(3-i)*60]);if(normal(w))yield* c.wait(5);yield* batch(c,'tideshuttle',4,i=>[180+i*180,-70]);yield* untilPart(c,start,15);spawn(c,'mirrorfish',840,520,{flank:-1});c.join('moyuan',{x:900,y:520});yield* c.conversation('C2.moyuanJoin');for(let i=1;i<(normal(w)?7:Math.round(7*w.difficulty.quantity));i++){spawn(c,'mirrorfish',750-i*100,-60-Math.abs(3-i)*60);yield* c.wait(.45);}while(w.real-start<45&&w.enemies.some(e=>!e.dead&&e.def.sprite==='e_mirrorfish'))yield;yield* c.conversation('C2.moyuanIntro');yield* untilPart(c,start,50);break;}
  case 7:{w.scrollSpeed(160,1.5);c.short(15);
- w.fork((function*():Co{for(let i=0;i<5;i++){yield* c.wait(6);const left=i%2===0;w.laser(left?40:860,60,left?PI/2-.7:PI/2+.7,{warn:1,duration:2.6,width:30,color:'amber',sweep:left?.55:-.55});}})());
- yield* batch(c,'umbrellaguest',4,i=>[180+i*160,180+i*150]);yield* batch(c,'mirrorfish',6,i=>[200+(i%3)*200,140+Math.floor(i/3)*300]);yield* batch(c,'moth',3,i=>[200+i*250,-80]);yield* batch(c,'netspider',2,i=>[700-i*500,330+i*250]);yield* untilPart(c,start,45);break;}
+ if(normal(w)){
+ spawn(c,'umbrellaguest',260,140);yield* c.wait(4);spawn(c,'mirrorfish',730,120);
+ yield* c.wait(6);spawn(c,'umbrellaguest',680,100);yield* c.wait(1.6);spawn(c,'mirrorfish',170,100,{attackDelay:.8});
+ yield* untilPart(c,start,24);yield* batch(c,'moth',3,i=>[200+i*250,-80]);
+ for(let i=0;i<2;i++){yield* c.wait(5);const left=i===0,x=left?40:860;
+  const muzzle=w.scene('e_turret',x,60);muzzle.rot=left?-.7:.7;
+  w.laser(x,60,left?PI/2-.7:PI/2+.7,{warn:1.2/w.difficulty.warn,duration:2.6,width:30,color:'amber',sweep:left?.55:-.55});
+  w.fork((function*():Co{yield* c.wait(4);muzzle.dead=true;})());}
+ }else{w.fork((function*():Co{for(let i=0;i<5;i++){yield* c.wait(6);const left=i%2===0;w.laser(left?40:860,60,left?PI/2-.7:PI/2+.7,{warn:1,duration:2.6,width:30,color:'amber',sweep:left?.55:-.55});}})());
+ yield* batch(c,'umbrellaguest',4,i=>[180+i*160,180+i*150]);yield* batch(c,'mirrorfish',6,i=>[200+(i%3)*200,140+Math.floor(i/3)*300]);yield* batch(c,'moth',3,i=>[200+i*250,-80]);yield* batch(c,'netspider',2,i=>[700-i*500,330+i*250]);}yield* untilPart(c,start,45);break;}
  case 8:w.scrollSpeed(45,1.5);c.changeBackground('cloud-town-real');yield* batch(c,'lantern',3,i=>[200+i*220,-60]);yield* untilPart(c,start,12);clear(w);yield* c.conversation('C2.P8.belowCloud');c.changeBackground('cloud-town-false');yield* w.milestone('云闸前补给');yield* c.conversation('C2.MR.arrival');yield* untilPart(c,start,36);break;
  case 9:clear(w);c.mission(3);w.scrollSpeed(25,2);c.fleet.visible=true;c.fleet.protected=false;c.fleet.scene.x=450;c.fleet.scene.y=900;yield* w.boss(Mirage,450,290,{startPhase:w.testBossPhase('MIRAGE'),warning:false,resumeMusic:'stage2'});w.clearBullets(false);break;
  case 10:clear(w);w.scrollSpeed(45,1.5);c.changeBackground('cloud-town-real');yield* c.conversation('C2.MR.reveal');w.unlockSkill('shenying');c.log('skill.shenying');yield* untilPart(c,start,20);

@@ -966,6 +966,14 @@ export class World implements G {
   }
 
   private scaleHp(e: Enemy): void {
+    if (this.diffId === 'normal' && e.def.normalHp && !e.def.boss) {
+      const [hp, kind] = e.def.normalHp;
+      const gains = { L: [1, 1.1, 1.2, 1.25], M: [1, 1.2, 1.4, 1.55], F: [1, 1, 1, 1] };
+      e.hp = e.maxHp = Math.round(hp * gains[kind][this.player.power - 1]);
+      e.data.birthPower = this.player.power;
+      e.data.noSupplementFire = true;
+      return;
+    }
     if (e.maxHp <= 0 || this.diff.hp === 1) return;
     e.maxHp = Math.max(1, Math.round(e.maxHp * this.diff.hp));
     e.hp = Math.max(1, Math.round(e.hp * this.diff.hp));
@@ -1004,8 +1012,12 @@ export class World implements G {
     yield* until(() => !this.enemies.some((e) => !e.dead && !e.def.ground), timeout);
   }
 
-  /** 火力每升一级，新发射敌弹速度增加 5%。 */
-  get enemyBulletSpeed(): number { return this.diff.speed * (1 + (this.player.power - 1) * 0.05); }
+  /** 普通道中固定弹速；其他入口保留随火力每级增加 5%。 */
+  get enemyBulletSpeed(): number {
+    const emitter = this.density.emitter(this.enemies);
+    if (this.diffId === 'normal' && emitter?.def.normalHp && !emitter.def.boss) return .82;
+    return this.diff.speed * (1 + (this.player.power - 1) * 0.05);
+  }
 
   shoot(x: number, y: number, angle: number, speed: number, style?: BulletStyle): Bullet {
     if(!this.allowOrdinaryFire(1)){const b=new Bullet();b.dead=true;return b;}

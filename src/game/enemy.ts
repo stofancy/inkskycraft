@@ -17,6 +17,8 @@ export interface EnemyDef {
   /** 精灵 id（见 DESIGN.md 4.B）。 */
   sprite: string;
   hp: number;
+  /** 普通道中出生时的最终 HP；L 轻型、M 中型、F 固定。 */
+  normalHp?: readonly [number, 'L' | 'M' | 'F'];
   /** 击破得分，默认 hp × 10。 */
   score?: number;
   /** 碰撞半径，默认取精灵建议半径。 */

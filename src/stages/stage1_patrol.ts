@@ -1,4 +1,5 @@
 // 第一章杂鱼出场表：按事件和秒数出，每种杂鱼第一次出现时单独亮相（见 studio/specs/fodder-patterns.md）。
+import { normal } from './ordinary';
 import type { Co,G } from '../game/api';
 import { RouteHornet,RouteCrane,RouteKite,RouteTurtle,RouteScout,RouteShield,RouteInspector,LiftingArm } from './stage1_enemies';
 import type { RouteState } from './stage1_events';
@@ -24,7 +25,7 @@ export const kiteGlide=(hook:boolean,side:-1|1=-1,extra:Record<string,unknown>={
 /** 云哨：浮石后露头（亮相只瞄玩家）。 */
 export const scout=(x:number,y:number,atShip=false,delay=0):Go=>g=>{mk(g,RouteScout,x,y,{atShip,delay});if(g.difficulty.quantity>=1.5)mk(g,RouteScout,900-x,y,{atShip:!atShip,delay:delay+.8});};
 /** 盾筝带 n 架蜂机：盾筝在前（下），蜂机在后。 */
-export const shieldSquad=(n:number,cx=450):Go=>g=>{mk(g,RouteShield,cx,-80,{tx:cx,ty:330});for(let i=0;i<cnt(g,n);i++)mk(g,RouteHornet,i%2?960:-60,60+(i%8)*40,{tx:cx-120+i*(240/Math.max(1,cnt(g,n)-1)),ty:190+(i%2)*40,delay:1.5+i*.5});};
+export const shieldSquad=(n:number,cx=450):Go=>g=>{mk(g,RouteShield,cx,-80,{tx:cx,ty:330});for(let i=0;i<cnt(g,n);i++)mk(g,RouteHornet,i%2?960:-60,60+(i%8)*40,{tx:cx-120+i*(240/Math.max(1,cnt(g,n)-1)),ty:190+(i%2)*40,rear:normal(g),delay:normal(g)?i*.3:1.5+i*.5});};
 export const inspector:Go=g=>{mk(g,RouteInspector,-60,420,{});};
 export const seq=(...gs:Go[]):Go=>g=>gs.forEach(f=>f(g));
 /** 蜂机扫过：n 架按间隔 gap 秒依次入场，沿 ang 方向直线飞过，转弯角速度 turn；入场点由 from(i) 给出。 */

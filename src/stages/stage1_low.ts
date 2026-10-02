@@ -1,3 +1,4 @@
+import { normal, speed } from './ordinary';
 import type { Co, G } from '../game/api';
 import type { Enemy, EnemyDef } from '../game/enemy';
 import type { World } from '../game/world';
@@ -46,41 +47,42 @@ function* aimWarning(e:Enemy,g:G,seconds:number):Generator<unknown,number> {
  yield* g.wait(seconds);
  line.kill();return a;
 }
-export const LowCannon:EnemyDef={
+export const LowCannon:EnemyDef={normalHp:[72,'M'],
  name:'铜炮台',sprite:'low_cannon-base',hp:90,score:700,ground:true,onDeath:wreck,
  *ai(e,g){prepare(e);
   const barrel=g.attach(e,{sprite:'low_cannon-barrel',hp:1,score:0,ground:true,decorative:true,drawOrder:1},[0,-7.8],{followRot:false});barrel.data.lowGround=true;
-  e.run((function*():Co{for(;;){barrel.angle=Math.atan2(g.player.y-e.y,g.player.x-e.x)+Math.PI/2;yield;}})());
-  yield* visible(e);yield* g.wait(.65);
+  e.run((function*():Co{for(;;){barrel.angle=(normal(g)&&e.charging?e.data.lockedAngle:Math.atan2(g.player.y-e.y,g.player.x-e.x))+Math.PI/2;yield;}})());
+  yield* visible(e);yield* g.wait(normal(g)?.2:.65);
   while(e.y<1120){
-   e.charging=true;g.fx.charge(e.x,e.y,22,.6,[1.2,.25,.55]);yield* g.wait(.6);
-   if(e.charging){const a=Math.atan2(g.player.y-e.y,g.player.x-e.x);
-    for(const offset of [-.18,0,.18])g.shoot(e.x+Math.cos(a)*37,e.y+Math.sin(a)*37,a+offset,145,{shape:'orb',color:'magenta',size:9});}
-   e.charging=false;yield* g.wait(2.4);
+   const locked=Math.atan2(g.player.y-e.y,g.player.x-e.x);e.data.lockedAngle=locked;e.charging=true;g.fx.charge(e.x,e.y,22,.6,[1.2,.25,.55]);yield* g.wait(.6);
+   if(e.charging){const a=normal(g)?locked:Math.atan2(g.player.y-e.y,g.player.x-e.x);
+    if(normal(g)){barrel.offY=2;e.run((function*():Co{yield* g.wait(.15);barrel.offY=-7.8;})());}
+    for(const offset of [-.18,0,.18])g.shoot(e.x+Math.cos(a)*37,e.y+Math.sin(a)*37,a+offset,speed(g,normal(g)?100:145),{shape:'orb',color:'magenta',size:9});}
+   e.charging=false;yield* g.wait(normal(g)?2.2:2.4);
   }
  }
 };
-export const LowBallista:EnemyDef={
+export const LowBallista:EnemyDef={normalHp:[52,'M'],
  name:'弩车',sprite:'low_ballista',hp:65,score:550,ground:true,onDeath:wreck,
  *ai(e,g){prepare(e);yield* visible(e);
   while(e.y<1080){e.frame=0;e.charging=true;const a=yield* aimWarning(e,g,1);
-   if(e.charging){e.frame=1;g.shoot(e.x,e.y,a,420,{shape:'needle',color:'magenta',size:11});}
-   e.charging=false;yield* g.wait(2.2);
+   if(e.charging){e.frame=1;g.shoot(e.x,e.y,a,speed(g,normal(g)?260:420),{shape:'needle',color:'magenta',size:11});}
+   e.charging=false;yield* g.wait(normal(g)?2:2.2);
   }
  }
 };
-export const LowEaveGunner:EnemyDef={
+export const LowEaveGunner:EnemyDef={normalHp:[40,'M'],
  name:'檐角弩手',sprite:'low_eave-gunner',hp:50,score:450,ground:true,onDeath:wreck,
  *ai(e,g){prepare(e);e.invulnerable=true;e.frame=0;
   const roof=g.scene('sky_low-roof-a',e.x,e.y-35),w=g as World,offset=e.y-w.scroll;
   roof.sx=roof.sy=.65;
   w.root.run((function*():Co{while(roof.y<1340){roof.y=offset+w.scroll-35;yield;}roof.dead=true;})());
-  yield* visible(e);yield* g.wait(.5);
+  yield* visible(e);yield* g.wait(normal(g)?.3:.5);
   while(e.y<1100){
    e.invulnerable=false;e.frame=1;e.charging=true;
-   const a=yield* aimWarning(e,g,1);
-   if(e.charging)g.shoot(e.x,e.y,a,270,{shape:'needle',color:'magenta',size:9});
-   yield* g.wait(.6);e.charging=false;e.invulnerable=true;e.frame=0;yield* g.wait(1.4);
+   const a=yield* aimWarning(e,g,normal(g)?.8:1);
+   if(e.charging)g.shoot(e.x,e.y,a,speed(g,normal(g)?240:270),{shape:'needle',color:'magenta',size:9});
+   yield* g.wait(normal(g)?.8:.6);e.charging=false;e.invulnerable=true;e.frame=0;yield* g.wait(1.4);
   }
  }
 };

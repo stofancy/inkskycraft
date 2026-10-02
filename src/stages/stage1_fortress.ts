@@ -4,6 +4,7 @@ import type { Co,G } from '../game/api';
 import type { Enemy,EnemyDef } from '../game/enemy';
 import type { Scenery } from '../game/scenery';
 import type { World } from '../game/world';
+import { normal } from './ordinary';
 import { closeBurst } from './stage1_air_enemies';
 
 /** 暂定数值（普通难度）。 */
@@ -28,8 +29,8 @@ export function startFortress(g:G,seconds:number):Fortress{
  const stone=g.scene('sky_rock',450,f.y);stone.layer='ground';stone.sx=stone.sy=.5;
  const bay=g.scene('story_fortress-bay-open',450,f.y);bay.layer='air';bay.alpha=0;
  const marks:Scenery[]=[];
- const turrets=TURRETS.map(t=>{const e=g.spawn(FortressTurret,450+t.ox,f.y+t.oy,e=>{e.data.contentRole='part';e.data.noSupplementFire=true;e.hp=e.maxHp=FORTRESS.turretHp/g.difficulty.hp;e.invulnerable=true;});
-  closeBurst(e,g);const ov=g.scene('story_fortress-turret-charge',e.x,e.y);ov.layer='air';ov.alpha=0;return {t,e,ov,next:t.phase+FORTRESS.arriveAt+2};});
+ const turrets=TURRETS.map((t,i)=>{const e=g.spawn(FortressTurret,450+t.ox,f.y+t.oy,e=>{e.data.contentRole='part';e.data.noSupplementFire=true;e.hp=e.maxHp=FORTRESS.turretHp/g.difficulty.hp;e.invulnerable=true;});
+  if(!normal(g))closeBurst(e,g);const ov=g.scene('story_fortress-turret-charge',e.x,e.y);ov.layer='air';ov.alpha=0;return {t,e,ov,next:normal(g)?FORTRESS.arriveAt+.9+i*.6:t.phase+FORTRESS.arriveAt+2};});
  const clamps=CLAMPS.map(c=>{const e=g.spawn(c.side<0?FortressClamp:FortressClampR,450+c.ox,f.y+c.oy,e=>{e.data.contentRole='part';e.data.noSupplementFire=true;e.data.fortressClamp=true;e.hp=e.maxHp=FORTRESS.clampHp/g.difficulty.hp;e.invulnerable=true;});
   const ring=g.scene('story_warning',e.x,e.y);ring.layer='air';ring.alpha=0;ring.sx=ring.sy=.7;marks.push(ring);return {c,e,ring,next:FORTRESS.clampSlam.first+(c.side>0?FORTRESS.clampSlam.gap/2:0)};});
  const t0=g.t;let prompted=false,openAt=-1,leaving=false;
@@ -47,10 +48,13 @@ export function startFortress(g:G,seconds:number):Fortress{
    body.x=f.x;body.y=f.y;stone.x=f.x;stone.y=f.y+32;stone.alpha=f.open?0:1;bay.x=f.x;bay.y=f.y+32;bay.alpha=f.open?1:0;
    for(const o of turrets){const e=o.e;if(e.dead){o.ov.dead=true;continue;}
     e.x=f.x+o.t.ox;e.y=f.y+o.t.oy;e.vx=e.vy=0;e.invulnerable=!here;o.ov.x=e.x;o.ov.y=e.y;
-    const dt=o.next-t,ch=FORTRESS.fire.charge;
+    const dt=o.next-t,ch=normal(g)?.9:FORTRESS.fire.charge;
     e.charging=here&&dt<ch&&dt>0;o.ov.alpha=e.charging?1:0;o.ov.glow=e.charging?1.2+.6*Math.sin(t*20):0;
     if(here&&dt<=0){const inner=o.t.kind==='inner',sx=e.x,sy=e.y+30;
-     if(g.bulletCount()<56){if(inner)g.fan(sx,sy,g.aim(sx,sy),3,.22,170,{shape:'crystal',color:'amber'});else g.fan(sx,sy,Math.PI/2,5,.7,140,{shape:'orb',color:'magenta'});}
+     if(normal(g)&&g.bulletCount()<55){
+      if(inner)g.fan(sx,sy,g.aim(sx,sy),Math.round(3/g.difficulty.count),.22,170/w.enemyBulletSpeed,{shape:'crystal',color:'amber'});
+      else for(const off of [-.6,-.3,.3,.6])g.shoot(sx,sy,Math.PI/2+off,95/w.enemyBulletSpeed,{shape:'orb',color:'magenta'});
+     }else if(!normal(g)&&g.bulletCount()<56){if(inner)g.fan(sx,sy,g.aim(sx,sy),3,.22,170,{shape:'crystal',color:'amber'});else g.fan(sx,sy,Math.PI/2,5,.7,140,{shape:'orb',color:'magenta'});}
      g.fx.burst(sx,sy,8,70,[1.5,.7,.2]);o.next=t+(inner?FORTRESS.fire.inner:FORTRESS.fire.outer);}}
    const sway=Math.sin(t*.9)*.06;
    for(const o of clamps){const e=o.e;if(e.dead){o.ring.dead=true;continue;}

@@ -6,6 +6,7 @@ import { startFortress,type Fortress } from './stage1_fortress';
 import type { World } from '../game/world';
 import type { EscortShip } from '../game/escort';
 import { CH1_AIR_ART } from '../game/escort';
+import { normal } from './ordinary';
 import { NetPost,BridgeTurret,ShoreCannon,Bomber } from './stage1_air_enemies';
 import { beeSwarm,beeShot,craneRow,kiteGlide,kitePair,scout,shieldSquad,inspector,stopGo,turtle,arm,sweepTop,sweepSide,sweepWave,chaseBehind,sweepLaser,seq } from './stage1_patrol';
 import { director,sayEvent } from './dialogue1';
@@ -117,7 +118,7 @@ export function* battery(g:G,s:RouteState):Co{
  s.ship.follow=true;s.ship.protected=false;const w=g as World;
  director(g).brief(3);while(director(g).briefRemaining>0)yield;
  let fort:Fortress|undefined,stone:Scenery|undefined,tow:Scenery|undefined,openedAt=-1;
- const bombers=(g:G)=>{for(let i=0;i<3;i++)spawn(g,Bomber,250+i*200,-80-i*40,{noSupplementFire:true,attack:i===0?'oil':i===2?'rocket':undefined});};
+ const bombers=(g:G)=>{for(let i=0;i<3;i++)spawn(g,Bomber,250+i*200,-80-i*40,{noSupplementFire:true,attack:i===0?'oil':i===2?'rocket':undefined,attackDelay:normal(g)?i*.6:0});};
  const plan:Plan=[
   {at:0,go:seq(bombers,sweepTop(4))},{at:6,go:g=>{director(g).event('E07.rockWarningShown');}},
   {at:8,go:seq(sweepSide(-1,4),sweepSide(1,4))},
