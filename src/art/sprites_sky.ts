@@ -16,5 +16,16 @@ export const SKY_SPRITES: SpriteDef[] = [
      c.strokeStyle = '#59605a88'; c.lineWidth = 1.5; c.stroke(); c.restore();
    }
  } },
+ // 瀑布流水：细长亮纹沿瀑布下滑，底端水雾团；见 bg/sky-scene.ts 的 drawFalls。
+ { id: 'sky_fall-streak', w: 12, h: 96, draw(c) {
+   const g = c.createLinearGradient(0, -48, 0, 48);
+   g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.5, 'rgba(255,255,255,.9)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+   c.fillStyle = g; c.beginPath(); c.ellipse(0, 0, 5, 48, 0, 0, Math.PI * 2); c.fill();
+ } },
+ { id: 'sky_fall-mist', w: 128, h: 128, draw(c) {
+   const g = c.createRadialGradient(0, 0, 0, 0, 0, 64);
+   g.addColorStop(0, 'rgba(255,255,255,.85)'); g.addColorStop(.5, 'rgba(240,247,255,.4)'); g.addColorStop(1, 'rgba(240,247,255,0)');
+   c.fillStyle = g; c.fillRect(-64, -64, 128, 128);
+ } },
  { id: 'sky_migration-ship', w: 360, h: 306, image: 'art/enemies/ch1/migration-ship.png' },
 ];

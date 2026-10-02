@@ -1,5 +1,5 @@
 import type { FodderChapter } from '../stages/fodder1';
-import { drawSkyStones } from '../bg/sky-scene';
+import { drawSkyStones, drawFalls } from '../bg/sky-scene';
 import { BossCombat } from './boss-combat';
 import { EscortShip } from './escort';
 import type { Chapter2 } from '../stages/stage2_air';
@@ -834,6 +834,7 @@ export class World implements G {
       const gateRock = gateVisible && s.sprite==='sky_rock' && gateScenery.includes(s);
       const sprite = gateRock ? (s.x<450?'sky_cliff-left':'sky_cliff-right') : s.sprite;
       (s.layer==='ground'?r.ground:s.layer==='front'?r.items:r.air).add(sprite,draw);
+      if(gateRock)drawFalls(r,sprite.slice(4),s.x,s.y,s.sx??1,s.sy??1,s.alpha??1,this.real,s.x<450?0:1);
       if(s.stroke){
         const n=Math.max(2,Math.ceil(s.stroke.pts.length/2*s.stroke.reveal));
         const pts=s.stroke.pts.slice(0,n*2),width=new Float32Array(pts.length/2);
