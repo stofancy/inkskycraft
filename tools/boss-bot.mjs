@@ -1,7 +1,10 @@
 // 共用自动驾驶只给输入，不直接结算破招或改 HP；笔画经过逐按钮鼠标事件/识别。
 export function bossInput(g,s){
  const w=g.world,q=w.bossCombat.qte,inp=g.input,F=window.__forced;
- if(!q){const b=w.bossE;if(b?.data.copperSimple&&!b.data.sealWindow){const r=b.data.rig,t=b.data.phaseIndex===2?r.wings.find(a=>!a.broken)?.lock:b.data.phaseIndex===3?r.controller:r.core;if(t){inp.axisX=Math.max(-1,Math.min(1,(t.x-w.player.x)/40));inp.axisY=Math.max(-1,Math.min(1,(850-w.player.y)/80));F.held.add('shoot');}}if(s.paint){const r=g.r.playCss;document.querySelector('#gl').dispatchEvent(new MouseEvent('mouseup',{clientX:r.x+r.w*.5,clientY:r.y+r.h*.5,button:2,buttons:0,bubbles:true}));s.paint=null;}s.id=null;return;}
+ if(!q){const b=w.bossE;if(b?.data.copperSimple&&!b.data.sealWindow){
+  const r=b.data.rig,t=b.data.phaseIndex===2?(b.data.paperSimple?r.claws.find(a=>!a.broken)?.part:r.wings.find(a=>!a.broken)?.lock):b.data.phaseIndex===3?r.controller:r.core;
+  if(t){const y=b.data.paperSimple?Math.max(500,Math.min(850,t.y+330)):850;inp.axisX=Math.max(-1,Math.min(1,(t.x-w.player.x)/40));inp.axisY=Math.max(-1,Math.min(1,(y-w.player.y)/80));F.held.add('shoot');}
+ }if(s.paint){const r=g.r.playCss;document.querySelector('#gl').dispatchEvent(new MouseEvent('mouseup',{clientX:r.x+r.w*.5,clientY:r.y+r.h*.5,button:2,buttons:0,bubbles:true}));s.paint=null;}s.id=null;return;}
  const pointer=(type,x,y,button=2)=>{const r=g.r.playCss;document.querySelector('#gl').dispatchEvent(new MouseEvent(type,{clientX:r.x+x*r.w/900,clientY:r.y+y*r.h/1200,button,buttons:type==='mouseup'?0:button===0?1:2,bubbles:true}));};
  if(q.state!=='window')return;if(s.id!==q.id){s.id=q.id;s.paint=null;s.started=false;s.completed=false;s.wait=s.delay??.7;}
  if(q.age<s.wait||s.completed)return;

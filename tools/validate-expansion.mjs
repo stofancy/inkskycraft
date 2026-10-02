@@ -105,8 +105,8 @@ try {
      if(!w.bossCombat.qte&&!paint&&sealTarget&&!sealTarget.data.lastSealedAt){paint={cx:sealTarget.x,cy:sealTarget.y,frame:0};pointer('mousedown',sealTarget.x+72,sealTarget.y);}
      const mirageSeal=boss?.data.c2Mirage&&boss.data.phaseIndex===2?w.enemies.find(e=>!e.dead&&e.data.c2True&&!e.data.pinned):null;
      if(!w.bossCombat.qte&&!paint&&mirageSeal&&w.real-(window.__mirageSealAt??-9)>2){window.__mirageSealAt=w.real;paint={cx:mirageSeal.x,cy:mirageSeal.y,frame:0};pointer('mousedown',mirageSeal.x+72,mirageSeal.y);}
-     if(!paint&&boss&&!w.bossCombat.qte){const regs=w.enemies.filter(e=>!e.dead&&e.def.sprite==='pd-register');if(regs.length&&w.real-(window.__lastLine??0)>.2){const r0=regs[(window.__lineIdx=((window.__lineIdx??-1)+1))%regs.length];paint={line:true,cx:r0.x,cy:r0.y,frame:0};pointer('mousedown',r0.x-75,r0.y);}}
-     if(paint?.line){pointer('pointermove',paint.cx-75+Math.min(30,paint.frame)/30*150,paint.cy);if(paint.frame++>=30){pointer('mouseup',paint.cx+75,paint.cy);window.__lastLine=w.real;paint=null;}}
+     if(!paint&&boss&&!w.bossCombat.qte){const regs=boss.data.paperSimple&&boss.data.phaseIndex===1?(boss.data.rig.open?[boss.data.rig.eye]:[]):w.enemies.filter(e=>w.targetable(e)&&e.def.sprite==='pd-register');if(regs.length&&w.real-(window.__lastLine??0)>.2){const r0=regs[(window.__lineIdx=((window.__lineIdx??-1)+1))%regs.length];paint={line:true,target:r0,cx:r0.x,cy:r0.y,frame:0};pointer('mousedown',r0.x-75,r0.y);}}
+     if(paint?.line){paint.cx=paint.target.x;paint.cy=paint.target.y;pointer('pointermove',paint.cx-75+Math.min(30,paint.frame)/30*150,paint.cy);if(paint.frame++>=30){pointer('mouseup',paint.cx+75,paint.cy);window.__lastLine=w.real;paint=null;}}
      else if(paint){const a=paint.frame/96*Math.PI*2;pointer('pointermove',paint.cx+Math.cos(a)*72,paint.cy+Math.sin(a)*72);if(paint.frame++>=96){pointer('mouseup',paint.cx+72,paint.cy);paint=null;}}
      g.update(1/60);if(frames===0)startLoadout={difficulty:w.diffId,power:w.player.power,weapon:w.player.weapon};frames++;
     }
