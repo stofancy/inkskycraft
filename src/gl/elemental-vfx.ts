@@ -2,7 +2,7 @@
 import { PLAY_W, PLAY_H } from '../types';
 import { Program, Target, type GL } from './util';
 
-export const EV = { Fire: 0, Water: 1, Bolt: 2, Sword: 3, Arc: 4 } as const;
+export const EV = { Fire: 0, Water: 1, Bolt: 2, Sword: 3, Arc: 4, ThunderCloud: 5, Thunder: 6, ThunderImpact: 7 } as const;
 interface Effect { kind:number;x:number;y:number;w:number;h:number;t:number;alpha:number;power:number;seed:number;angle:number;ground:boolean }
 const VS = `#version 300 es
 uniform vec4 uRect;
@@ -140,7 +140,7 @@ void main(){
        +vec3(2.0,2.55,2.65)*(spine*1.1+bevel*.32)
        +vec3(.55,1.05,1.12)*(guard*.65+handle*.45)
        +vec3(.16,.46,.51)*(wake*.70+thread*.35))*edge*uPower;
- }else{
+ }else if(uKind==4){
   // 地面放射状电弧：不闭合，弧端逐渐碎成飞白。
   float rad=length(q),ang=atan(q.y,q.x),dist=1.;
   for(int k=0;k<9;k++){
@@ -154,6 +154,77 @@ void main(){
   a=shell*.8*edge;
   body=vec3(.045,.018,.07)*a;
   emit=(vec3(.28,.09,.46)*shell+vec3(1.8,1.4,2.1)*core)*edge*(1.-smoothstep(.30,.88,rad))*uPower;
+ }else if(uKind==5){
+  // 扁阔雷云：浓墨云腹、翻卷的云头，中央一道白紫裂眼。
+  float trans=1.;vec3 cloudCol=vec3(0);
+  for(int i=0;i<5;i++){
+   float z=-.7+float(i)*.32;
+   vec3 p=vec3(q*vec2(1.,1.12),z);
+   float n=fbm(vec3(p.x*5.,p.y*3.+t*.22,p.z*3.+sd));
+   float d=.96-length(p*vec3(1.,1.,.55))-(1.-n)*.48;
+   float density=smoothstep(0.,.13,d)*.88;
+   float fold=fbm(vec3(p.x*13.,p.y*9.+t*.4,p.z*5.+sd));
+   float silver=pow(smoothstep(.38,.77,fold),2.);
+   vec3 ink=mix(vec3(.018,.006,.033),vec3(.24,.12,.34),silver);
+   cloudCol+=trans*density*ink;trans*=1.-density;
+  }
+  a=(1.-trans)*edge;body=cloudCol*edge;
+  float xx=q.x,yy=q.y-.10+jag(q.x+t*.025,sd)*.12;
+  float lens=pow(abs(xx)/.56,1.4)+pow(abs(yy)/.27,1.1);
+  float grain=fbm(vec3(q*17.,t*.35));
+  float lip=exp(-pow((lens-1.+(grain-.5)*.35)*12.,2.))*(1.-smoothstep(.43,.64,abs(xx)));
+  float slit=exp(-pow(yy*21.,2.))*exp(-pow(xx*4.5,4.));
+  float vein=abs(yy-sin(xx*9.+t*2.)*.07-jag(xx+t*.06,9.)*.065);
+  float electric=exp(-vein*vein*9000.)*(1.-smoothstep(.30,.65,abs(xx)));
+  float breaks=smoothstep(.32,.62,grain);
+  emit=(vec3(.45,.09,.82)*lip*.65
+       +vec3(1.15,.55,1.9)*lip*breaks*.85
+       +vec3(2.6,2.1,3.3)*(slit*.70+electric*.95))*edge*uPower;
+ }else if(uKind==6){
+  // 一束有实体宽度的天雷，白芯外依次是紫电与毛边浓墨。
+  float y=(q.y+1.)*.5,seed=sd+floor(t*20.);
+  float axis=jag(y*.40,sd)*.34+jag(y*1.1,sd+5.)*.10;
+  float grain=fbm(vec3(q.x*17.,q.y*24.-t*10.,sd));
+  float width=(.22+.06*sin(y*8.+sd))*(.8+grain*.4);
+  float d=abs(q.x-axis),tip=1.-smoothstep(.90,1.,abs(q.y));
+  float ink=1.-smoothstep(width+.06,width+.17+grain*.09,d);
+  float purple=1.-smoothstep(width*.55,width+.025,d);
+  float core=1.-smoothstep(width*.18,width*.60,d);
+  float strand=exp(-pow((q.x-axis+sin(y*32.-t*20.)*.035)*55.,2.));
+  float branch=1.;
+  for(int k=0;k<4;k++){
+   float f=float(k),start=.16+f*.16,u=(y-start)/.30;
+   float side=mod(f,2.)*2.-1.;
+   float bx=jag(start*.40,sd)*.34+jag(start*1.1,sd+5.)*.10+side*u*.62+jag(u,seed+f)*.10;
+   if(u>0.&&u<1.)branch=min(branch,abs(q.x-bx));
+  }
+  float twig=1.-smoothstep(.006,.019,branch);
+  a=max(ink,(1.-smoothstep(.025,.055,branch))*.85)*tip*edge;
+  body=vec3(.055,.012,.105)*a;
+  emit=(vec3(.65,.12,1.25)*purple+vec3(2.7,2.15,3.25)*(core*.82+strand*.35+twig*.70))*tip*edge*uPower;
+  heat=purple*.25;
+ }else if(uKind==7){
+  // 落点先爆开厚电弧，短暂保留裂纹状焦墨。
+  float rad=length(q),ang=atan(q.y,q.x),grain=fbm(vec3(q*14.,sd));
+  float scorch=1.-smoothstep(.36,.75,rad+(grain-.5)*.25);
+  float dist=1.;
+  for(int k=0;k<9;k++){
+   float f=float(k),axis=f*6.283185/9.+sd;
+   vec2 p=mat2(cos(axis),-sin(axis),sin(axis),cos(axis))*q;
+   float reach=.58+hash(vec3(f,sd,2))*.25;
+   float bend=jag(p.x*1.3,f+sd)*.23*p.x;
+   if(p.x>.04&&p.x<reach)dist=min(dist,abs(p.y-bend)/(1.-p.x*.9));
+  }
+  float rays=1.-smoothstep(.006,.024,dist);
+  float root=1.-smoothstep(.028,.065,dist);
+  float burn=scorch*(.48+.35*grain)+root*.65;
+  float burst=clamp(1.-t/.32,0.,1.);
+  float wave=exp(-pow((rad-(.20+t*1.7)+(grain-.5)*.18)*25.,2.));
+  float core=exp(-dot(q,q)*28.);
+  a=clamp(burn*.8+wave*burst*.75,0.,.95)*edge;
+  body=vec3(.045,.014,.065)*a;
+  emit=(vec3(.6,.18,1.05)*(wave*.3+root*.5)
+       +vec3(2.7,2.25,3.2)*(core*1.7+wave*.25+rays*.8))*burst*edge*uPower;
  }
  // 折射背景来自本层绘制前的快照；暗边常规混合，亮芯以预乘加色叠加。
  a*=uAlpha;emit*=uAlpha;

@@ -204,6 +204,7 @@ export class HeavyCannon {
   if(c.key.level===3&&t>=1.22&&t<1.88){const u=clamp((t-1.46)/.08,0,1),after=clamp((t-1.54)/.34,0,1);this.sword(c.x,c.y-55,-Math.PI/2,t<1.46?210:520-220*ease(u),22+26*(1-u),t<1.46?.25:1-after);}
  }
  private drawPurple(c:Cast):void {
+  if(c.key.level===3){this.drawThunderEye(c);return;}
   const r=this.w.r,t=c.t,col=COLORS.purple;
   for(const bolt of c.bolts){
    const age=t-bolt.at;
@@ -213,5 +214,38 @@ export class HeavyCannon {
    if(al>0)r.elemental.add(EV.Bolt,bolt.x,(top+bolt.y)/2,bolt.final?380:230,bolt.y-top+30,age,al,bolt.final?1.3:.95,bolt.at*13);
    r.elemental.add(EV.Arc,bolt.x,bolt.y,bolt.final?380:190,bolt.final?245:125,age,clamp(1-age/.58,0,1),bolt.final?1.2:.8,bolt.at,0,true);
   }
+ }
+ /** 三级雷云眼、天雷柱与焦痕只跟随既有落雷节拍绘制。 */
+ private drawThunderEye(c:Cast):void {
+  const r=this.w.r,t=c.t,fade=clamp((c.end-t)/.35,0,1);
+  const latest=c.bolts.at(-1),aim=latest??c.target;
+  const x=clamp(aim?.x??PLAY_W*.26,230,PLAY_W-230);
+  const aimY=aim?.y??PLAY_H*.3;
+  const cloudY=Math.min(210,Math.max(55,aimY-290),aimY-70);
+  const charge=ease((t-.6)/.4),age=latest?t-latest.at:-1;
+  const flash=age>=0?clamp(1-age/.22,0,1):0;
+  for(const bolt of c.bolts){
+   const age=t-bolt.at,final=bolt.final;
+   if(age<0){
+    const u=clamp(1+age/bolt.warn,0,1);
+    this.ring(r.ribbonGround,bolt.x,bolt.y,65-30*u,22-8*u,COLORS.purple,.25+u*.45,2.5);
+    continue;
+   }
+   if(age>.68)continue;
+   const alpha=this.alpha(bolt.x,bolt.y,fade),strike=clamp((.24-age)/.12,0,1);
+   const top=Math.min(210,Math.max(55,bolt.y-290),bolt.y-70)+25;
+   if(strike>0)r.elemental.add(EV.Thunder,bolt.x,(top+bolt.y)/2,final?340:280,Math.max(80,bolt.y-top+65),age,alpha*strike,final?1.3:1,bolt.at*13);
+   r.elemental.add(EV.ThunderImpact,bolt.x,bolt.y,final?440:330,final?235:175,age,alpha*clamp((.68-age)/.2,0,1),final?1.2:1,bolt.at,0,true);
+   if(age<.3){
+    const u=age/.3;
+    for(let i=0;i<12;i++){
+     const a=i*Math.PI/6+bolt.at,reach=(final?200:145)*ease(u),dx=Math.cos(a),dy=Math.sin(a)*.45;
+     const px=bolt.x+dx*reach,py=bolt.y+dy*reach-45*Math.sin(u*Math.PI);
+     r.ribbonTop.line(px-dx*12,py-dy*12+8,px,py,3*(1-u)+1,RS.AuraArc,1.3,.55,2.8,alpha*(1-u));
+    }
+   }
+  }
+  // 云腹压暗天空，裂口随蓄势打开，电光沿裂口游走。
+  r.elemental.add(EV.ThunderCloud,x,cloudY,580*charge,230*charge,t,this.alpha(x,cloudY,.96*charge*fade),.45+charge*.25+flash*.55,3);
  }
 }
