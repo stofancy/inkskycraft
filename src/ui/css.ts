@@ -98,34 +98,38 @@ const RAW = /* css */ `
 .icons{display:flex;flex-wrap:wrap;gap:5h;min-height:28h;align-items:center}
 .icons svg{width:28h;height:28h;filter:drop-shadow(0 1px 2px #000a)}
 .icons b{font-size:20h;margin-left:4h;color:var(--gold)}
-.inkrow{display:flex;gap:20h;align-items:flex-start}
-.ink{position:relative;width:34h;height:136h;flex:none}
+.inkrow{display:flex;gap:24h;align-items:center}
+.ink{position:relative;width:29h;height:116h;flex:none}
 .ink img{position:absolute;inset:0;width:100%;height:100%;display:block}
 .b-clip{position:absolute;inset:0;transition:clip-path .18s linear}
 .b-ready{opacity:0;transition:opacity .25s}
 .ink.ready .b-ready,.ink.brush .b-ready{opacity:1}
 .ink .il{position:absolute;left:0;right:0;bottom:-26h;text-align:center;font-size:14h;letter-spacing:.3em;color:var(--gold);transition:color .3s;padding-left:.3em}
 .ink.ready .il{color:#ff8a70}
-.icons.armor{margin-top:2h;min-height:16h}
+.icons.armor{margin-top:2h;min-height:28h;gap:4h}
+.icons.armor img{width:28h;height:28h}
+.icons.armor img.off,.lat i:not(.on),.mis i:not(.on),.icons img[src$='life-off.png']{opacity:.3;filter:grayscale(1)}
+.icons.armor img.broke{animation:armor-break .3s ease-out}
+@keyframes armor-break{0%{opacity:1;filter:brightness(4);transform:scale(1.5)}60%{opacity:.8;filter:brightness(2);transform:scale(1.15) rotate(8deg)}100%{opacity:.3;filter:grayscale(1);transform:none}}
 .icons img{filter:drop-shadow(0 1px 2px #000a)}
 .ink-hint{font-size:11h;letter-spacing:.06em;color:var(--paper2);opacity:.65;margin-top:3h}
 .ink-score-dots{display:flex;gap:10h;font-size:13h;margin-top:2h}
 .hurt-edge{position:absolute;inset:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center,#0000 55%,#d8201a66 100%);z-index:30}
 .hurt-edge.on{animation:hurt-edge .45s ease-out}
 @keyframes hurt-edge{0%{opacity:1}100%{opacity:0}}
-.wp{display:flex;flex-direction:column;gap:14h;align-items:flex-start;padding-top:4h}
+.wp{display:flex;flex-direction:column;gap:12h;align-items:center;justify-content:center;align-self:stretch}
 .wseal{width:56h;height:56h;display:flex;align-items:center;justify-content:center;font-size:44h;font-weight:900;color:var(--paper);
   position:relative;}
 .wseal img{position:absolute;inset:0;width:100%;height:100%;display:none}
 .wseal.w-red .seal-red,.wseal.w-blue .seal-blue,.wseal.w-purple .seal-purple{display:block}
 .w-red{--wc:#d8382a}.w-blue{--wc:#1f9fc0}.w-purple{--wc:#8f5be8}
-.lat{display:grid;grid-template-columns:repeat(4,14h);gap:4h;padding:2h 0}
-.lat i{width:14h;height:14h;background:url('/art/ui/hud/level-off.png') center/100% 100%;transition:all .2s}
+.lat{display:grid;grid-template-columns:repeat(4,18h);gap:4h}
+.lat i{width:18h;height:18h;background:url('/art/ui/hud/level-off.png') center/100% 100%;transition:all .2s}
 .lat i.on{background-image:url('/art/ui/hud/level-on.png')}
 .wl{display:flex;align-items:center;gap:8h;font-size:14h;color:var(--paper2);letter-spacing:.2em}
 .wl b{font-size:20h;color:var(--paper);letter-spacing:0}
 .mis{display:flex;align-items:center;gap:8h;font-size:14h;color:var(--paper2)}
-.mis .arrows{display:flex;gap:3h}.mis i{width:14h;height:14h;background:url('/art/ui/hud/arrow-off.png') center/100% 100%}
+.mis .arrows{display:flex;gap:4h}.mis i{width:18h;height:18h;background:url('/art/ui/hud/arrow-off.png') center/100% 100%}
 .mis i.on{background-image:url('/art/ui/hud/arrow-on.png')}
 
 /* 窄屏：HUD 收进游戏区顶部 */
@@ -142,7 +146,7 @@ const RAW = /* css */ `
 .kr.rdy .kk{color:#ff7a5a;opacity:1}
 .kr.rdy::before{content:"";position:absolute;left:-12h;top:50%;width:6h;height:6h;background:var(--red);transform:translateY(-50%) rotate(45deg);box-shadow:0 0 8h var(--red)}
 .keys:has(.kr.rdy){opacity:.9}
-.ik:not(.compact) .host.r .hud{gap:16h}.ik:not(.compact) .host.r .ink{height:136h;width:34h}.ik:not(.compact) .host.r .inkrow{margin-bottom:20h}
+.ik:not(.compact) .host.r .hud{gap:11h}.ik:not(.compact) .host.r .ink{height:116h;width:29h}.ik:not(.compact) .host.r .inkrow{margin-bottom:26h}
 .ik:not(.compact) .host .hud,.ik:not(.compact) .keys{width:var(--column-width);max-width:none;padding:0}
 .host.r:not(.c){background:linear-gradient(90deg,#090807,#070707 80%,#080808)}
 /* 标题底部按键行 / 暂停按键表 */
@@ -170,12 +174,12 @@ const RAW = /* css */ `
 .host.c .medal svg{width:22h;height:22h}
 .host.c .stage{display:none}
 .host.c .icons{justify-content:flex-end;min-height:22h}
-.host.c .icons svg,.host.c .icons img{width:22h;height:22h}.host.c .icons.armor img{width:14h;height:14h}.host.c .ink-hint{display:none}
+.host.c .icons svg,.host.c .icons img{width:22h;height:22h}.host.c .icons.armor img{width:18h;height:18h}.host.c .ink-hint{display:none}
 .host.c .inkrow{flex-direction:column;align-items:flex-end;gap:36h;margin-top:6h}
 .host.c .ink{width:46h;height:184h;opacity:.92}
 .host.c .wp{align-items:flex-end}
 .host.c .wseal{width:44h;height:44h}
-.host.c .lat{grid-template-columns:repeat(4,11h);gap:3h}.host.c .lat i{width:11h;height:11h}
+.host.c .lat{grid-template-columns:repeat(4,14h);gap:3h}.host.c .lat i{width:14h;height:14h}
 .host.c .wl{display:none}
 .host.c.l::before{content:"";position:absolute;left:0;right:0;top:0;height:170h;background:linear-gradient(#000a,#0000);pointer-events:none}
 

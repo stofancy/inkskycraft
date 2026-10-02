@@ -229,7 +229,10 @@ export function createUI(): GameUI & PresentationUI {
     if (stageNoPrev !== sn) stageNoPrev = sn;
     if (prev.hurtSeq !== s.hurtSeq) { if (prev.hurtSeq !== undefined) { hurtEl.classList.remove('on'); void hurtEl.offsetWidth; hurtEl.classList.add('on'); } prev.hurtSeq = s.hurtSeq; }
     iconRow('lives', s.lives, `<img src="${HUD_ART}life.png" width="24" height="24" alt="朱雀">`, Math.max(0, (s.lifeMax ?? s.lives) - s.lives), `<img src="${HUD_ART}life-off.png" width="24" height="24" alt="">`);
-    iconRow('armor-row', s.armor ?? 3, `<img src="${HUD_ART}armor-on.png" width="16" height="16" alt="羽甲">`, 3 - (s.armor ?? 3), `<img src="${HUD_ART}armor-off.png" width="16" height="16" alt="">`);
+    const armorNow = s.armor ?? 3, armorBefore = prev.armorNow as number | undefined;
+    iconRow('armor-row', s.armor ?? 3, `<img src="${HUD_ART}armor-on.png" alt="羽甲">`, 3 - (s.armor ?? 3), `<img class="off" src="${HUD_ART}armor-off.png" alt="">`);
+    if (armorBefore !== undefined && armorNow < armorBefore) R['armor-row'].children[armorNow]?.classList.add('broke');
+    prev.armorNow = armorNow;
     iconRow('bombs', s.bombs, ICON_BOMB);
     R.bombs.style.setProperty('--bomb-color',{red:'#f06b43',blue:'#6ce2eb',purple:'#c79bef'}[s.weapon]);R.bombs.querySelectorAll('svg').forEach(svg=>svg.style.color=R.bombs.style.getPropertyValue('--bomb-color'));
     const dots = INK_COLORS.map(c=>`<span class="${c}">${INK_NAMES[c]} ${'●'.repeat(s.inkScore?.[c]??0)}${'○'.repeat(3-(s.inkScore?.[c]??0))}</span>`).join('');if(prev.inkdots!==dots){prev.inkdots=dots;R.inkdots.innerHTML=dots;}
