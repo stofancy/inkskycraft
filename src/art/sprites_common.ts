@@ -1,12 +1,75 @@
 import type { SpriteDef } from './types';
-import { PAL, inkOutline, glowDot, symmetric, pathFrom, rng } from './style';
+import { PAL, glyph, inkOutline, glowDot, symmetric, pathFrom, rng } from './style';
 import type { Pt } from './style';
 import {
   plate, line, groove, dots, ellipsePath, neonLine, neonSeamDraw, bevel, litFill, rectPath,
 } from './b1_helpers';
 
+// V2 八角牌「矢」，由图集初始化时绘制一次。
+function missileItemPoints(r: number): Pt[] {
+  return Array.from({ length: 8 }, (_, i) => {
+    const a = Math.PI / 8 + i * Math.PI / 4;
+    return [Math.cos(a) * r * 1.03, Math.sin(a) * r * 1.03];
+  });
+}
+function missileItemPath(r: number): Path2D {
+  return pathFrom(missileItemPoints(r), true, true);
+}
+function drawMissileItem(ctx: CanvasRenderingContext2D): void {
+  const s = { l: '#e9e0cc', b: '#8f8570', d: '#3d362b', glow: '#ffe8c0', gcol: PAL.ink, ch: '矢' };
+  const R = 18.4;
+  const fr = ['#fbe6a8', PAL.gold, PAL.gold3];
+  // 外框（金）
+  const outer = missileItemPath(R);
+  ctx.save(); ctx.translate(1, 1.6); ctx.globalAlpha = 0.4; ctx.fillStyle = '#000'; ctx.fill(outer); ctx.restore();
+  litFill(ctx, outer, [-R, -R, R * 2, R * 2], fr[0], fr[1], fr[2], { seed: 4, blots: 2, wear: 'rgba(255,240,200,0.5)', wearN: 8 });
+  bevel(ctx, outer, 'rgba(255,250,225,0.8)', 'rgba(60,30,4,0.6)', 1, 1.8);
+  inkOutline(ctx, outer, 1.6, PAL.ink, 9);
+  // 内晶
+  const ri = R * 0.76;
+  const inner = missileItemPath(ri);
+  litFill(ctx, inner, [-ri, -ri, ri * 2, ri * 2], s.l, s.b, s.d, { seed: 6, blots: 3, blotColor: 'rgba(255,255,255,0.10)' });
+  // 切面
+  ctx.save();
+  ctx.clip(inner);
+  const vs = missileItemPoints(ri);
+  for (let i = 0; i < vs.length; i++) {
+    const a = vs[i], b = vs[(i + 1) % vs.length];
+    const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+    const facing = -(mx + my) / (Math.hypot(mx, my) * 1.414 || 1); // 朝左上为正
+    ctx.fillStyle = facing > 0 ? `rgba(255,255,255,${0.16 * facing})` : `rgba(0,0,0,${-0.28 * facing})`;
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.closePath(); ctx.fill();
+    line(ctx, [[a[0] * 0.5, a[1] * 0.5], a], 'rgba(255,255,255,0.22)', 0.6);
+  }
+  // 内环
+  ctx.strokeStyle = 'rgba(255,255,255,0.22)'; ctx.lineWidth = 0.8;
+  ctx.stroke(missileItemPath(ri * 0.62));
+  // 左上高光弧
+  ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1.4; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.arc(0, 0, ri * 0.86, Math.PI * 1.02, Math.PI * 1.42); ctx.stroke();
+  ctx.restore();
+  inkOutline(ctx, inner, 1.1, PAL.ink, 12);
+  // 字
+  const col = s.gcol;
+  const ol = 'rgba(255,245,215,0.55)';
+  for (const [ox, oy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [1, 1.4]]) glyph(ctx, s.ch, ox * 0.9, oy * 0.9, 17, ol);
+  glyph(ctx, s.ch, 0, 0, 17, col);
+}
+
+function glowMissileItem(ctx: CanvasRenderingContext2D): void {
+  const R = 18.4;
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 20);
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(0.75, 'rgba(0,0,0,0)'); g.addColorStop(0.9, '#ffe8c0'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.globalAlpha = 0.5; ctx.fillStyle = g; ctx.fillRect(-20, -20, 40, 40);
+  ctx.globalAlpha = 0.05; ctx.fillStyle = '#ffe8c0'; ctx.fill(missileItemPath(R * 0.68));
+  ctx.restore();
+}
+
 // ============ 道具 ============
 const ITEMS: SpriteDef[] = [
+  { id: 'item_missile', w: 40, h: 40, radius: 16, draw: drawMissileItem, glow: glowMissileItem },
   { id: 'item_p', w: 36, h: 36, radius: 16, image: '/art/icons/items/power.png' },
   { id: 'item_bomb', w: 36, h: 36, radius: 16, image: '/art/icons/items/bomb.png' },
   { id: 'item_ink', w: 36, h: 36, radius: 16, image: '/art/icons/items/inkstone.png' },

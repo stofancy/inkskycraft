@@ -86,6 +86,8 @@ export interface HudState {
   inkReady: boolean;
   /** 主武器等级 1..4。 */
   power: number;
+  /** 追踪墨矢等级 0..4。 */
+  missile?: number;
   weapon: WeaponColor;
   /** 连击倍率，1.0 起。 */
   multiplier: number;

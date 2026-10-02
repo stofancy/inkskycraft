@@ -235,7 +235,7 @@ export class World implements G {
   allSkills=false;
   cheatGod=false;
   get skillCooldownScale(){return this.allSkills ? .25 : 1;}
-  enableAllSkills():void {if(!this.allSkills){for(const id of Object.keys(this.skills.cooldowns) as (keyof typeof this.skills.cooldowns)[])this.skills.cooldowns[id]*=.25;for(const s of this.companions.team)s.cooldown*=.25;}this.allSkills=true;this.player.ink=1;this.player.bombs=this.progression.bombMax;this.inkScore.levels={red:3,blue:3,purple:3};this.skills.setUnlocked(['chaifa','tishen','zhongpao','shenying','bilei']);this.brushPower=3;this.brushForms=new Set(['横','竖']);}
+  enableAllSkills():void {if(!this.allSkills){for(const id of Object.keys(this.skills.cooldowns) as (keyof typeof this.skills.cooldowns)[])this.skills.cooldowns[id]*=.25;for(const s of this.companions.team)s.cooldown*=.25;}this.allSkills=true;this.player.missile=4;this.player.ink=1;this.player.bombs=this.progression.bombMax;this.inkScore.levels={red:3,blue:3,purple:3};this.skills.setUnlocked(['chaifa','tishen','zhongpao','shenying','bilei']);this.brushPower=3;this.brushForms=new Set(['横','竖']);}
   newGame(): void {
     this.allSkills=this.cheatGod=false;
     this.inkScore.resetRun();this.mantra.resetRun();
@@ -660,6 +660,7 @@ export class World implements G {
     if (pts >= 3000) this.ui.popup(e.x, e.y - 20, pts.toLocaleString(), 'score');
     this.kills++;
     this.progression.recordAction({ kind: 'kill', source: e.lastDamageSource, enemy: e });
+    if (!e.parent && !e.def.boss && this.player.missile < 4 && this.kills % 35 === 0) this.drop('missile', e.x, e.y);
     this.addChain(1);
     const p = this.player;
     const close = Math.hypot(e.x - p.x, e.y - p.y) < 200;
@@ -723,6 +724,10 @@ export class World implements G {
         if (p.bombs < this.progression.bombMax) { p.bombs++; this.ui.popup(it.x, it.y, '泼墨 +1', 'info'); }
         else { this.addScore(10000); this.ui.popup(it.x, it.y, '10,000', 'score'); }
         a.sfx('item_bomb'); break;
+      case 'missile':
+        if (p.missile < 4) p.missile++;
+        else this.addScore(10000);
+        a.sfx('powerup'); this.ui.popup(it.x, it.y, '矢', 'info'); break;
       case 'medal': {
         const v = it.scoreValue ?? medalScore(it.elapsed);
         this.addScore(v);
@@ -900,7 +905,7 @@ export class World implements G {
     return {
       ship:this.escort?{durability:this.escort.durability,x:this.escort.scene.x,y:this.escort.scene.y,label:this.real-this.escort.born<5,state:this.escort.state}:undefined,
       score: this.score, hiScore: this.hiScore, lives: Math.max(0, p.lives), bombs: p.bombs,
-      ink: p.ink, inkReady: p.ink >= this.progression.brushMods.minInk, power: p.power, weapon: p.weapon,
+      ink: p.ink, inkReady: p.ink >= this.progression.brushMods.minInk, power: p.power, weapon: p.weapon, missile: p.missile,
       multiplier: this.multiplier, graze: this.graze, medalValue: Math.max(200, ...this.items.list.filter(it => it.kind === 'medal' && !it.dead).map(it => medalScore(it.elapsed))),
       stage: this.stageIndex, stageName: this.stageName,
       inkScore:{...this.inkScore.levels},

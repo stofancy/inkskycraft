@@ -168,7 +168,8 @@ export function createUI(): GameUI & PresentationUI {
  <div class="blk"><div class="lbl">剩余战机<i>LIFE</i></div><div class="icons" data-k="lives"></div></div>
  <div class="blk"><div class="lbl">泼墨<i>INK BOMB</i></div><div class="icons" data-k="bombs"></div></div>
  <div class="inkrow"><div class="ink" data-k="ink">${INK_SVG}</div>
-  <div class="wp"><div class="wseal w-red" data-k="wseal">朱</div><div class="lat" data-k="lat">${'<i></i>'.repeat(4)}</div></div></div>
+  <div class="wp"><div class="wseal w-red" data-k="wseal">朱</div><div class="lat" data-k="lat">${'<i></i>'.repeat(4)}</div>
+   <div class="mis"><span>矢</span><b data-k="missiles">0 / 4</b></div></div></div>
  <div class="blk ship-durability" data-k="ship"></div>
  <div class="growth-mini" data-k="growth"></div>
  <div class="partners" data-k="partners"></div><div class="skillbar" data-k="skills"><div class="skill-row" data-row="1"></div><div class="skill-row" data-row="2"></div></div></div>`;
@@ -275,6 +276,7 @@ export function createUI(): GameUI & PresentationUI {
       const dots = R.lat.children;
       for (let i = 0; i < 4; i++) dots[i].classList.toggle('on', i < s.power);
     }
+    setText('missiles', `${s.missile ?? 0} / 4`);
     setText('fps', settings.showFps && s.fps > 0 ? `${Math.round(s.fps)} FPS` : '');
     const growth = s.growth;
     setText('growth', growth ? `笔力 ${growth.brush} · 天赋 ${growth.talents}\n已学笔法：${['斩', '封', ...filterBrushForms(s.brushMethods)].join('、')}` : '');

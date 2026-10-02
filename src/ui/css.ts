@@ -117,6 +117,7 @@ const RAW = /* css */ `
 .lat i.on{background:var(--wc,#fff);border-color:#fff8;box-shadow:0 0 8h var(--wc)}
 .wl{display:flex;align-items:center;gap:8h;font-size:14h;color:var(--paper2);letter-spacing:.2em}
 .wl b{font-size:20h;color:var(--paper);letter-spacing:0}
+.mis{display:flex;align-items:center;gap:8h;font-size:14h;color:var(--paper2)}
 .mis b{font-family:var(--font-number);font-size:18h;letter-spacing:0}.mis i{width:8h;height:18h;transform:skewX(-14deg);border:1.5px solid #dcb75e70;background:transparent;transition:all .2s}
 .mis i.on{background:var(--gold);box-shadow:0 0 6h #dcb75e90}
 
