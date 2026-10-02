@@ -1,5 +1,5 @@
 // 玩家「朱雀」：移动、倾斜、三色主武器、泼墨炸弹、死亡与重生。
-import { approach, clamp, deg } from '../core/math';
+import { approach, clamp, deg, angleDiff } from '../core/math';
 import { PK } from '../gl/particles';
 import { RS } from '../gl/ribbons';
 import { makeBolt, type Bolt } from './bolt';
@@ -14,6 +14,7 @@ interface Shot {
   x: number; y: number; vx: number; vy: number;
   color: WeaponColor; visual?: boolean;
   dmg: number;
+  kind?: 0 | 1; // 0 主武器 1 导弹
   age: number; dead: boolean;
   target: Enemy | null;
   pierce?:number; hits?:Set<number>;
@@ -38,6 +39,7 @@ export class Player {
   respawnT = 0;
   lives = 3;
   bombs = 3;
+  missile = 0;
   /** 新游戏的初始残机 / 炸弹（由难度决定）。 */
   startLives = 3;
   startBombs = 3;
@@ -60,6 +62,7 @@ export class Player {
   readonly grazeR = 26;
   private shots: Shot[] = [];
   private fireCd = 0;
+  private missileCd = 0;
   private sfxCd = 0;
   private thunderTargets: Enemy[] = [];
   private thunderRetarget = 0;
@@ -107,6 +110,7 @@ export class Player {
       this.bombs = this.startBombs;
       this.power = 1;
       this.weapon = 'red';
+      this.missile = 0;
       this.ink = 0.4;
     }
   }
@@ -154,6 +158,7 @@ export class Player {
   private fire(dt: number): void {
     const w = this.w;
     this.fireCd -= dt;
+    this.missileCd -= dt;
     this.focusCharge=approach(this.focusCharge,this.weapon==='blue'&&this.focus&&this.firing?1:0,this.focus&&this.firing?1.3:8,dt);
     this.laserOn = this.firing && this.weapon === 'blue' ? Math.min(1, this.laserOn + dt * 8) : Math.max(0, this.laserOn - dt * 10);
     if (!this.firing) {
@@ -197,6 +202,17 @@ export class Player {
       this.thunderTargets = this.thunderTargets.filter((e) => !e.dead);
       if (this.sfxCd <= 0) { w.audio.sfx('shot_purple', { vol: 0.45 }); this.sfxCd = 0.12; }
     }
+    // 导弹
+    if (this.missile > 0 && this.missileCd <= 0) {
+      this.missileCd = 0.75;
+      for (let i = 0; i < this.missile * 2; i++) {
+        const left = i % 2 === 0;
+        const g = this.gun(left ? 'missileL' : 'missileR');
+        const a = -Math.PI / 2 + (left ? -1 : 1) * (0.6 + 0.25 * Math.floor(i / 2));
+        this.shots.push({ x: g.x, y: g.y, vx: Math.cos(a) * 380, vy: Math.sin(a) * 380, color: 'red', dmg: 7, kind: 1, age: 0, dead: false, target: null });
+      }
+      w.audio.sfx('missile', { vol: 0.5 });
+    }
   }
 
   /** 子弹命中：朱弹炸一小团火，紫弹迸电火花。 */
@@ -215,6 +231,26 @@ export class Player {
     const lv = this.weaponLevel;
     for (const s of this.shots) {
       s.age += dt;
+      // 导弹追踪
+      if (s.kind === 1) {
+        if (!s.target || s.target.dead || !w.targetable(s.target, true)) {
+          s.target = w.nearestEnemy(s.x, s.y, s.y + 100);
+        }
+        const sp = Math.min(1150, Math.hypot(s.vx, s.vy) + 1800 * dt);
+        let a = Math.atan2(s.vy, s.vx);
+        if (s.target && s.age > 0.12) {
+          const ta = Math.atan2(s.target.y - s.y, s.target.x - s.x);
+          a += clamp(angleDiff(a, ta), -7 * dt, 7 * dt);
+        } else if (s.age > 0.12) {
+          a += clamp(angleDiff(a, -Math.PI / 2), -3 * dt, 3 * dt);
+        }
+        s.vx = Math.cos(a) * sp;
+        s.vy = Math.sin(a) * sp;
+        if (w.frameNo % 2 === 0) {
+          w.fx.emit({ x: s.x, y: s.y, vx: -s.vx * 0.05, vy: -s.vy * 0.05, life: 0.5, drag: 2, size: 3.2, sizeEnd: 1, r: 0.02, g: 0.02, b: 0.02, a: 0.7, kind: PK.Ink });
+          w.fx.emitHigh({ x: s.x, y: s.y, life: 0.12, size: 5, sizeEnd: 2, r: 2.0, g: 0.5, b: 0.15, kind: PK.Dot });
+        }
+      }
       const px0 = s.x, py0 = s.y;
       s.x += s.vx * dt;
       s.y += s.vy * dt;
@@ -227,13 +263,13 @@ export class Player {
         continue;
       }
       while(!s.dead){
-        const hit=w.shotHit(s.x,s.y,7,px0,py0,s.hits);
+        const hit=w.shotHit(s.x,s.y,s.kind===1?8:7,px0,py0,s.hits);
         if(!hit)break;
-        this.primaryDamage(hit,s.dmg,w.hitX,w.hitY,'red');
+        this.primaryDamage(hit,s.dmg,w.hitX,w.hitY,s.kind===1?'red':'red');
         s.hits?.add(hit.id);
         if((s.pierce??0)>0&&!hit.invulnerable)s.pierce!--;
         else{s.x=w.hitX;s.y=w.hitY;s.dead=true;}
-        if(s.dead)this.hitBurst(s.x,s.y,'red');
+        if(s.dead&&s.kind!==1)this.hitBurst(s.x,s.y,'red');
       }
     }
     this.shots = this.shots.filter((s) => !s.dead);
@@ -337,6 +373,7 @@ export class Player {
     const preserved=w.progression.onDeath();
     w.items.spawn('p', this.x, this.y);
     if(!preserved)this.power = Math.max(1, this.power - 2);
+    if(!preserved)this.missile = Math.max(0, this.missile - 1);
     if(!preserved)w.clearBullets(false);
     if (this.lives < 0) w.onGameOver();
   }
@@ -356,6 +393,12 @@ export class Player {
   draw(r: Renderer, time: number): void {
     const w = this.w;
     for (const s of this.shots) {
+      if (s.kind === 1) {
+        // 导弹
+        const rot = Math.atan2(s.vy, s.vx) + Math.PI / 2;
+        r.air.add('player_missile', { x: s.x, y: s.y, rot, glow: 1.5 });
+        continue;
+      }
       const speed=Math.hypot(s.vx,s.vy),dx=s.vx/speed,dy=s.vy/speed;
       const size=w.skills.boosted?1.65:1;
       if(s.color==='red'){ // 泪滴：头半径 R，总长 3.3R

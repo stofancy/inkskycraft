@@ -26,7 +26,7 @@ export function medalScore(seconds: number): number {
   return seconds <= 1 + 1e-9 ? 2000 : seconds <= 2 + 1e-9 ? 1000 : seconds <= 3 + 1e-9 ? 500 : 200;
 }
 const SPRITE: Record<ItemType, string> = {
-  p: 'item_p', bomb: 'item_bomb', medal: 'item_medal', ink: 'item_ink', gold: 'item_gold',
+  p: 'item_p', bomb: 'item_bomb', missile: 'item_missile', medal: 'item_medal', ink: 'item_ink', gold: 'item_gold',
 };
 
 export class Items {

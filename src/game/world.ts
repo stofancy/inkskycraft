@@ -723,6 +723,9 @@ export class World implements G {
         if (p.bombs < this.progression.bombMax) { p.bombs++; this.ui.popup(it.x, it.y, '泼墨 +1', 'info'); }
         else { this.addScore(10000); this.ui.popup(it.x, it.y, '10,000', 'score'); }
         a.sfx('item_bomb'); break;
+      case 'missile':
+        p.missile++; this.ui.popup(it.x, it.y, '导弹 +1', 'info');
+        a.sfx('item_power'); break;
       case 'medal': {
         const v = it.scoreValue ?? medalScore(it.elapsed);
         this.addScore(v);
