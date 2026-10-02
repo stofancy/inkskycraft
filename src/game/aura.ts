@@ -3,7 +3,6 @@ import type { World } from './world';
 import { PK, type ParticleSpec } from '../gl/particles';
 import { RS, type RibbonBatch } from '../gl/ribbons';
 import type { WeaponColor } from '../types';
-import { MainGun } from './maingun';
 export const AURA_COLORS:Record<WeaponColor,[number,number,number]>={red:[1.8,.32,.045],purple:[.75,.26,1.7],blue:[.08,1.05,.92]};
 export function auraLine(batch:RibbonBatch,points:number[],width:number,color:readonly number[],alpha=.55,style=RS.Glow):void{
  for(let i=2;i<points.length;i+=2){batch.line(points[i-2],points[i-1],points[i],points[i+1],width,style,color[0],color[1],color[2],alpha);if(style===RS.Glow||style===RS.Trail)batch.line(points[i-2],points[i-1],points[i],points[i+1],Math.max(.7,width*.22),RS.AuraArc,color[0],color[1],color[2],alpha*.72);}
@@ -19,10 +18,8 @@ export class Aura {
  private ready=false;private jump=0;private emitCarry=0;private spark=0;private muzzle=0;private arcCd=0;
  private lives:{end:number;born:number}[]=[];
  private bolts:{pts:number[];left:number}[]=[];
- readonly gun:MainGun;
- constructor(readonly w:World){this.gun=new MainGun(w);}
+ constructor(readonly w:World){}
  clear():void{
-  this.gun.clear();
   this.w.r.playerFx.reset();this.w.r.playerFx.retireBefore=-1;
   this.ready=false;this.time=this.burst=this.jump=this.emitCarry=this.spark=this.muzzle=this.arcCd=0;
   this.active=this.peak=0;this.lives=[];this.bolts=[];
@@ -45,7 +42,6 @@ export class Aura {
    this.switchIn();
   }
   this.burst=Math.max(0,this.burst-dt);if(dt<=0)return;
-  this.gun.update(dt);
   this.bolts=this.bolts.filter(b=>(b.left-=dt)>0);this.jump+=dt;
   // 保留紫色原有的近身跳雷伤害与普通敌弹清除规则。
   if(this.color==='purple'&&this.jump>=1.5){
@@ -122,7 +118,6 @@ export class Aura {
  }
  draw():void{
   const w=this.w,p=w.player,b=w.r.ribbonPlayer;if(!p.alive)return;
-  this.gun.draw(w.r.ribbonMid,b);
   for(const bolt of this.bolts)auraLine(b,bolt.pts,1.1,[1.15,.52,2.2],Math.min(1,bolt.left/.055)*.7,RS.Lightning);
   const col=AURA_COLORS[this.color],breath=.045+.03*(1+Math.sin(this.time*4));
   for(const side of[-1,1]){
