@@ -10,8 +10,8 @@
 
 ## 试玩与视频
 
-- **在线试玩：** Cloudflare Pages 部署准备中，发布后在此更新地址。
-- **[观看三章试玩实录 · MP4，约 37 秒，含游戏原声](https://github.com/stofancy/inkskycraft/raw/refs/heads/main/docs/showcase/gameplay.mp4)**
+- **[立即在线试玩](https://inkskycraft.pages.dev/)** · Cloudflare Pages 免费静态托管
+- **[观看三章试玩实录 · MP4，约 37 秒，含游戏原声](https://inkskycraft.pages.dev/showcase/gameplay.mp4)**
 - 录屏包含实际浏览器画面、战斗 HUD、三色武器、自动射击与泼墨。游戏启动时需要加载美术和音频，首次打开请稍候。
 
 ## 游戏画面
@@ -106,7 +106,7 @@ TypeScript + WebGL2 + Vite。运行时使用原生浏览器图形、音频和输
 
 ## 发布与同步
 
-这个仓库使用脱敏后的发布提交。同步进程读取源仓库 `v2` 的已提交内容，在独立发布 worktree 中导出游戏文件、去除本机路径并扫描敏感信息，再推送到 GitHub。
+这个仓库使用脱敏后的发布提交。本机定时服务每分钟检查一次；机器运行且网络可用时，检测到新提交就同步。同步进程读取源仓库 `v2` 的已提交内容，在独立发布 worktree 中导出游戏文件、去除本机路径并扫描敏感信息，再推送到 GitHub，并将通过构建的游戏更新到 Cloudflare Pages。
 
 内部制作记录、会话、本机配置、未提交文件和制作中间产物留在本地。源工作区的文件、Git 配置与原始提交保持原状。GitHub 的提交号与源提交号分别记录；历史源提交在初次发布前的内容未上传。
 
