@@ -6,7 +6,7 @@ import type { Scenery } from '../game/scenery';
 import type { World } from '../game/world';
 
 /** 暂定数值（普通难度）。 */
-export const FORTRESS={arriveAt:9,restY:330,driftX:90,driftPeriod:18,turretHp:90,clampHp:160,fire:{inner:3.4,outer:4.2,charge:1.1},leaveAfterOpen:3};
+export const FORTRESS={arriveAt:9,restY:330,driftX:90,driftPeriod:18,turretHp:90,clampHp:150,clampSlam:{first:5,gap:7,warn:1.3,hold:.8},fire:{inner:3.4,outer:4.2,charge:1.1},leaveAfterOpen:3};
 
 const TURRETS=[{ox:-100.5,oy:-28.5,kind:'inner',phase:0},{ox:100,oy:-28.5,kind:'inner',phase:1.7},{ox:-143,oy:12.5,kind:'outer',phase:.8},{ox:143.5,oy:12.5,kind:'outer',phase:2.5}] as const;
 const CLAMPS=[{ox:-35,oy:15.5,side:-1},{ox:35,oy:15.5,side:1}] as const;
@@ -30,7 +30,7 @@ export function startFortress(g:G,seconds:number):Fortress{
  const turrets=TURRETS.map(t=>{const e=g.spawn(FortressTurret,450+t.ox,f.y+t.oy,e=>{e.data.contentRole='part';e.data.noSupplementFire=true;e.hp=e.maxHp=FORTRESS.turretHp/g.difficulty.hp;e.invulnerable=true;});
   const ov=g.scene('story_fortress-turret-charge',e.x,e.y);ov.layer='air';ov.alpha=0;return {t,e,ov,next:t.phase+FORTRESS.arriveAt+2};});
  const clamps=CLAMPS.map(c=>{const e=g.spawn(c.side<0?FortressClamp:FortressClampR,450+c.ox,f.y+c.oy,e=>{e.data.contentRole='part';e.data.noSupplementFire=true;e.data.fortressClamp=true;e.hp=e.maxHp=FORTRESS.clampHp/g.difficulty.hp;e.invulnerable=true;});
-  const ring=g.scene('story_warning',e.x,e.y);ring.layer='air';ring.alpha=0;ring.sx=ring.sy=.7;marks.push(ring);return {c,e,ring};});
+  const ring=g.scene('story_warning',e.x,e.y);ring.layer='air';ring.alpha=0;ring.sx=ring.sy=.7;marks.push(ring);return {c,e,ring,next:FORTRESS.clampSlam.first+(c.side>0?FORTRESS.clampSlam.gap/2:0)};});
  const t0=g.t;let prompted=false,openAt=-1,leaving=false;
  g.fork((function*():Co{
   while(!f.gone){
@@ -55,6 +55,9 @@ export function startFortress(g:G,seconds:number):Fortress{
    for(const o of clamps){const e=o.e;if(e.dead){o.ring.dead=true;continue;}
     e.x=f.x+o.c.ox;e.y=f.y+o.c.oy;e.vx=e.vy=0;e.angle=o.c.side*sway;e.invulnerable=!(here&&t>=FORTRESS.arriveAt+4);
     o.ring.x=e.x;o.ring.y=e.y+30;o.ring.alpha=e.invulnerable?0:.5+.4*Math.sin(t*6);e.glow=e.invulnerable?1:1.5+.5*Math.sin(t*6);}
+   // 钳臂合拢：露出弱点后每 7 秒（左右错开）从钳口放一道扫向身前的光刃，金线预警 1.3 秒。
+   for(const o of clamps){const e=o.e;if(e.dead||e.invulnerable||t-FORTRESS.arriveAt<o.next)continue;o.next=t-FORTRESS.arriveAt+FORTRESS.clampSlam.gap;
+    g.laser(e.x,e.y+30,Math.PI/2+o.c.side*.75,{warn:FORTRESS.clampSlam.warn,duration:FORTRESS.clampSlam.hold,width:12,length:600,color:'red',sweep:-o.c.side*.55,follow:e});}
    if(!prompted&&here&&t>=FORTRESS.arriveAt+4){prompted=true;g.caption('','打断钳臂',4);}
    if(!f.open&&clamps.every(o=>o.e.dead)){f.open=true;f.openX=f.x;f.openY=f.y+32;openAt=t;g.fx.flash(.35);w.fx.shake(.6);w.hitstop(.1);g.sfx('explode_boss',{vol:.8});}
    if(f.open&&!leaving&&t-openAt>FORTRESS.leaveAfterOpen)leaving=true;

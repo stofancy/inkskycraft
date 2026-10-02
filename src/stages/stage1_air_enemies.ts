@@ -1,9 +1,10 @@
 // 第一章空战新增敌人；友方目标只通过 EscortShip 获取。
 import type { EnemyDef } from '../game/enemy';
+import type { Co } from '../game/api';
 import type { World } from '../game/world';
 import { CH1_AIR_ART } from '../game/escort';
 import { SpritePlayback } from '../art/playback';
-export const NetPost:EnemyDef={name:'浮石林网桩',sprite:CH1_AIR_ART.post.atlas,hp:300,score:500,noCollide:true,onHit(e){e.frame=CH1_AIR_ART.post.segments.damaged.start;},*ai(e){e.stop();e.data.manualFrame=true;for(;;){e.frame=e.hp<e.maxHp?CH1_AIR_ART.post.segments.damaged.start:CH1_AIR_ART.post.segments.intact.start;yield;}},
+export const NetPost:EnemyDef={name:'浮石林网桩',sprite:CH1_AIR_ART.post.atlas,hp:200,score:500,noCollide:true,onHit(e){e.frame=CH1_AIR_ART.post.segments.damaged.start;},*ai(e){e.stop();e.data.manualFrame=true;for(;;){e.frame=e.hp<e.maxHp?CH1_AIR_ART.post.segments.damaged.start:CH1_AIR_ART.post.segments.intact.start;yield;}},
  onDeath(e,g){const remains=g.scene(CH1_AIR_ART.post.atlas,e.x,e.y);remains.frame=CH1_AIR_ART.post.segments.destroyed.start;e.data.remains=remains;}};
 export const BridgeTurret:EnemyDef={name:'浮石炮塔',sprite:'e_turret',hp:110,score:1000,noCollide:true,
  onHit(e,_g,x,y,source){if(e.charging&&['red','blue','purple','companion'].includes(source)&&Math.hypot(x-e.x,y-(e.y+20))<=40)e.interrupt(.4);},
@@ -25,10 +26,14 @@ export const AirBomb:EnemyDef={name:'轰炸机炸弹',sprite:CH1_AIR_ART.bomb.at
   try{e.vy=260;while(e.y<y){yield;}e.stop();while(g.real-log.warnAt<1.2)yield;
   log.explodeAt=g.real;warning.dead=true;ship.explode(x,y);g.remove(e);}finally{warning.dead=true;}
  },onDeath(e){e.data.warning&&(e.data.warning.dead=true);if(e.data.bombLog)e.data.bombLog.destroyed=true;}};
-export const Bomber:EnemyDef={name:'浮石林轰炸机',sprite:CH1_AIR_ART.bomber.atlas,hp:140,score:900,
+export const Bomber:EnemyDef={name:'浮石林轰炸机',sprite:CH1_AIR_ART.bomber.atlas,hp:170,score:900,
  *ai(e,g){const ship=(g as World).escort!,art=CH1_AIR_ART.bomber;e.data.noSupplementFire=true;e.data.manualFrame=true;e.vy=90;
   const flight=new SpritePlayback(art.segments.flight);
-  while(ship.scene.y-e.y>=260){flight.update(g.dt);e.frame=art.segments.flight.start+flight.frame;e.vx=Math.max(-40,Math.min(40,(ship.scene.x-e.x)*.25));yield;}
+  // 机炮：每 2.4 秒朝玩家放 3 发扇形；玩家贴到机身下方 170 以内时，亮光 0.6 秒后近身炸一圈（冷却 5 秒）。
+  let gun=1.5,burst=0;const guns=function*():Co{gun-=g.dt;burst-=g.dt;
+   if(burst<=0&&Math.abs(g.player.x-e.x)<170&&g.player.y>e.y&&g.player.y-e.y<300){burst=5;g.fx.charge(e.x,e.y,30,.6,[1.5,.7,.2]);yield* g.wait(.6);g.ring(e.x,e.y+20,Math.round(8/.42),120,{shape:'orb',color:'magenta'});}
+   else if(gun<=0){gun=2.4;g.fan(e.x,e.y+20,g.aim(e.x,e.y),Math.round(3/.42),.5,150,{shape:'crystal',color:'amber'});}};
+  while(ship.scene.y-e.y>=260){yield* guns();flight.update(g.dt);e.frame=art.segments.flight.start+flight.frame;e.vx=Math.max(-40,Math.min(40,(ship.scene.x-e.x)*.25));yield;}
   e.vx=0;e.data.bayOpen=true;e.data.bayOpenedAt=g.real;g.fx.burst(e.x,e.y,8,30,[.9,.5,.1]);
   const bombing=new SpritePlayback(art.segments.bombing,event=>{if(event.name!=='bombRelease')return;
    e.frame=art.segments.bombing.start+event.frame;e.data.releaseFrame=e.frame;e.data.releaseAt=g.real;
@@ -36,5 +41,5 @@ export const Bomber:EnemyDef={name:'浮石林轰炸机',sprite:CH1_AIR_ART.bombe
    const x=ship.scene.x,y=ship.scene.y,anchor=art.anchors.bombRelease;
    for(let i=0;i<3;i++)g.spawn(AirBomb,e.x+anchor[0],e.y+anchor[1],b=>{b.hp=b.maxHp=AirBomb.hp/g.difficulty.hp;b.data.contentRole='hazard';b.data.noSupplementFire=true;b.data.landX=x;b.data.landY=y+(i-1)*45;});
   });
-  while(e.y<1300){e.frame=art.segments.bombing.start+bombing.frame;yield;bombing.update(g.dt);}g.remove(e);
+  while(e.y<1300){yield* guns();e.frame=art.segments.bombing.start+bombing.frame;yield;bombing.update(g.dt);}g.remove(e);
  }};

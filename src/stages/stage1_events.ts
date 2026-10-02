@@ -7,7 +7,7 @@ import type { World } from '../game/world';
 import type { EscortShip } from '../game/escort';
 import { CH1_AIR_ART } from '../game/escort';
 import { NetPost,BridgeTurret,ShoreCannon,Bomber } from './stage1_air_enemies';
-import { beeSwarm,beeShot,craneRow,kiteGlide,scout,shieldSquad,sweepTop,sweepSide,chaseBehind,sweepLaser,seq } from './stage1_patrol';
+import { beeSwarm,beeShot,craneRow,kiteGlide,scout,shieldSquad,inspector,stopGo,turtle,arm,sweepTop,sweepSide,sweepWave,chaseBehind,sweepLaser,seq } from './stage1_patrol';
 import { director,sayEvent } from './dialogue1';
 export interface RouteState {ship:EscortShip;cart:Scenery;gatePosts?:Enemy[]; gate?:Scenery; bridge:Scenery[]; tools:Scenery[]; events:string[];times:Record<string,number>;lastStrikeBlocked?:boolean;bossResults?:Record<string,{result:string;events:unknown;phases:unknown;timing?:unknown;assisted?:boolean;paperStats?:unknown}>}
 export function routeState(g:G):RouteState{const ship=(g as World).createEscort();const s:RouteState={ship,cart:ship.scene,bridge:[],tools:[],events:[],times:{}};(g as World).sceneState=s;return s;}
@@ -84,11 +84,11 @@ export function* wave(g:G,s:RouteState):Co{
  s.ship.follow=true;
  const plan:Plan=[
   {at:2,go:g=>director(g).event('CH1.air.radar')},
-  {at:1,go:sweepTop(4)},{at:7,go:sweepSide(-1,4)},{at:10,go:drop('p',300)},{at:12,go:sweepSide(1,4)},
-  {at:16,go:seq(sweepTop(5,300,400),sweepTop(5,600,400))},{at:20,go:g=>director(g).event('CH1.air.raid')},
-  {at:22,go:sweepSide(-1,5)},{at:23,go:sweepSide(1,5)},{at:27,go:beeSwarm(4)},{at:28,go:drop('p',600)},
+  {at:1,go:sweepTop(4)},{at:7,go:sweepSide(-1,4)},{at:10,go:drop('p',300)},{at:12,go:stopGo(1)},
+  {at:16,go:seq(sweepWave(5,300,400),sweepTop(5,600,400))},{at:20,go:g=>director(g).event('CH1.air.raid')},
+  {at:22,go:sweepSide(-1,5)},{at:23,go:stopGo(1,200)},{at:27,go:beeSwarm(4)},{at:28,go:drop('p',600)},
   {at:28,go:g=>director(g).event('CH1.air.fight')},
-  {at:29,go:seq(sweepTop(6,450,700),sweepSide(-1,4,160))},{at:33,go:seq(sweepSide(1,5,120),sweepSide(-1,5,200))},{at:35,go:drop('p',450)},
+  {at:29,go:seq(sweepWave(6,450,700),sweepSide(-1,4,160))},{at:33,go:seq(sweepSide(1,5,120),sweepSide(-1,5,200))},{at:35,go:drop('p',450)},
  ];
  yield* timeline(g,40,plan);clear(g);
 }
@@ -97,9 +97,9 @@ export function* hijack(g:G,s:RouteState):Co{
  s.ship.follow=true;s.ship.protected=false;
  const hook=(side:-1|1,first=false)=>(g:G)=>{kiteGlide(true,side,first?{weakLabel:'钩机',weakWeapon:'red',hookLabel:'打掉钩机'}:{})(g);if(first)director(g).event('CH1.hijack');};
  const plan:Plan=[
-  {at:1,go:sweepTop(3)},{at:3,go:hook(-1,true)},{at:10,go:sweepSide(1,4)},{at:15,go:sweepSide(-1,4)},
-  {at:19,go:hook(1)},{at:23,go:beeSwarm(3)},{at:26,go:scout(250,330)},
-  {at:26,go:hook(-1)},{at:27,go:sweepTop(4,600,400)},{at:31,go:seq(sweepSide(1,4),sweepSide(-1,4))},
+  {at:1,go:sweepTop(3)},{at:3,go:hook(-1,true)},{at:9,go:craneRow},{at:13,go:turtle(450)},{at:16,go:sweepWave(4)},
+  {at:19,go:hook(1)},{at:21,go:shieldSquad(2)},{at:25,go:scout(250,330)},
+  {at:26,go:hook(-1)},{at:27,go:sweepTop(4,600,400)},{at:31,go:seq(stopGo(-1),sweepSide(1,4))},
  ];
  yield* timeline(g,37,plan,()=>dragDecay(s,(g as World).lastRealDt));
  while(s.ship.hooks.length){dragDecay(s,0);yield;}
@@ -122,7 +122,7 @@ export function* battery(g:G,s:RouteState):Co{
   {at:8,go:seq(sweepSide(-1,4),sweepSide(1,4))},
   {at:11,go:g=>{fort=startFortress(g,56);emit(g,s,'E08.batteryCargoShown');g.drop('bomb',450,700);g.caption('','拦下空中堡垒',4);}},
   {at:38,go:seq(bombers,sweepTop(5,300,500))},
-  {at:50,go:seq(sweepSide(-1,4),sweepSide(1,4))},
+  {at:50,go:seq(stopGo(-1),stopGo(1,200))},
  ];
  const each=(t:number)=>{
   if(fort&&openedAt<0&&fort.open){openedAt=t;stone=g.scene('sky_rock',fort.openX,fort.openY);stone.layer='front';stone.glow=1.5;stone.sx=stone.sy=.9;tow=g.scene('e_kite',stone.x+110,stone.y-40);tow.sx=tow.sy=1.4;tow.layer='air';emit(g,s,'E08.transportDirectionShown');}
@@ -135,8 +135,8 @@ export function* battery(g:G,s:RouteState):Co{
 export function* rush(g:G,s:RouteState):Co{
  s.ship.follow=true;s.ship.protected=false;director(g).event('CH1.rush');
  const plan:Plan=[
-  {at:1,go:chaseBehind(5)},{at:4,go:sweepLaser(-1,260)},{at:8,go:sweepSide(1,4)},{at:11,go:chaseBehind(6)},
-  {at:14,go:seq(sweepLaser(1,400),sweepSide(-1,3))},{at:19,go:sweepLaser(-1,200)},{at:21,go:chaseBehind(5)},
+  {at:1,go:chaseBehind(5)},{at:4,go:sweepLaser(-1,260)},{at:6,go:inspector},{at:8,go:sweepSide(1,4)},{at:11,go:chaseBehind(6)},
+  {at:14,go:seq(sweepLaser(1,400),sweepSide(-1,3))},{at:16,go:arm(300)},{at:19,go:sweepLaser(-1,200)},{at:20,go:shieldSquad(2,600)},{at:21,go:chaseBehind(5)},
   {at:25,go:seq(sweepSide(-1,4),sweepSide(1,4))},{at:27,go:seq(sweepLaser(1,300),sweepLaser(-1,500))},{at:30,go:chaseBehind(6)},{at:32,go:drop('ink',450)},
  ];
  yield* timeline(g,36,plan);clear(g);
