@@ -28,6 +28,8 @@ export async function loadSpriteImages(defs: SpriteDef[]): Promise<SpriteImages>
 
 /** 烘焙与精灵预览共用图片来源和回退规则。画布原点仍为矩形中心。 */
 export function drawSprite(ctx: CanvasRenderingContext2D, def: SpriteDef, frame: number, images: SpriteImages): void {
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
   const sheet = def.sheet;
   const path = sheet?.image ?? (typeof def.image === 'string' ? def.image : def.image?.[frame % def.image.length]);
   const image = path ? images.get(path) : undefined;

@@ -11,6 +11,6 @@
 
 工具准备：`npm run fonts:setup`，fontTools 与 Brotli 安装到项目 `.venv/`。`npm run build` 与 `npm run dev` 自动生成字体；单独生成用 `npm run fonts:subset`。安装完工具后可离线构建、离线运行。
 
-扫描 `src/**/*.ts`、`tools/**/*.ts` 的字符串与模板文本，排除注释、CSS 与生成的 fonts.ts；外部动态文字登记 extraText。汉字缺失阻止构建，特殊符号缺失写入报告。输出正文/数字 WOFF2、授权文件、`src/ui/fonts.ts` 与 `assets/fonts/subset-report.json`，生成文件随分支提交。
+扫描 `src/**/*.ts`、`tools/**/*.ts` 的字符串与模板文本，排除注释、CSS 与生成的 fonts.ts；外部动态文字登记 extraText。正文缺少的汉字使用已收录的 Noto Serif CJK 源生成 unicode-range 补字子集（例如墨谱名称里的“炁”）；两个来源均缺字才阻止构建，特殊符号缺失写入报告。输出正文/数字/补字 WOFF2、授权文件、`src/ui/fonts.ts` 与 `assets/fonts/subset-report.json`，生成文件随分支提交。
 
 缺少 Python、fontTools 或 Brotli 时沿用已提交字体，输出当前源码字集覆盖提示；准备工具后重建。数字不变由 P3-09 的前后 SHA256 比较验证。字体对比记录位于主工作区绝对路径 `local-source/README.md`，交付证据位于 `local-source/P3-09.md`。

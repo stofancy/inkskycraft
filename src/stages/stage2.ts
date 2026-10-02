@@ -1,51 +1,53 @@
-import type { Co, G } from '../game/api';
-import type { EnemyDef } from '../game/enemy';
+// P5-01：十二段手写空战剧情；检查点与段落计时共用同一顺序。
+import type { Co,G } from '../game/api';
+import type { World } from '../game/world';
+import type { Enemy } from '../game/enemy';
 import type { StageDef } from './types';
+import { ChapterDialogue,director } from './dialogue1';
+import { CH2_LINES } from './dialogue2_data';
+import { Chapter2 } from './stage2_air';
+import { chapterEnemy,GateTower,noSupplement } from './stage2_air_enemies';
 import { STAGE2_ENEMIES } from './stage2_enemies';
-import { waveCheckpoint } from './checkpoints';
-import { Mirage, Pagoda } from './stage2_boss';
-const chapters=['渡灯','拆税舟','宝塔记忆','蜃还名'];
-const pools: (keyof typeof STAGE2_ENEMIES)[][] = [
- ['paperray','taxcrab','rotor','lantern'],['junk','lampboat','belleel','netspider'],
- ['mirrorfish','umbrellaguest','moth','netspider'],['tideshuttle','paperray','lampboat','belleel']];
-/** 旧16波各映射四段：示范→交叉→场景互动→组合验收。每章4旧波。 */
-export const STAGE2_ENCOUNTERS=chapters.flatMap((chapter,c)=>Array.from({length:16},(_,i)=>({
- chapter,oldWave:c*4+Math.floor(i/4)+1,variation:['教学','交叉','场景互动','组合验收'][i%4],bodies:i<12?24:23,
- primary:pools[c][Math.floor(i/4)],secondary:pools[c][(Math.floor(i/4)+1)%4],
-})));
-const Rescue:EnemyDef={sprite:'s2_rescueboat',hp:1,invulnerable:true,noCollide:true,
- *ai(e,g):Co {e.vy=95;for(;;){g.fx.ink(e.x,e.y+70,45,0.3,[0.1,0.4,0.4]);yield* g.wait(1);}}};
-const Mooring:EnemyDef={sprite:'s2_node',hp:28,score:150,noCollide:true,
- *ai(e):Co {e.vy=90;e.data.weakWeapon='purple';},onDeath(e,g){g.clearBullets();g.drop('ink',e.x,e.y);}};
-function* encounter(g:G,index:number):Co {
- const a=STAGE2_ENCOUNTERS[index],variant=index%4,start=g.t;
- const n=Math.round(a.bodies*(g.difficulty.quantity??g.difficulty.enemyCount));
- const side=(Math.floor(index/4)%2?1:-1);
- if(variant===2){g.spawn(Rescue,side<0?225:675,-50,e=>{e.data.contentRole='prop';});g.spawn(Mooring,side<0?650:250,100,e=>{e.data.contentRole='prop';});}
- for(let j=0;j<n;j++){
-  const primary=variant===0 || (variant===1 ? j%2===0 : variant===2 ? j%3!==0 : j%3===0);
-  let type=primary?a.primary:a.secondary;
-  if(type==='lantern'&&j>=3)type='paperray';
-  let x:number,y=-70;
-  if(variant===0)x=180+(j%6)*108;
-  else if(variant===1){x=j%2?760:140;y=-60-(j%3)*35;}
-  else if(variant===2)x=(side<0?500:130)+(j%4)*75;
-  else{x=120+(j%7)*105;y=-70-Math.abs(3-j%7)*30;}
-  g.spawn(STAGE2_ENEMIES[type],x,y,e=>{e.data.contentRole='normal';e.data.enemyType=type;e.data.entryX=x;e.data.flank=j%2?1:-1;e.data.amp=variant===1?130:65;e.data.oldX=g.player.x;});
-  yield* g.wait(variant===0?0.23:variant===1?0.25:variant===2?0.22:0.24);
+import { Mirage } from './stage2_boss';
+import { beaconWave } from './stage2_beacon';
+const PI=Math.PI;
+const names=['灯河夜航','护船下游','打灭假航灯','屿长说来历','闸楼炮大场面','镜鱼突袭','急行横扫','云闸前九灯','蜃','章末'];
+export const C2_PARTS=names.map((label,i)=>({id:`C2.P${i+1}`,label}));
+function clear(w:World){for(const e of [...w.enemies])w.remove(e);w.clearBullets(false);}
+function* untilPart(c:Chapter2,start:number,seconds:number):Co{while(c.w.real-start<seconds)yield;}
+function spawn(c:Chapter2,kind:keyof typeof STAGE2_ENEMIES,x:number,y:number,data:Record<string,unknown>={}):Enemy{return c.w.spawn(chapterEnemy(kind,c.part),x,y,e=>{noSupplement(e);e.data.entryX=x;Object.assign(e.data,data);});}
+function* batch(c:Chapter2,kind:keyof typeof STAGE2_ENEMIES,n:number,positions:(i:number)=>[number,number],data:(i:number)=>Record<string,unknown>=()=>({})):Co{for(let i=0;i<Math.round(n*c.w.difficulty.quantity);i++){const [x,y]=positions(i);spawn(c,kind,x,y,data(i));yield* c.wait(.45);}}
+function* part(c:Chapter2,n:number):Co{const w=c.w,start=w.real;c.part=n;
+ switch(n){
+ case 1:w.scrollSpeed(45,1);c.mission(1);yield* c.conversation('C2.P1.riverNight');w.scrollSpeed(80,2);yield* untilPart(c,start,15);yield* batch(c,'lantern',5,i=>[190+(i%2)*510,210+i*75]);yield* batch(c,'rotor',3,i=>[150+i*300,-60-i*40],i=>({flank:i%2?1:-1,amp:120}));yield* untilPart(c,start,30);yield* batch(c,'lantern',5,i=>[190+(i%2)*510,210+i*75]);yield* batch(c,'rotor',3,i=>[750-i*300,-60-i*40]);yield* untilPart(c,start,45);c.short(2);yield* batch(c,'lampboat',2,i=>[260+i*380,-70]);yield* untilPart(c,start,60);break;
+ case 2:c.mission(2);w.scrollSpeed(80,1.5);c.fleet.visible=true;c.fleet.protected=false;c.fleet.scene.y=860;c.log('fleet.depart');
+ yield* batch(c,'paperray',5,i=>[120+(i%2)*660,-60-i*45],i=>({flank:i%2?-1:1}));yield* batch(c,'junk',2,i=>[180+i*540,240]);yield* batch(c,'tideshuttle',4,i=>[150+i*190,-90]);yield* batch(c,'taxcrab',2,i=>[250+i*400,300]);yield* batch(c,'netspider',2,i=>[120+i*660,260]);c.short(5);yield* untilPart(c,start,28);c.fleet.scene.x=450;
+ yield* batch(c,'paperray',5,i=>[780-(i%2)*660,-60-i*45],i=>({flank:i%2?1:-1}));yield* batch(c,'junk',2,i=>[720-i*540,260]);yield* batch(c,'tideshuttle',4,i=>[720-i*180,-60]);yield* untilPart(c,start,55);break;
+ case 3:{w.scrollSpeed(110,1.5);yield* batch(c,'paperray',4,i=>[120+(i%2)*660,-60-i*45],i=>({flank:i%2?-1:1}));yield* batch(c,'taxcrab',2,i=>[300+i*300,300]);yield* untilPart(c,start,8);
+ yield* beaconWave(w,[[90,330],[810,560]],true);yield* batch(c,'junk',2,i=>[180+i*540,240]);yield* batch(c,'tideshuttle',3,i=>[200+i*250,-90]);yield* untilPart(c,start,30);
+ yield* beaconWave(w,[[90,330],[90,560],[810,450]],true);yield* batch(c,'netspider',2,i=>[120+i*660,270]);yield* batch(c,'lantern',3,i=>[200+i*220,-60]);yield* untilPart(c,start,52);break;}
+ case 4:w.scrollSpeed(45,2);yield* batch(c,'lantern',2,i=>[250+i*400,-60]);yield* c.conversation('C2.P4.origin');yield* untilPart(c,start,15);break;
+ case 5:{w.scrollSpeed(80,1.5);const towers=[w.spawn(GateTower,200,300,noSupplement),w.spawn(GateTower,700,300,noSupplement)];c.short(20);
+ yield* batch(c,'umbrellaguest',3,i=>[180+i*270,-60]);yield* batch(c,'lampboat',2,i=>[250+i*400,-80]);yield* batch(c,'rotor',3,i=>[170+i*280,-60]);yield* untilPart(c,start,16);
+ yield* batch(c,'umbrellaguest',3,i=>[720-i*270,-60]);yield* batch(c,'lampboat',2,i=>[650-i*400,-80]);yield* batch(c,'netspider',2,i=>[120+i*660,270]);yield* untilPart(c,start,34);
+ yield* batch(c,'umbrellaguest',3,i=>[200+i*250,-60]);yield* batch(c,'lampboat',2,i=>[300+i*300,-80]);yield* batch(c,'rotor',3,i=>[750-i*280,-60]);
+ while(towers.some(t=>!t.dead)&&w.real-start<60)yield;for(const tower of towers)if(!tower.dead){w.damage(tower,10000,tower.x,tower.y,true,'companion');c.log('gate.chiyanAssist');}
+ yield* c.wait(1.5);for(const tower of towers)if(tower.data.wreck)tower.data.wreck.dead=true;yield* c.conversation('C2.P6.bellSilence');c.leave('chiyan');yield* c.wait(.8);break;}
+ case 6:{w.scrollSpeed(150,1.5);const cave=w.scene('c2_cliff-cave',810,520);cave.layer='ground';c.short(17);yield* batch(c,'mirrorfish',7,i=>[120+i*100,-60-Math.abs(3-i)*60]);yield* batch(c,'tideshuttle',4,i=>[180+i*180,-70]);yield* untilPart(c,start,15);spawn(c,'mirrorfish',840,520,{flank:-1});c.join('moyuan',{x:900,y:520});yield* c.conversation('C2.moyuanJoin');for(let i=1;i<Math.round(7*w.difficulty.quantity);i++){spawn(c,'mirrorfish',750-i*100,-60-Math.abs(3-i)*60);yield* c.wait(.45);}while(w.real-start<45&&w.enemies.some(e=>!e.dead&&e.def.sprite==='e_mirrorfish'))yield;yield* c.conversation('C2.moyuanIntro');yield* untilPart(c,start,50);cave.dead=true;break;}
+ case 7:{w.scrollSpeed(160,1.5);c.short(15);
+ w.fork((function*():Co{for(let i=0;i<5;i++){yield* c.wait(6);const left=i%2===0;w.laser(left?40:860,60,left?PI/2-.7:PI/2+.7,{warn:1,duration:2.6,width:30,color:'amber',sweep:left?.55:-.55});}})());
+ yield* batch(c,'umbrellaguest',4,i=>[180+i*160,180+i*150]);yield* batch(c,'mirrorfish',6,i=>[200+(i%3)*200,140+Math.floor(i/3)*300]);yield* batch(c,'moth',3,i=>[200+i*250,-80]);yield* batch(c,'netspider',2,i=>[700-i*500,330+i*250]);yield* untilPart(c,start,45);break;}
+ case 8:w.scrollSpeed(45,1.5);c.changeBackground('cloud-town-real');yield* batch(c,'lantern',3,i=>[200+i*220,-60]);yield* untilPart(c,start,12);clear(w);yield* c.conversation('C2.P8.belowCloud');c.changeBackground('cloud-town-false');yield* w.milestone('云闸前补给');yield* c.conversation('C2.MR.arrival');yield* untilPart(c,start,36);break;
+ case 9:clear(w);c.mission(3);w.scrollSpeed(25,2);c.fleet.visible=true;c.fleet.protected=false;c.fleet.scene.x=450;c.fleet.scene.y=900;yield* w.boss(Mirage,450,290,{startPhase:w.testBossPhase('MIRAGE'),warning:false,resumeMusic:'stage2'});w.clearBullets(false);break;
+ case 10:clear(w);w.scrollSpeed(45,1.5);c.changeBackground('cloud-town-real');yield* c.conversation('C2.MR.reveal');w.unlockSkill('shenying');c.log('skill.shenying');yield* untilPart(c,start,20);
+ for(const strength of [.6,.8,1]){w.bgFlash(strength);w.sfx('warning');c.log(`end.flash.${strength}`);yield* c.wait(2);}c.endScene=w.scene('c2_enforcement-ship',730,260);c.endScene.layer='air';c.lockedBird=w.scene('companion_chiyan',729.52,346.19);c.lockedBird.layer='air';c.lockedBird.sx=c.lockedBird.sy=.4;
+ yield* c.wait(6);yield* c.conversation('C2.end.thunderCall');const end=w.real;while(w.real-end<8){const k=(w.real-end)/8;c.endScene.x=730+k*180;c.endScene.y=260-k*180;c.endScene.sx=c.endScene.sy=1-k*.6;c.endScene.alpha=1-k;c.lockedBird.x=c.endScene.x;c.lockedBird.y=c.endScene.y+86.19*(1-k*.6);c.lockedBird.alpha=1-k;yield;}c.endScene.dead=c.lockedBird.dead=true;const mo=w.companions.team.find(s=>s.kind==='moyuan'),flight=w.real,ox=w.player.x,oy=w.player.y;if(mo){mo.penFlight=true;mo.angle=0;}while(w.real-start<45){const k=Math.min(1,(w.real-flight)/Math.max(.1,45-(flight-start)));w.player.x=ox+(450-ox)*k;w.player.y=oy+(-90-oy)*k;if(mo){mo.x=w.player.x+82;mo.y=w.player.y-60;}yield;}break;
  }
- yield* g.until(()=>g.t>=start+7,8);
 }
-export const STAGE2:StageDef={index:2,title:'第二幕 · 灯河还名',subtitle:'THE RIVER OF RETURNED NAMES',name:'灯河还名',bg:'stage2',music:'stage2',
- content:{baselineBodies:380,normalBodies:1520,baselineTypes:4,enemyTypes:Object.keys(STAGE2_ENEMIES),encounters:64,chapters},
- *script(g:G):Co {if(!g.seekingCheckpoint){g.card(this.title,this.subtitle);yield* g.wait(3);}let growthSlot=0;
- for(let c=0;c<4;c++){
-  if(!g.seekingCheckpoint)g.card(`灯河 · ${chapters[c]}`,`CHAPTER ${c+1}`);g.bg(0,0.25+c*0.2,4);g.bg(1,c*0.22,4);g.bg(2,0.18+c*0.05,4);g.scrollSpeed(65+c*5,3);
-  if(!g.seekingCheckpoint)g.caption('老盾',['旧路尚在，名字已空。','他们的名字，仍在供电。','原契从未许诺永囚。','把归处交还他们。'][c],2.5);
-  for(let i=0;i<16;i++){if(!g.checkpoint(waveCheckpoint(c*16+i)))continue;yield* encounter(g,c*16+i);if(growthSlot<3&&g.t>=[60,180,300][growthSlot])yield* g.growthChoice(++growthSlot);if(i===4||i===10||i===14)g.drop('p',240+(i%3)*180,210);if(i===7)g.drop('weapon',450,210);}
-  if(!g.seekingCheckpoint)yield* g.waitClear(7);
-  if(c===2 && g.checkpoint('PAGODA')){g.caption('老盾','拆掉锁链，原契才可读。',2.5);yield* g.boss(Pagoda,450,-180,{warning:false,music:false,startPhase:g.testBossPhase('PAGODA')});g.drop('1up',450,380);yield* g.milestone('宝塔断链 · 航图归还');}
-  else if(!g.seekingCheckpoint)yield* g.milestone(`灯河 · ${chapters[c]}回墨`);
- }
- if(g.checkpoint('MIRAGE'))yield* g.boss(Mirage,450,-240,{subtitle:'藏灯 · 闭壳藏人',startPhase:g.testBossPhase('MIRAGE')});g.bg(1,0,4);g.caption('藏灯','让他们自己选归处。',2.8);yield* g.wait(3);
+export const STAGE2:StageDef={index:2,title:'第二章 · 蜃海',subtitle:'认清真灯，穿过云海',name:'蜃海',bg:'stage2',music:'stage2',
+ content:{baselineBodies:0,normalBodies:135,baselineTypes:13,enemyTypes:[...Object.keys(STAGE2_ENEMIES),'gatetower'],encounters:10,chapters:names},
+ *script(g:G):Co{const w=g as World;w.chapterDialogue=new ChapterDialogue(w,CH2_LINES);const c=w.chapter2=new Chapter2(w);w.sceneState=c;c.roster(['chiyan','laodun']);
+ if(!g.seekingCheckpoint){g.card(this.title,this.subtitle);yield* c.wait(3);}if(w.checkpointTarget&&/^C2.P(?:[6-9]|10)$|MIRAGE/.test(w.checkpointTarget)){c.roster(['laodun','moyuan']);}if(w.checkpointTarget&&/^C2.P(?:[3-9]|10)$|MIRAGE/.test(w.checkpointTarget)){c.fleet.visible=true;c.fleet.protected=false;}
+ for(let n=1;n<=10;n++){if(!(g.checkpoint(`C2.P${n}`)||(n===9&&g.checkpoint('MIRAGE'))))continue;clear(w);const at=w.real,paused=w.dialoguePauseSeconds;c.times[`P${n}.start`]=at;yield* part(c,n);c.times[`P${n}.end`]=w.real;c.segments.push({id:`C2.P${n}`,seconds:w.real-at,dialogueSeconds:w.dialoguePauseSeconds-paused});clear(w);
+ if(n===3||n===5||n===8){yield* g.growthChoice(n===3?1:n===5?2:3);} }
  }};

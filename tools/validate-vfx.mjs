@@ -1,6 +1,6 @@
 // P1-05：固定世界时钟的游戏内前后对照、帧序列及 30 爆炸压测。
 // 用法：node tools/validate-vfx.mjs <dev URL> <输出目录> [before|after]
-// 固定场景直接走 MoveSystem.execute / World.damage / World.kill；指令输入另跑 validate-moves。
+// 固定场景走 World.damage / World.kill；键鼠输入另跑 validate-controls。
 // VFX_SKIP_BENCH=1 仅重采视觉与预览页，保留已验证的性能记录。
 import puppeteer from 'puppeteer-core';
 import assert from 'node:assert/strict';
@@ -19,24 +19,25 @@ try {
  await page.waitForFunction(()=>window.__game?.state==='playing');await delay(3500);
  await page.evaluate(async()=>{
   const g=window.__game,w=g.world,r=g.r;
-  const {ACTIVE_MOVES}=await import('/src/game/moves.ts');
+
   g.update=()=>{};
+  const add=r.inkBursts.layer.add.bind(r.inkBursts.layer);window.vfxDraw=[];r.inkBursts.layer.add=(id,params)=>{window.vfxDraw.push({id,...params});return add(id,params);};
   window.vfxReset=()=>{
-   w.root.cancel();w.enemies=[];w.bullets.clear();w.lasers=[];w.items.list=[];
-   w.moves.resetStage();w.fx.clear();r.partLow.reset();r.partHigh.reset();r.fluid.clear();r.lights.clear();
+   w.resetStage();
+   w.fx.clear();r.partLow.reset();r.partHigh.reset();r.fluid.clear();r.lights.clear();
    w.player.x=450;w.player.y=1000;w.player.entering=0;w.player.ink=1;
-   w.time+=5;w.real=w.time;r.partLow.time=r.partHigh.time=w.time;w.dt=0;
+   w.time+=5;w.real=w.time;r.partLow.time=r.partHigh.time=w.visualTime;w.dt=0;
    w.fx.shakeEnabled=false;w.bgFlashValue=0;
   };
   window.vfxStep=dt=>{
-   w.time+=dt;w.real=w.time;r.partLow.time=r.partHigh.time=w.time;
-   w.moves.update(dt);w.fx.update(dt,dt,w.time);g.render();
+   w.time+=dt;w.real=w.time;r.partLow.time=r.partHigh.time=w.visualTime;
+   w.fx.update(dt,dt,w.time);window.vfxDraw=[];g.render();
   };
   window.vfxSetup=mode=>{
    window.vfxReset();
    if(mode==='moves'){
-    w.player.x=240;w.moves.execute(ACTIVE_MOVES[1]);
-    w.player.x=660;w.moves.execute(ACTIVE_MOVES[0]);
+    w.player.x=240;w.brush.paths.spear([240,850,240,580]);
+    w.player.x=660;w.roll.update(0);
    }else if(mode==='hits'){
     const boss=w.spawn({sprite:'b_sparrow_body',hp:10000,noCollide:true,boss:{name:'同一机体三色命中',phases:1,music:'boss1'}},450,310);
     boss.scaleX=2.7;boss.scaleY=1.4;window.vfxBoss=boss;
@@ -69,9 +70,9 @@ try {
   window.vfxSetup('hits');const boss=window.vfxBoss,hp=boss.hp;
   boss.invulnerable=true;w.damage(boss,10,450,235,true,'purple');checks.blockedHpUnchanged=boss.hp===hp;
   boss.invulnerable=false;w.damage(boss,10,450,400,true,'purple');checks.successHpDecreased=boss.hp===hp-10;
-  window.vfxSetup('explosion');checks.threeBurstSizes=r.inkBursts.count===3;
+  window.vfxSetup('explosion');checks.threeBurstSizes=r.inkBursts.count===3&&JSON.stringify(window.vfxDraw.map(d=>d.sx*256))===JSON.stringify([125,225,355]);
   window.vfxStep(1.6);checks.expiredBurstsRemoved=r.inkBursts.count===0;
-  window.vfxSetup('explosion');const frames=()=>Array.from(r.inkBursts.layer.data.slice(8,12));
+  window.vfxSetup('explosion');const frames=()=>window.vfxDraw.map(d=>({frame:d.frame,sx:d.sx,sy:d.sy}));
   window.vfxStep(.2);const a=frames();window.vfxStep(0);checks.pausedFrameStable=JSON.stringify(a)===JSON.stringify(frames());
   w.fx.clear();checks.stageResetClearsBursts=r.inkBursts.count===0;
   r.setBackground('stage2');window.vfxSetup('explosion');checks.otherChapterKeepsVolumetric=r.inkBursts.count===0;
@@ -98,7 +99,7 @@ try {
      const stamp=await new Promise(requestAnimationFrame);
      if(frame>=60&&previous)raf.push(stamp-previous);previous=stamp;
      const begin=performance.now();
-     w.time+=1/60;w.real=w.time;r.partLow.time=r.partHigh.time=w.time;
+     w.time+=1/60;w.real=w.time;r.partLow.time=r.partHigh.time=w.visualTime;
      if(stress){
       // 每半秒重播一批，保持 30 个在播；旧碎甲、粒子、墨与受光自然衰减。
       if(frame%30===0){r.inkBursts.clear();for(let i=0;i<30;i++){

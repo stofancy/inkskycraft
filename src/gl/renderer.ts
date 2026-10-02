@@ -1,7 +1,10 @@
+import { MantraGlyphs } from './mantra-glyphs';
+import { SpellLayer } from './spell';
 // 渲染总调度：管理画布尺寸、游戏区视口、各渲染层与固定的绘制顺序。
 import { ALL_SPRITES } from '../art/index';
 import { BG_HEADER, FRAME_HEADER, type BgDef, type Vec4 } from '../bg/header';
 import { BACKGROUNDS, FRAME_FRAG } from '../bg/index';
+import { SkyGroundLayer } from '../bg/sky-scene';
 import { PLAY_H, PLAY_W, type Rect, type Settings } from '../types';
 import { Atlas } from './atlas';
 import { BulletRenderer } from './bullets';
@@ -34,9 +37,6 @@ function norm3(x: number, y: number, z: number): [number, number, number] {
 
 interface BgProgs { def: BgDef; bg: Program | null; fg: Program | null; s3: Scene3D | null }
 
-const COPY = `#version 300 es
-precision highp float; uniform sampler2D uTex; in vec2 vUv; out vec4 o; void main(){ o = vec4(texture(uTex, vUv).rgb, 1.0); }`;
-
 export class Renderer {
   readonly gl: GL;
   readonly atlas: Atlas;
@@ -49,6 +49,8 @@ export class Renderer {
   partLow!: ParticleSystem;
   /** 高层粒子（火花、余烬），在敌弹之下、其余之上。 */
   partHigh!: ParticleSystem;
+  /** 机身粒子独立限额、时钟与判定点留白。 */
+  playerFx!: ParticleSystem;
   /** 体积火球（爆炸），叠在空中敌机之上、玩家子弹之下。 */
   fireballs!: FireballSystem;
   /** 三维甲片碎块，独立深度缓冲保证翻滚时的自遮挡。 */
@@ -58,6 +60,12 @@ export class Renderer {
   impact!: ImpactSystem;
   inkBursts!: InkBursts;
   moveTitles!: MoveTitles;
+  mantraGlyphs!:MantraGlyphs;
+  /** 泼墨施法的屏幕层（暗角、字、立绘笔触、火墙）。 */
+  spell!:SpellLayer;
+  /** 泼墨墨浪期间让流体按真实时间推进。 */
+  fluidReal=false;
+  mantraZoom=1;mantraInk=0;mantraDim=1;mantraShake:[number,number]=[0,0];
   /** 弹光缓冲（1/4 分辨率 HDR）：弹幕、激光、爆炸的柔光，供 3D 背景采样。 */
   lightBuf!: LightBuffer;
   /** 弹光缓冲进入 3D 背景光照的强度。 */
@@ -66,13 +74,14 @@ export class Renderer {
   shotLight: [number, number, number] = [1.0, 0.42, 0.28];
 
   // 各层（每帧由游戏填充，渲染后清空）
-  ground!: SpriteLayer;
+  ground!: SkyGroundLayer;
   shadows!: SpriteLayer;
   air!: SpriteLayer;
   shots!: SpriteLayer;   // 玩家子弹（加色）
   player!: SpriteLayer;
   items!: SpriteLayer;
   top!: SpriteLayer;     // 印章等最上层
+  ribbonPlayer = new RibbonBatch(); // 贴合机翼的表面辉光，位于玩家精灵与敌弹之间
   ribbonMid = new RibbonBatch();  // 激光、雷弧（在空中敌机之上）
   ribbonTop = new RibbonBatch();  // 一笔墨迹、敌方激光（最上层）
 
@@ -89,8 +98,7 @@ export class Renderer {
   quality: 'high' | 'ultra' = 'ultra';
   private lastReal = 0;
   scene!: Target;
-  private bgTarget!: Target;
-  private copy!: Program;
+  private mantraWash!:Program;
   private frameProg!: Program;
   private bgs = new Map<string, BgProgs>();
   bgId = 'title';
@@ -124,11 +132,11 @@ export class Renderer {
 
   async init(settings: Settings, onProgress: (p: number) => void): Promise<void> {
     const gl = this.gl;
-    this.renderScale = settings.renderScale;
+    this.renderScale = Math.max(1, settings.renderScale);
     this.quality = settings.quality;
-    // 纹理密度按屏幕实际像素密度决定：6K 屏约 3 像素/单位
-    const pxPerUnit = (window.innerHeight * (window.devicePixelRatio || 1)) / PLAY_H;
-    const texScale = Math.min(3, Math.max(1.25, Math.ceil(pxPerUnit * 4) / 4));
+    // 公共图集固定两倍密度，小机体通过textureScale保留原帧。
+    // DPR提升渲染缓冲分辨率；整套文字和素材同步超采样会占用数倍显存。
+    const texScale = 2;
     await this.atlas.build(ALL_SPRITES, texScale, (p) => onProgress(p * 0.85));
     this.sprites = new SpriteRenderer(gl, this.atlas);
     this.bullets = new BulletRenderer(gl);
@@ -138,14 +146,15 @@ export class Renderer {
     this.post = new Post(gl);
     this.partLow = new ParticleSystem(gl, ultra ? 262144 : 131072);
     this.partHigh = new ParticleSystem(gl, ultra ? 524288 : 196608);
+    this.playerFx = new ParticleSystem(gl, 800);
     this.fireballs = new FireballSystem(gl);
     this.debris = new DebrisSystem(gl);
     this.thunder = new ThunderSystem(gl);
     this.impact = new ImpactSystem(gl);
     this.fireballs.quality = 1;
-    this.fireballs.scale = ultra ? 1 : 0.75;
+    this.fireballs.scale = 1;
     this.lightBuf = new LightBuffer(gl);
-    this.ground = this.sprites.layer();
+    this.ground = new SkyGroundLayer(this.atlas);
     this.shadows = this.sprites.layer();
     this.air = this.sprites.layer();
     this.shots = this.sprites.layer(4096);
@@ -153,11 +162,13 @@ export class Renderer {
     this.items = this.sprites.layer();
     this.top = this.sprites.layer(64);
     this.inkBursts = new InkBursts(this.sprites.layer(128));
+    this.mantraGlyphs=new MantraGlyphs(gl);
+    this.spell=new SpellLayer(gl);
     this.moveTitles = new MoveTitles(this.sprites.layer(1));
-    this.copy = new Program(gl, FS_TRI_VS, COPY);
+    this.mantraWash=new Program(gl,FS_TRI_VS,`#version 300 es
+precision highp float;uniform float dim;out vec4 o;void main(){o=vec4(vec3(dim),1.);}`);
     this.frameProg = new Program(gl, FS_TRI_VS, FRAME_HEADER + FRAME_FRAG);
     this.scene = new Target(gl, 4, 4, 'rgba16f');
-    this.bgTarget = new Target(gl, 4, 4, 'rgba16f');
     onProgress(0.9);
     // 预编译所有背景，避免关卡切换时卡顿
     for (const id of Object.keys(BACKGROUNDS)) this.bgProgs(id);
@@ -207,14 +218,15 @@ export class Renderer {
     if (q === this.quality) return;
     this.quality = q;
     this.fireballs.quality = 1;
-    this.fireballs.scale = q === 'ultra' ? 1 : 0.75;
+    this.fireballs.scale = 1;
     this.fireballs.resize(this.playPx.w, this.playPx.h);
     for (const p of this.bgs.values()) p.s3?.setQuality(q);
     this.resizeBg();
   }
 
   setRenderScale(s: number): void {
-    this.renderScale = s;
+    // 旧设置可低至 0.5；画面至少按屏幕实际像素绘制。
+    this.renderScale = Math.max(1, s);
     this.resize();
   }
 
@@ -243,10 +255,8 @@ export class Renderer {
   }
 
   private resizeBg(): void {
-    if (!this.bgTarget) return;
+    if (!this.scene) return;
     const P = this.bgProgs(this.bgId);
-    const s = P.def.scale ?? 1;
-    this.bgTarget.resize(this.playPx.w * s, this.playPx.h * s);
     P.s3?.resize(this.playPx.w, this.playPx.h);
   }
 
@@ -258,16 +268,18 @@ export class Renderer {
   /**
    * 渲染一帧。time = 游戏时间（受子弹时间影响），real = 真实时间。
    */
-  render(time: number, real: number, scroll: number, beat: number, bgFlash: number, fluidDt: number): void {
+  render(time: number, real: number, scroll: number, beat: number, bgFlash: number, fluidDt: number, visualTime=time): void {
     const gl = this.gl;
     const P = this.bgProgs(this.bgId);
-    this.partLow.time = time;
-    this.partHigh.time = time;
+    this.fireballs.realTime=real;
+    this.partLow.time = visualTime;
+    this.partHigh.time = visualTime;
     this.sprites.time = time;
 
     const tm = this.timer;
     if (tm && tm.only === 'frame') tm.begin('frame');
-    this.fluid.step(fluidDt);
+    // 顿帧期间墨浪仍按真实时间注入，暂停时 real 不前进。
+    this.fluid.step(this.mantraDim<1||this.fluidReal?Math.min(1/30,Math.max(0,real-this.lastReal)):fluidDt);
     // 1. 背景
     gl.disable(gl.BLEND);
     if (tm && tm.only === 'bg') tm.begin('bg');
@@ -277,16 +289,10 @@ export class Renderer {
       P.s3.render(this.scene, { time, scroll, beat, flash: bgFlash, params: this.bgParams, lightTex: this.lightBuf.target.tex, lightK: this.lightBufK }, this.lights);
       this.lights.endFrame();
     } else {
-      const scaled = (P.def.scale ?? 1) !== 1;
-      const bgT = scaled ? this.bgTarget : this.scene;
+      const bgT = this.scene;
       bgT.bind();
       this.setBgUniforms(P.bg!, bgT.w, bgT.h, time, scroll, beat, bgFlash);
       fullscreen(gl);
-      if (scaled) {
-        this.scene.bind();
-        this.copy.use().tex('uTex', this.bgTarget.tex);
-        fullscreen(gl);
-      }
     }
     if (tm && tm.only === 'bg') tm.end();
 
@@ -294,29 +300,37 @@ export class Renderer {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     const S = this.sprites;
+    // 先压暗背景；随后绘制的战斗对象、亮芯、敌弹保持本身亮度。
+    if(this.mantraDim<1){this.scene.bind();gl.enable(gl.BLEND);gl.blendFunc(gl.ZERO,gl.SRC_COLOR);this.mantraWash.use().set('dim',this.mantraDim);fullscreen(gl);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);}
     // 2. 地面单位 → 3. 空中单位投影 → 4. 墨流体 → 5. 低层粒子
+    S.draw(this.ground.scenery);
+    // 天气盖过背景景物，玩家、敌机及双方子弹随后绘制。
+    if (P.fg) {
+      this.setBgUniforms(P.fg, this.scene.w, this.scene.h, time, scroll, beat, bgFlash);
+      fullscreen(gl);
+    }
     S.draw(this.ground);
     S.draw(this.shadows, 1, [26, 44], 0.92);
     this.fluid.composite(time, 1.6);
     this.partLow.draw();
     // 6. 空中敌机 → 7. 玩家子弹与光带 → 8. 玩家 → 9. 道具
     S.draw(this.air);
-    this.debris.draw(time, this.scene);
-    this.fireballs.draw(time, this.scene);
-    this.inkBursts.draw(time);
+    this.debris.draw(visualTime, this.scene);
+    this.fireballs.draw(visualTime, this.scene);
+    this.inkBursts.draw(visualTime);
     S.draw(this.inkBursts.layer);
     this.inkBursts.layer.clear();
     S.draw(this.shots, 2);
     this.ribbons.draw(this.ribbonMid, time);
-    this.thunder.draw(time, this.scene);
+    this.thunder.draw(visualTime, this.scene);
+    this.playerFx.draw();
     S.draw(this.player);
-    this.impact.draw(time, this.scene);
+    this.ribbons.draw(this.ribbonPlayer, time);
+    this.impact.draw(visualTime, this.scene);
     S.draw(this.items);
-    // 10. 前景（云、雨）
-    if (P.fg) {
-      this.setBgUniforms(P.fg, this.scene.w, this.scene.h, time, scroll, beat, bgFlash);
-      fullscreen(gl);
-    }
+    this.mantraGlyphs.draw();
+    this.spell.drawBack(real);
+    this.spell.drawGlyphs(real);
     // 11. 高层粒子 → 12. 敌弹 → 13. 一笔与敌方激光 → 14. 印章
     this.partHigh.draw();
     this.moveTitles.draw(real);
@@ -324,6 +338,7 @@ export class Renderer {
     this.moveTitles.layer.clear();
     this.bullets.draw(time);
     this.ribbons.draw(this.ribbonTop, time);
+    this.spell.drawTop(real);
     S.draw(this.top);
     gl.disable(gl.BLEND);
 
@@ -335,10 +350,14 @@ export class Renderer {
     this.frameProg.use().set('uRes', this.canvas.width, this.canvas.height)
       .set('uPlay', pp.x, flipY, pp.w, pp.h).set('uTime', real).set('uBeat', beat).set('uTint', this.tint).set('uFlash', bgFlash * 0.3);
     fullscreen(gl);
+    const zoom=this.post.zoom,shake=this.post.shake,reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.post.zoom=zoom*(reduced?1:this.mantraZoom);this.post.shake=reduced?[0,0]:[shake[0]+this.mantraShake[0],shake[1]+this.mantraShake[1]];this.post.mantraInk=this.mantraInk;
     this.post.render(this.scene, real, pp.x, flipY, pp.w, pp.h);
+    this.post.zoom=zoom;this.post.shake=shake;
 
     for (const l of [this.ground, this.shadows, this.air, this.shots, this.player, this.items, this.top]) l.clear();
     this.ribbonMid.clear();
+    this.ribbonPlayer.clear();
     this.ribbonTop.clear();
     this.thunder.clear();
     this.impact.clear();

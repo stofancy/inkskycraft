@@ -27,7 +27,7 @@ float fbm(vec2 p, int oct) {
 /**
  * 背景 / 前景着色器头。
  * - 背景输出 fragColor.rgb = 线性 HDR 颜色（alpha 忽略）。
- * - 前景（可选）输出预乘 alpha 的 RGBA，叠在敌机之上、子弹之下（云雾、雨丝等）。
+ * - 前景（可选）输出预乘 alpha 的 RGBA，叠在背景景物之上、所有战斗对象之下（云雾、雨丝等）。
  *
  * 世界坐标：p = vec2(vUv.x * PLAY_W, vUv.y * PLAY_H + uScroll * layerSpeed)，y 向上。
  * uScroll 随时间增加，画面内容向下移动（玩家向上飞）。

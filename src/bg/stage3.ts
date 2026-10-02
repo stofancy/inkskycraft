@@ -1,5 +1,6 @@
 import type { BgDef } from './header';
 import type { Bg3D } from '../gl/scene3d';
+import { SKY_WEATHER } from './weather';
 
 /**
  * 第三幕 · 云海雷（真 3D：光线步进体积云海 + 云内闪电，见 src/gl/scene3d.ts 的 fogFS / compHook 扩展）
@@ -360,4 +361,12 @@ export const BG_STAGE3: BgDef = {
   tint: 0x5a3c8c,
   params: { p0: [0, 0.55, 0, 0], p1: [1, 1, 0, 0] },
   scene3d: SCENE,
+  fg: SKY_WEATHER + `
+void main() {
+  vec2 base = vUv * vec2(PLAY_W, PLAY_H);
+  // 保留 V2 的远云、体积积云、近处稀云与云内闪电；补回细雨和风中微粒。
+  vec4 weather = skyWeather(base, hexc(0x92919e), hexc(0x343140), 0.25, 0.45 + uP0.x * 0.55);
+  fragColor = weather;
+}
+`,
 };

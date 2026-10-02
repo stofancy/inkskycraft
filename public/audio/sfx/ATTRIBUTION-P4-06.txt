@@ -1,0 +1,58 @@
+P4-06 音效素材来源与署名
+
+以下均使用 Freesound 官方公开高质量 MP3 预览，经过剪辑、变速、叠加及峰值调整。
+
+gong — airtaxi
+来源：https://freesound.org/people/airtaxi/sounds/76886/
+预览：https://cdn.freesound.org/previews/76/76886_1051883-hq.mp3
+授权：CC0 https://creativecommons.org/publicdomain/zero/1.0/
+
+wood — alegemaate
+来源：https://freesound.org/people/alegemaate/sounds/364691/
+预览：https://cdn.freesound.org/previews/364/364691_2531187-hq.mp3
+授权：CC0 https://creativecommons.org/publicdomain/zero/1.0/
+
+slash — mht23SD
+来源：https://freesound.org/people/mht23SD/sounds/707339/
+预览：https://cdn.freesound.org/previews/707/707339_15272986-hq.mp3
+授权：CC0 https://creativecommons.org/publicdomain/zero/1.0/
+
+thunder — bastipictures
+来源：https://freesound.org/people/bastipictures/sounds/243778/
+预览：https://cdn.freesound.org/previews/243/243778_997601-hq.mp3
+授权：CC0 https://creativecommons.org/publicdomain/zero/1.0/
+
+sword — spycrah
+来源：https://freesound.org/people/spycrah/sounds/471095/
+预览：https://cdn.freesound.org/previews/471/471095_9856191-hq.mp3
+授权：CC0 https://creativecommons.org/publicdomain/zero/1.0/
+
+wind — qubodup
+来源：https://freesound.org/people/qubodup/sounds/60013/
+预览：https://cdn.freesound.org/previews/60/60013_71257-hq.mp3
+授权：CC0 https://creativecommons.org/publicdomain/zero/1.0/
+
+drum — sazanami12
+来源：https://freesound.org/people/sazanami12/sounds/856549/
+预览：https://cdn.freesound.org/previews/856/856549_17110092-hq.mp3
+授权：CC0 https://creativecommons.org/publicdomain/zero/1.0/
+
+rim — sazanami12
+来源：https://freesound.org/people/sazanami12/sounds/856559/
+预览：https://cdn.freesound.org/previews/856/856559_17110092-hq.mp3
+授权：CC0 https://creativecommons.org/publicdomain/zero/1.0/
+
+cymbal — Zagorius_mpc
+来源：https://freesound.org/people/Zagorius_mpc/sounds/136449/
+预览：https://cdn.freesound.org/previews/136/136449_2483307-hq.mp3
+授权：CC-BY-4.0 https://creativecommons.org/licenses/by/4.0/
+
+flute — Carlos Carty
+来源：https://freesound.org/people/CarlosCarty/sounds/339357/
+预览：https://cdn.freesound.org/previews/339/339357_197130-hq.mp3
+授权：CC0 https://creativecommons.org/publicdomain/zero/1.0/
+
+Chinese Cymbal 46_1.wav by Zagorius_mpc, licensed CC BY 4.0.
+用于 mantra_roll / mantra_finale：截取、缩短尾音、变速以外的混合与峰值调整。
+DIZI FLUTE 02.wav by Carlos Carty (CC0)，依作者请求保留署名。用于 swap_red：短音截取、逐渐变速上滑与淡出。
+所有鼓声来自 sazanami12 的大鼓实录。未使用运行时或离线程序合成鼓声。

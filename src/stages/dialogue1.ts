@@ -1,82 +1,72 @@
-// 第一章对白：按 studio/specs/dialogue-ch1.md 接入，经 G.say 走通讯窗。
-import type { G } from '../game/api';
+// 第一章对白：剧情按页确认，战斗短句按游戏时钟排队；演出使用独立时钟。
+import { BOSS_DIALOGUE_BY_ID } from './dialogue1_boss_data';
+import type { Co,G } from '../game/api';
+import type { World } from '../game/world';
 import type { DialogueActor } from '../types';
-
-const LABEL = { calm: '平静', smug: '得意', alarmed: '着急' } as const;
-type Expr = keyof typeof LABEL;
-// public/art/portraits 里已有的表情图；缺的表情回退到 calm。
-const HAVE: Record<string, Expr[]> = {
-  xiaoman: ['calm', 'smug', 'alarmed'], chiyan: ['calm'], laodun: ['calm'], moyuan: ['calm'],
-  suanpan: ['calm'], zhangmen: ['calm'], tongque: ['calm'],
-};
-const NAMES: Record<string, string> = { xiaoman: '小满', chiyan: '赤燕', laodun: '老盾', moyuan: '墨鸢', suanpan: '算盘', zhangmen: '掌门', tongque: '铜雀', zhilong: '纸龙' };
-const actors: Record<string, DialogueActor> = {};
-for (const id of Object.keys(NAMES)) {
-  const have = HAVE[id];
-  actors[id] = have
-    ? { name: NAMES[id], portrait: `/art/portraits/${id}/calm.png`, expressions: Object.fromEntries(have.map(e => [LABEL[e], `/art/portraits/${id}/${e}.png`])) }
-    : { name: NAMES[id] };
+import { CH1_LINES } from './dialogue1_data';
+export { CH1_LINES };
+const LABEL={calm:'平静',smug:'得意',alarmed:'着急'} as const;
+const IDS:Record<string,string>={小满:'xiaoman',赤燕:'chiyan',老盾:'laodun',算盘:'suanpan',总镖头:'zhangmen',铜雀:'tongque',纸龙:'zhilong',屿长:'gongtou',蜃:'mirage',墨鸢:'moyuan',雷公:'leigong'};
+export type Line={id:string;trigger:string;speaker:string;emotion:'calm'|'smug'|'alarmed';text:string;memory:boolean;pause?:boolean;identity?:string};
+export const DISABLED_BOSS_EVENTS=new Set(['PD.arrival','PD.P1.paperArmorShown','PD.P2.repeatSlipShown','PD.P3.sealTargetReady','PD.P3.foldConfirmed','PD.exitRouteOpened','PD.sealTimeout','TQ.T1.returnOrderShown','TQ.T1.chestOpen','TQ.T2.verticalUnlocked','TQ.T2.firstShellHanging','TQ.T2.firstShellFallen','TQ.T3.padAimLocked','TQ.T3.powerActuallyCut','TQ.T4.tailLatchExposed','TQ.T5.controllerReady','TQ.T5.sealMissed','TQ.controlStopped','TQ.sealTimeout']);
+interface Group {event:string;lines:Line[];at:number;queuedAt:number;notBefore:number;long:boolean;filler:boolean;persistent:boolean;started?:number;index:number;done:boolean;expired?:boolean;afterLine?:string;segment:string}
+export class ChapterDialogue {
+ queue:Group[]=[];current:Group|null=null;until=0;briefRemaining=0;
+ triggered=new Set<string>();history:Line[]=[];dropped:{id:string;reason:string}[]=[];
+ briefIds:number[]=[];groups:Group[]=[];lineStarts:Record<string,number>={};lineEnds:Record<string,number>={};
+ onLineStart?: (line:Line)=>void;onLineEnd?: (line:Line)=>void;
+ private completed=false;private segment=0;
+ get groupTimings(){return this.groups.map(v=>({event:v.event,ids:v.lines.map(l=>l.id),grouped:v.lines.length>1,triggered:v.at,started:v.started,delay:v.started===undefined?null:v.started-v.at,dropped:!!v.expired,done:v.done,afterLine:v.afterLine}));}
+ constructor(readonly g:World,readonly lines:readonly Line[]=[...CH1_LINES,...Object.values(BOSS_DIALOGUE_BY_ID)]){g.ui.resetCommunications();}
+ get spawnPaused(){return this.paused;}
+ get paused(){return this.briefRemaining>0||this.g.ui.dialogueState().active;}
+ event(event:string,long=false,afterLine?:string):Group|undefined{
+  if(this.triggered.has(event))return;
+  this.triggered.add(event);
+  const skill=event==='PD.partSalvaged'?'tishen':event==='TQ.POST.partSalvaged'?'zhongpao':null;
+  if(skill&&!this.g.skills.unlocked.has(skill))this.g.skills.unlock(skill,450,350);
+  if(DISABLED_BOSS_EVENTS.has(event))return;
+  const lines:Line[]=this.lines.filter(l=>l.trigger===event);if(!lines.length)return;
+  const group:Group={event,lines,at:this.g.presentationTime,queuedAt:this.g.real,notBefore:this.g.real+(event.startsWith('B-')&&/(成功|失败)$/.test(event)?.5:0),long:long||lines.some(l=>l.pause),filler:!long&&!lines.some(l=>l.pause)&&/中弹/.test(event),persistent:/^E02\.cannonStopped$|HP≤|^B-4\..*(成功|失败)$/.test(event),index:0,done:false,afterLine,segment:event};this.enqueue(group);return group;
+ }
+ short(id:string,speaker:string,text:string):void {const line:Line={id,trigger:id,speaker,emotion:'calm',text,memory:false,pause:false};const group:Group={event:id,lines:[line],at:this.g.presentationTime,queuedAt:this.g.real,notBefore:this.g.real,long:false,filler:false,persistent:true,index:0,done:false,segment:id};this.enqueue(group);}
+ private drop(group:Group,reason:string){group.done=true;group.expired=true;this.dropped.push(...group.lines.map(l=>({id:l.id,reason})));}
+ private enqueue(group:Group){
+  this.groups.push(group);
+  if(group.filler&&this.queue.length>0){this.drop(group,'填充喊话让位于排队对白');return;}
+  if(!group.filler){for(const v of this.queue.filter(v=>v.filler))this.drop(v,'填充喊话让位于排队对白');this.queue=this.queue.filter(v=>!v.filler);}
+  this.queue.push(group);
+ }
+ *conversation(...events:string[]):Co{const segment=`conversation-${++this.segment}`;const groups=events.map(id=>this.event(id,true)).filter(Boolean) as Group[];for(const group of groups)group.segment=segment;while(groups.some(v=>!v.done))yield;}
+ brief(id:number):void{this.briefIds.push(id);this.briefRemaining=3.65;this.g.ui.missionBrief(id);}
+ private actor(line:Line):DialogueActor{const id=IDS[line.speaker],expr=LABEL[line.emotion];if(!id)return {name:line.speaker,identity:line.identity,portrait:'',expressions:{}};return {name:line.speaker,identity:line.identity,portrait:`/art/portraits/${id}/calm.png`,expressions:{[expr]:`/art/portraits/${id}/${id==='suanpan'?'calm':line.emotion}.png`}};}
+ private end(line:Line){this.lineEnds[line.id]=this.g.presentationTime;this.onLineEnd?.(line);}
+ private skipSegment(){
+  const group=this.current;if(!group)return;const pending=[group,...this.queue.filter(v=>v.segment===group.segment)];
+  this.queue=this.queue.filter(v=>v.segment!==group.segment);
+  for(const v of pending){if(v===group)this.end(v.lines[v.index-1]);for(const line of v.lines.slice(v.index)){this.history.push(line);this.g.ui.recordCommunication(this.actor(line),LABEL[line.emotion],line.text,line.id,line.memory);this.lineStarts[line.id]=this.g.presentationTime;this.onLineStart?.(line);this.end(line);}v.done=true;}
+  this.current=null;this.completed=false;this.until=0;
+ }
+ tick(dt:number):void{
+  const blocked=this.g.bossCombat.dialogueBlocked;const el=document.querySelector<HTMLElement>('.communication');if(el)el.style.visibility=blocked?'hidden':'';if(blocked){if(this.current)this.until+=dt;return;}
+  if(this.briefRemaining>0){this.briefRemaining=Math.max(0,this.briefRemaining-dt);return;}
+  if(this.current&&this.current.index>0&&(this.completed||(!this.current.long&&this.g.real>=this.until))){const group=this.current;this.end(group.lines[group.index-1]);this.completed=false;if(group.index>=group.lines.length){group.done=true;this.current=null;}}
+  if(!this.current){while(this.queue.length){const index=this.queue.findIndex(v=>this.g.real>=v.notBefore&&(!v.afterLine||this.lineEnds[v.afterLine]!==undefined));if(index<0)break;const next=this.queue.splice(index,1)[0];
+   if(!next.long&&!next.persistent&&(next.lines.length===1||next.event.startsWith('B-'))&&this.g.real-next.queuedAt>6){this.drop(next,'战斗喊话排队超过6秒');continue;}
+   next.started=this.g.presentationTime;this.current=next;this.until=0;break;
+  }}
+  if(!this.current){this.g.ui.chapterSay({name:''},'','','',false);return;}
+  if(this.g.ui.dialogueState().active)return;
+  if(this.current.long||this.g.real>=this.until){
+   const line=this.current.lines[this.current.index];
+   this.current.index++;this.history.push(line);this.lineStarts[line.id]=this.g.presentationTime;
+   this.until=this.g.real+Math.max(2.5,Array.from(line.text).length*.18);
+   this.g.ui.chapterSay(this.actor(line),LABEL[line.emotion],line.text,line.id,line.memory,this.current.long?{pause:true,onDone:()=>{this.completed=true;},onSkip:()=>this.skipSegment()}:undefined);
+   this.onLineStart?.(line);
+  }
+ }
 }
-
-// 台词 ID -> [说话人, 表情, 台词, 时长]
-type Line = [string, Expr, string, number];
-const LINES: Record<string, Line> = {
-  'M1-0-00': ['xiaoman', 'calm', '我是修机徒弟小满，来救修桥工。', 3],
-  'M1-0-01': ['xiaoman', 'alarmed', '断桥上的工人，被机器拦住了。', 3],
-  'M1-0-02': ['xiaoman', 'calm', '师父教过我：人在，桥才在。', 3],
-  'M1-0-03': ['zhangmen', 'calm', '小满，先回来。检修交给师兄。', 3],
-  'M1-0-04': ['xiaoman', 'alarmed', '师父，我先救人，再回去见您。', 3],
-  'M1-0-05': ['chiyan', 'calm', '赤燕火力手，先把拦路炮拆了！', 3],
-  'M1-0-06': ['xiaoman', 'smug', '赤燕，你那旧机像条咸鱼。', 3],
-  'M1-0-07': ['chiyan', 'smug', '咸鱼也有梦想！旧机子也要起飞！', 3],
-  'M1-0-08': ['xiaoman', 'smug', '飞起来了！回镇给它刷漆。', 3],
-  'M1-0-09': ['laodun', 'calm', '老盾护航。人先走，我来挡弹。', 3],
-  'M1-0-10': ['xiaoman', 'calm', '你护工人，我拆拦路炮。', 3],
-  'M1-1-00': ['moyuan', 'calm', '我是侦察机墨鸢，拍下了断桥。', 3],
-  'M1-1-01': ['moyuan', 'calm', '我拍的是断桥，广播播的却是新桥。', 3],
-  'M1-1-03': ['suanpan', 'calm', '修理机器人算盘，镇上又停电了。', 3],
-  'M1-1-04': ['suanpan', 'alarmed', '掌门，怎么突然之间没电了呢？', 3],
-  'M1-1-05': ['xiaoman', 'alarmed', '师父在山上，只看得到广播。', 3],
-  'M1-1-07': ['suanpan', 'alarmed', '电池都往河边运，镇上拿什么开工？', 3],
-  'M1-1-08': ['xiaoman', 'calm', '记下去向，先救桥上的人。', 3],
-  'M1-2-00': ['xiaoman', 'calm', '纸龙是巡逻机，连修桥的人也查？', 3],
-  'M1-2-04': ['xiaoman', 'calm', '前面是纸龙，先让它停下。', 3],
-  'M1-2-06': ['moyuan', 'calm', '纸龙回报：桥已经修好。', 3],
-  'M1-2-07': ['chiyan', 'alarmed', '修好了？断桥的洞自己长的？', 3],
-  'M1-2-08': ['xiaoman', 'calm', '先过检查，再去桥口放人。', 3],
-  'M1-3-00': ['xiaoman', 'calm', '纸龙停了，继续去桥口救人。', 3],
-  'M1-3-01': ['laodun', 'calm', '铜雀是守桥机器，堵着桥口。', 3],
-  'M1-3-03': ['xiaoman', 'alarmed', '师父若知道停电，一定会撤令。', 3],
-  'M1-3-05': ['suanpan', 'calm', '灯河是运电池的河，记住方向。', 3],
-  'M1-3-07': ['xiaoman', 'calm', '先开桥口，再沿灯河找回电池。', 3],
-  'M1-3-09': ['chiyan', 'calm', '铜雀的旧甲，是我亲手装的。', 3],
-  'M1-3-10': ['xiaoman', 'calm', '师父教过我：人在，桥才在。', 3],
-  'M1-PD-IN': ['zhilong', 'calm', '桥没修好，修桥的人禁止通行。', 3],
-  'M1-TQ-IN': ['tongque', 'calm', '桥没修好，谁都别走。掌门有令。', 3],
-  'M1-TQ-STRIP': ['chiyan', 'smug', '敌羞，吾去脱他衣！', 3],
-  'M1-TQ-SHY': ['tongque', 'alarmed', '旧甲退壳。这是……羞？', 3],
-  'M1-TQ-RETRY': ['moyuan', 'calm', '回墨，再圈住发光的核心。', 2],
-  'M1-END': ['xiaoman', 'calm', '工人能下桥了，沿灯河找回电池！', 2],
-};
-
-let played = new Set<string>();
-let lastAt = -99;
-/** 新一局开始时清空「只播一次」记录。 */
-export function resetDialogue(): void { played = new Set(); lastAt = -99; }
-
-/** 播放一条台词；同一条只播一次。返回是否播出。 */
-export function sayLine(g: G, id: string, opts: { spaced?: boolean; after?: string; repeat?: boolean } = {}): boolean {
-  const l = LINES[id];
-  if (!l || (played.has(id) && !opts.repeat)) return false;
-  if (opts.after && !played.has(opts.after)) return false;
-  if (opts.spaced && g.t - lastAt < 4.5) return false;
-  played.add(id); lastAt = g.t;
-  g.say(actors[l[0]], LABEL[l[1]], l[2], l[3]);
-  return true;
-}
-
-/** 普通遭遇对白：encounter 开始时按 chapter/round 查表。 */
-export function sayEncounter(g: G, chapter: number, round: number): void {
-  const id = `M1-${chapter}-${String(round).padStart(2, '0')}`;
-  if (LINES[id]) sayLine(g, id);
-}
+export const director=(g:G)=>(g as World).chapterDialogue!;
+export function resetDialogue(g:G):void{(g as World).chapterDialogue=new ChapterDialogue(g as World);}
+export function sayLine(g:G,event:string,_opts:unknown={}):boolean{return !!director(g)?.event(event);}
+export const sayEvent=sayLine;

@@ -39,7 +39,7 @@ try{
   await page.evaluate(async entry=>{
    const g=window.__game;g.toTitle();const {defaultTestOptions}=await import('/src/game/test-options.ts');
    const options={...defaultTestOptions(),chapter:entry.chapter,checkpoint:entry.checkpoint,god:true,fullInk:true,fullBombs:true};
-   const {TEST_CHECKPOINTS}=await import('/src/stages/checkpoints.ts');if(!TEST_CHECKPOINTS[entry.chapter].some(c=>c.id===entry.checkpoint))throw Error('未知起点 '+entry.checkpoint);g.onTestStart(options);g.world.player.weapon=entry.weapon;
+   const {TEST_CHECKPOINTS}=await import('/src/stages/checkpoints.ts');const starts=TEST_CHECKPOINTS[entry.chapter];if(!starts.some(c=>c.id===entry.checkpoint)){options.checkpoint=starts.find(c=>c.id===(['','S3','C2.P3'][entry.chapter]??'start'))?.id??'start';}g.onTestStart(options);g.world.player.weapon=entry.weapon;
    const original=g.input.down.bind(g.input);g.input.down=a=>a==='shoot'||original(a);
    g.world.debugAuto=true;
    window.__advance=setInterval(()=>{const ui=g.ui;if(ui.dialogueState?.().active)ui.dialogueAdvance?.();if(g.state==='growth'){const buttons=[...document.querySelectorAll('[role=button]')];buttons.find(b=>b.getAttribute('aria-disabled')!=='true')?.click();}},400);

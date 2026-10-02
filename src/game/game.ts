@@ -8,11 +8,14 @@ import { STAGES, TEST_STAGE } from '../stages/index';
 import type { StageDef } from '../stages/types';
 import type { GameAudio, GameUI, Settings, StageResult, UIEvents } from '../types';
 import { World } from './world';
+import { MAX_BOMBS } from './items';
 import { TEST_CHECKPOINTS } from '../stages/checkpoints';
 import { FINAL_TEST_STAGE } from '../stages/stage3';
+import { INK_COLORS } from './ink-score';
 import { TALENTS } from './progression';
+import { filterSkills } from './skills';
+import { filterBrushForms } from './brush-shape';
 import type { TestRunOptions } from './test-options';
-import { ACTIVE_MOVES } from './moves';
 
 type State = 'loading' | 'title' | 'playing' | 'paused' | 'continue' | 'results' | 'gameover' | 'ending' | 'growth';
 
@@ -33,10 +36,23 @@ export class Game implements UIEvents {
   readonly world: World;
   private stages: StageDef[];
   private stageIdx = 0;
+  private stageRequest = 0;
   private continueT = 0;
   private titleT = 0;
   private pendingResult: StageResult | null = null;
-  private restMode: 'talent' | 'shop' = 'talent';
+  private restMode: 'talent' | 'inkScore' = 'talent';
+  private cheatDeadline=0;
+  private cheatBuffer='';
+  private acceptCheat(code:string):void {
+    if(this.state!=='playing'||performance.now()>this.cheatDeadline)return;
+    const token:Record<string,string>={ArrowUp:'U',ArrowDown:'D',ArrowLeft:'L',ArrowRight:'R',KeyB:'B',KeyA:'A'};
+    if(!token[code]){this.cheatBuffer='';return;}
+    this.cheatBuffer=(this.cheatBuffer+token[code]).slice(-12);
+    const w=this.world;let name='';
+    if(this.cheatBuffer.endsWith('UUDDLRLRBABA')&&!w.allSkills){w.enableAllSkills();name='全技能';}
+    if(this.cheatBuffer.endsWith('UDLRABAB')&&!w.cheatGod){w.cheatGod=true;name='无敌';}
+    if(name){this.audio.sfx('skill_unlock');this.ui.popup(w.player.x,w.player.y-100,'秘技 · '+name,'info');}
+  }
   fps = 60;
   testRun: TestRunOptions | null = null;
 
@@ -45,11 +61,13 @@ export class Game implements UIEvents {
     public settings: Settings, hiScore: number, readonly debug: DebugOpts = {},
   ) {
     this.world = new World(r, audio, ui, input);
+    input.onKey=code=>this.acceptCheat(code);
     this.world.hiScore = hiScore;
     this.world.setDifficulty(loadDifficulty(debug.diff));
     this.world.onGameOver = () => this.toContinue();
     this.world.debugAuto = !!debug.bot;
     this.world.onMilestone = label => this.openMilestone(label);
+    this.world.onInkScore = name => this.openInkScore(name);
     this.stages = STAGES.length ? STAGES : [TEST_STAGE];
     this.applySettings(settings);
   }
@@ -76,9 +94,12 @@ export class Game implements UIEvents {
     const entry=TEST_CHECKPOINTS[options.chapter]?.find(p=>p.id===options.checkpoint);
     if(!entry)return;
     const selected=structuredClone(options);
+    selected.brushMethods=filterBrushForms(selected.brushMethods);
+    selected.skills=filterSkills(selected.skills);
     selected.bossPhase=Math.max(1,Math.min(entry.phases??1,Math.trunc(selected.bossPhase)||1));
     selected.companions=[...new Set(selected.companions)].filter(k=>['chiyan','laodun','moyuan','suanpan'].includes(k)).slice(0,2);
     selected.passives=[...new Set(selected.passives)].filter(id=>TALENTS.some(t=>t.id===id));
+    selected.bombColor=INK_COLORS.includes(selected.bombColor)?selected.bombColor:'red';selected.inkScore=Object.fromEntries(INK_COLORS.map(c=>[c,Math.max(0,Math.min(3,Math.trunc(selected.inkScore?.[c]??0)))])) as TestRunOptions['inkScore'];
     this.world.newGame();
     this.testRun=selected;
     this.startStage(selected.chapter-1,selected);
@@ -105,6 +126,7 @@ export class Game implements UIEvents {
       w.player.respawn();
       this.state = 'playing';
       this.ui.screen('none');
+      this.audio.music(w.combatMusic, .6);
       this.audio.sfx('menu_ok');
     } else {
       this.toGameOver();
@@ -114,7 +136,10 @@ export class Game implements UIEvents {
   onResultsDone(): void {
     if (this.state !== 'results') return;
     if(this.testRun){this.toTitle();return;}
-    if (this.stageIdx + 1 < this.stages.length) this.startStage(this.stageIdx + 1);
+    if (this.stageIdx + 1 < this.stages.length) {
+      this.world.brushPower = Math.min(3, this.world.brushPower + 1);
+      void this.startStage(this.stageIdx + 1, undefined, true);
+    }
     else this.toEnding();
   }
 
@@ -129,46 +154,38 @@ export class Game implements UIEvents {
     saveDifficulty(d);
   }
 
+  onDialogueSound(): void {
+    this.audio.sfx('menu_move', { vol: .22, pitch: .85 });
+  }
+
   onMenuSound(kind: 'move' | 'ok' | 'back'): void {
     this.audio.sfx(kind === 'move' ? 'menu_move' : kind === 'ok' ? 'menu_ok' : 'menu_back');
   }
 
   private openMilestone(label: string): void {
     const w = this.world;
-    if (!label.startsWith('成长 ')) {
-      const goods=w.shop.offerChapter(Math.min(4,w.contentStats.milestones));
-      if(this.debug.bot){const affordable=goods.find(g=>g.cost<=w.shop.credits);if(affordable)w.shop.purchase(affordable.id);else w.shop.skip();w.restLabel='';return;}
-      this.restMode='shop';this.state='growth';
-      this.ui.screen('growth',{choiceTitle:'行囊补给',choiceHint:`补给 ${w.shop.credits} · 采购一项或保留`,choices:[...goods.map(g=>({id:g.id,name:g.name,description:g.description,cost:g.cost,disabled:g.cost>w.shop.credits})),{id:'skip',name:'继续前行',description:'保留补给额度'}],moves:this.moveCards()});return;
-    }
+    if (!label.startsWith('成长 ')) { w.restLabel = ''; return; }
     const talents = w.progression.offerTalents();
     if (this.debug.bot) {if(talents[0])w.progression.choose(talents[0].id);w.restLabel='';return;}
     this.restMode='talent';this.state='growth';
     if(w.progression.talents.size===0)w.say('算盘','平静','三项挑一项，照着示意行动就会生效。',3);
-    this.ui.screen('growth', {choiceTitle:label,choiceHint:'先看效果示意，选一项；之后按条件自动生效',choices:talents.map(t=>({id:t.id,name:t.name,description:t.description,detail:t.route,preview:t.preview,icon:t.icon})),moves:this.moveCards()});
+    this.ui.screen('growth', {choiceTitle:`天赋 · ${label}`,choiceHint:'看图标和说明，选一项；之后按条件自动生效',choices:talents.map(t=>({id:t.id,name:t.name,description:t.description,detail:t.route,preview:t.preview,icon:t.icon}))});
   }
+
+  private openInkScore(name:string):void{const w=this.world;if(w.allSkills){w.inkScore.pending=false;return;}if(this.debug.bot){w.inkScore.choose(INK_COLORS.filter(c=>w.inkScore.levels[c]<3).sort((a,b)=>w.inkScore.levels[a]-w.inkScore.levels[b])[0]);return;}this.restMode='inkScore';this.state='growth';this.ui.screen('growth',{choiceTitle:'墨谱',choiceHint:`${name}的驱动符补全山门笔法，选一色升一级`,choices:w.inkScore.cards()});}
 
   onChoice(id: string): void {
     if (this.state !== 'growth') return;
     const w = this.world;
-    if (this.restMode === 'talent') {
-      if (!w.progression.choose(id)) return;
-      w.restLabel='';this.state='playing';this.ui.screen('none');
-    } else {
-      if (id === 'skip') w.shop.skip(); else if (!w.shop.purchase(id)) return;
-      w.restLabel = '';
-      this.state = 'playing';
-      this.ui.screen('none');
-    }
-  }
-
-  private moveCards() {
-    return [...ACTIVE_MOVES.map(m=>({name:`主动 · ${m.name}`,input:`${m.input} + F / U（手柄 R3）`,effect:`${m.effect} · 冷却 ${m.cooldown} 秒`,window:m.window,cost:m.cost})), ...this.world.combos.moves.map(m => ({ name: `被动 · ${m.name}` + (m.talent && !this.world.progression.has(m.talent) ? ' · 天赋' : ''), input: m.description.split('：')[0], effect: m.description.split('：')[1] ?? m.description, window: m.window, cost: m.cost }))];
+    if(this.restMode==='inkScore'){if(!w.inkScore.choose(id))return;this.state='playing';this.ui.screen('none');w.audio.sfx('seal');return;}
+    if (!w.progression.choose(id)) return;
+    w.restLabel = ''; this.state = 'playing'; this.ui.screen('none');
   }
 
   // ------------------------------------------------------------ 流程
 
   toTitle(): void {
+    this.stageRequest++;
     this.testRun=null;
     this.state = 'title';
     this.world.resetStage();
@@ -177,28 +194,54 @@ export class Game implements UIEvents {
     this.ui.screen('title', { settings: this.settings, hiScore: this.world.hiScore, difficulty: this.world.diffId });
   }
 
-  startStage(i: number, test?: TestRunOptions): void {
+  async startStage(i: number, test?: TestRunOptions, interlude = false): Promise<void> {
     const w = this.world;
     const def = test?.chapter===4 ? FINAL_TEST_STAGE : this.debug.stage === 0 && !test ? TEST_STAGE : this.stages[i];
+    const request = ++this.stageRequest;
+    this.state = 'loading';
+    if (interlude) this.audio.music('interlude', .5);
+    this.ui.screen('loading', { progress: 0 });
+    await this.audio.init();
+    if (request !== this.stageRequest) return;
+    await this.audio.prepareMusic(def.index, !!test && !!TEST_CHECKPOINTS[test.chapter].find(p => p.id === test.checkpoint)?.phases);
+    if (request !== this.stageRequest) return;
     this.stageIdx = i;
     w.resetStage();
     w.stageIndex = def.index;
     w.stageName = def.name;
     w.player.reset(false);
+    w.companions.setRoster(def.index===1?[]:def.index===2?['chiyan','laodun']:['laodun','moyuan']);
     if(test){
-      w.testOptions=test;
+      w.testOptions={...test,brushMethods:filterBrushForms(test.brushMethods)};
       w.checkpointTarget=test.checkpoint==='start'?null:test.checkpoint;
       w.scroll=TEST_CHECKPOINTS[test.chapter].find(p=>p.id===test.checkpoint)!.scroll;
-      w.companions.setTestSelection(test.companions);
+      w.companions.setRoster(test.companions);
       for(const id of test.passives)w.progression.talents.set(id,1);
+      w.inkScore.levels={...test.inkScore};w.player.weapon=test.bombColor;
+      w.brushPower=test.brushPower;
+      w.brushForms=new Set(filterBrushForms(test.brushMethods));
+      w.skills.setUnlocked(test.skills);
+      w.roll.reset();
       this.applyDebug();
     }
+    w.progression.beginChapter();
     this.r.setBackground(def.bg);
-    this.audio.music(def.music, 1);
+    w.music(def.music, 1);
+    if(test?.allSkills||w.allSkills)w.enableAllSkills();
+    this.cheatDeadline=performance.now()+10000;this.cheatBuffer='';this.input.blockBrushUntilRelease();
     this.state = 'playing';
     this.ui.screen('none');
     const game = this;
+    if (interlude) {
+      this.audio.music('interlude', .5);
+      const interludeEnd = w.real + 17.5;
+      w.root.run((function* () {
+        while (w.real < interludeEnd) yield;
+        game.audio.music(w.ambientMusic, .8);
+      })());
+    }
     w.root.run((function* () {
+      game.ui.controlsHint('左键射击　右键 / 左右键 / 空格执笔　中键换色　Shift 翻滚　F 泼墨', 5);
       yield* def.script(w);
       yield* wait(2);
       game.toResults(def);
@@ -207,10 +250,11 @@ export class Game implements UIEvents {
 
   private toResults(def: StageDef): void {
     const w = this.world;
-    const bonus = (w.noMiss ? 200000 : 0) + w.player.bombs * 20000 + w.maxChain * 500 + w.brush.sealed * 100;
+    const shipBonus=w.escort?Math.round(w.escort.durability)*100:0;
+    const bonus = shipBonus + (w.noMiss ? 200000 : 0) + w.player.bombs * 20000 + w.maxChain * 500 + w.brush.sealed * 100;
     const res: StageResult = {
       stage: def.index, stageName: def.name, score: w.score, kills: w.kills, graze: w.graze,
-      sealed: w.brush.sealed, maxChain: w.maxChain, noMiss: w.noMiss, bonus,
+      sealed: w.brush.sealed, maxChain: w.maxChain, noMiss: w.noMiss, bonus, shipBonus,
     };
     w.addScore(bonus);
     saveHiScore(w.hiScore);
@@ -219,6 +263,7 @@ export class Game implements UIEvents {
     this.audio.music('clear', 0.5);
     this.audio.sfx('stage_clear');
     this.ui.screen('results', { results: res });
+    w.chapter2?.results();
   }
 
   private toContinue(): void {
@@ -248,12 +293,14 @@ export class Game implements UIEvents {
 
   update(dt: number): void {
     const inp = this.input, w = this.world;
+    if(this.state==='playing'&&w.brush.active&&inp.down('brush')&&!w.dialoguePaused&&!w.bossCombat.inputLocked) this.audio.sfx('brush_loop',{vol:.5});
+    else this.audio.stopSfx?.('brush_loop');
     switch (this.state) {
       case 'playing':
-        if (inp.pressed('pause')) {
-          this.state = 'paused';
-          w.moves.resetInput();
-          this.ui.screen('pause', { settings: this.settings, moves: this.moveCards() });
+        if (inp.pressed('pause')&&!w.dialoguePaused) {
+          this.state = 'paused';this.audio.stopSfx?.('brush_loop');
+
+          this.ui.screen('pause', { settings: this.settings,inkScore:{...this.world.inkScore.levels} });
           this.audio.sfx('menu_ok');
           break;
         }
@@ -280,32 +327,35 @@ export class Game implements UIEvents {
   /** 非游戏状态：只推进时间让背景和特效继续动。 */
   private idle(dt: number, scroll = 0): void {
     const w = this.world;
-    w.moves.resetInput();
-    w.real += dt;
+
+    w.real += dt;w.presentationTime+=dt;
     w.time += dt * (this.state === 'paused' || this.state === 'growth' ? 0 : 1);
     w.scroll += scroll * dt;
     Clock.dt = 0;
     w.fx.update(0, dt, w.real);
     w.timeScale = 1;
-    this.r.post.inkMode = 0;
+    this.r.post.inkMode = 0;this.r.post.brushShade=0;
     this.audio.setSlowmo(0);
   }
 
   private applyDebug(): void {
     const d = this.debug, p = this.world.player;
-    if (this.testRun?.god || (!this.testRun && d.god)) p.invuln = Math.max(p.invuln, 1);
+    if(this.world.allSkills){p.ink=1;p.bombs=this.world.progression.bombMax;this.world.inkScore.levels={red:3,blue:3,purple:3};this.world.companions.charge=100;}
+    if (this.world.cheatGod || this.testRun?.god || (!this.testRun && d.god)) p.invuln = Math.max(p.invuln, 1);
     if(this.testRun?.fullInk)p.ink=1;
-    if(this.testRun?.fullBombs)p.bombs=7; // 与道具/商店的库存上限一致。
+    if(this.testRun?.fullBombs)p.bombs=this.world.progression.bombMax;
     if (d.power) { p.power = d.power; d.power = 0; }
     if (d.weapon) { p.weapon = d.weapon; d.weapon = undefined; }
   }
 
   render(): void {
+    this.input.setCursorColor({red:'#ff6941',blue:'#66f2da',purple:'#d09bff'}[this.world.player.weapon]);
+    this.input.refreshPointer();
     const w = this.world;
     const playing = this.state === 'playing' || this.state === 'paused' || this.state === 'continue' || this.state === 'results' || this.state === 'growth';
     if (playing) w.draw();
     const beat = this.audio.beat();
-    this.r.render(w.time, w.real, w.scroll, beat.phase, w.bgFlashValue, this.state === 'playing' ? w.dt : this.state === 'paused' || this.state === 'growth' ? 0 : 1 / 60);
+    this.r.render(w.time, w.real, w.scroll, beat.phase, w.bgFlashValue, this.state === 'playing' ? w.dt : this.state === 'paused' || this.state === 'growth' ? 0 : 1 / 60,w.visualTime);
     this.ui.hud(w.hud(this.fps), this.state === 'playing' || this.state === 'continue');
   }
 }

@@ -71,6 +71,8 @@ export class Motion {
     }
     return a;
   }
+  /** 字图自身承担入退场，容器只保留原有阅读时间。 */
+  hold(el:Element,seconds:number,done:()=>void){const timer=window.setTimeout(()=>{this.fallback.delete(el);done();},seconds*1000);this.fallback.set(el,timer);}
   brush(el: Element) {
     if (this.reduced) return;
     // 仅墨迹本身使用遮罩，其余提示优先走合成层 transform / opacity。
@@ -102,7 +104,8 @@ export class Motion {
     this.play(el, [{ transform: 'scale(.98)', opacity: .85 }, { transform: 'scale(1.04)', opacity: 1, offset: .35 }, { transform: 'none', opacity: 1 }], { duration: 320, easing: EASING.rebound }, true);
   }
   popup(el: Element, kind: string, done: () => void) {
-    if ([...this.active].filter(e => e.el.classList.contains('pop')).length >= MOTION.maxPopups) { done(); return; }
+    const damage=kind.startsWith('damage-');
+    if (!damage&&[...this.active].filter(e => e.el.classList.contains('pop')).length >= MOTION.maxPopups) { done(); return; }
     const duration = kind === 'graze' ? 650 : kind === 'score' ? 1000 : 1500;
     const entry = this.reduced ? 100 : 200;
     const frames: Keyframe[] = this.reduced ? [
@@ -114,7 +117,7 @@ export class Motion {
       { opacity: 1, transform: 'translate(-50%,-50%) translateY(-6px)', offset: .7, easing: EASING.cubic },
       { opacity: 0, transform: 'translate(-50%,-50%) translateY(-18px) scale(.98)', offset: 1 },
     ];
-    this.play(el, frames, { duration }, true, done);
+    this.play(el, frames, { duration }, !damage, done);
   }
   /** 长篇结尾滚动保持阅读速度；启停由三次曲线缓动。 */
   credits(el: Element, distance: number) {

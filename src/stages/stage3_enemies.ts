@@ -2,10 +2,10 @@ import type { Co, G } from '../game/api';
 import type { Enemy, EnemyDef } from '../game/enemy';
 export const PI=Math.PI;
 export const clamp=(v:number)=>Math.max(80,Math.min(820,v));
-export function aim(e:Enemy,g:G):number{const old=e.data.oldX??g.player.x;const x=old+(g.player.x-old)*(1+g.difficulty.intelligence);e.data.oldX=g.player.x;return Math.atan2(g.player.y-e.y,clamp(x)-e.x);}
+export function aim(e:Enemy,g:G):number{const target=g.aimTarget(e.x,e.y);if(target.x!==g.player.x||target.y!==g.player.y)return Math.atan2(target.y-e.y,target.x-e.x);const old=e.data.oldX??g.player.x;const x=old+(g.player.x-old)*(1+g.difficulty.intelligence);e.data.oldX=g.player.x;return Math.atan2(g.player.y-e.y,clamp(x)-e.x);}
 export function* leave(e:Enemy,g:G):Co{yield* g.wait(.7);e.vel(-PI/2,180);}
 export function ordinary(name:string,sprite:string,hp:number,ai:(e:Enemy,g:G)=>Co):EnemyDef{return{name,sprite,hp,score:hp*25,drops:hp>=60?'ink':undefined,ai};}
-export const Hornet=ordinary('hornet','e_hornet',16,function*(e,g){e.data.weakWeapon='red';e.vel(PI/2,220);yield* g.wait(.9);g.shoot(e.x,e.y,aim(e,g),180,{color:'cyan',shape:'rice'});yield* g.wait(1/g.difficulty.aggression);e.vel(PI/2+(e.x<450?-.6:.6),280);});
+export const Hornet:EnemyDef={face:'move',faceUp:true,...ordinary('hornet','e_hornet',16,function*(e,g){e.data.weakWeapon='red';e.vel(PI/2,220);yield* g.wait(.9);g.shoot(e.x,e.y,aim(e,g),180,{color:'cyan',shape:'rice'});yield* g.wait(1/g.difficulty.aggression);e.vel(PI/2+(e.x<450?-.6:.6),280);})};
 export const Kite=ordinary('kite','e_kite',70,function*(e,g){e.data.weakWeapon='purple';yield* e.moveTo(e.x,260,1.2);for(let k=0;k<3;k++){g.ring(e.x,e.y,5,75,{color:'magenta',shape:'petal'});yield* e.moveBy(k%2?140:-140,40,1.8/g.difficulty.aggression);}yield* leave(e,g);});
 export const Drum=ordinary('drum','e_drum',65,function*(e,g){e.data.weakWeapon='purple';yield* e.moveTo(e.x,220,1.2);for(let k=0;k<3;k++){g.fx.charge(e.x,e.y,35,.9,[1,.5,1]);yield* g.wait(.9);for(const n of g.liveEnemies().filter(n=>n.data.contentRole==='normal'&&n!==e).slice(0,Math.round(g.difficulty.intelligence*4)))g.shoot(n.x,n.y,aim(n,g),150,{color:'cyan',shape:'rice'});g.ring(e.x,e.y,6,100,{color:'magenta',shape:'orb'});yield* g.wait(1.4/g.difficulty.aggression);}yield* leave(e,g);});
 export const Lancer=ordinary('lancer','e_lancer',20,function*(e,g){e.data.weakWeapon='red';yield* e.moveTo(e.x,190,1);const a=aim(e,g);g.fx.charge(e.x,e.y,24,1,[.2,1,1]);yield* g.wait(1);e.vel(a,480);});

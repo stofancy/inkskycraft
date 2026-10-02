@@ -77,7 +77,12 @@ const FX: Partial<Record<Sfx, Fn>> = {
   powerup: (G,o,t,p) => { noise(G,o,t,p,{f:850,f2:2100,dur:.35,vol:.18,a:.035,q:.6}); },
   weapon_change: (G,o,t,p) => noise(G,o,t,p,{f:500,f2:2300,dur:.23,vol:.18,a:.035,q:.7}),
   medal: (G,o,t,p) => { noise(G,o,t,p,{f:2100,dur:.12,vol:.18,q:.8}); noise(G,o,t,p,{f:1200,dur:.2,vol:.08,at:.06}); },
-  bomb:(G,o,t,p)=>{ noise(G,o,t,p,{f:850,f2:1900,dur:.18,vol:.18,a:.035,q:.6}); noise(G,o,t,p,{f:180,dur:1.1,vol:.6,type:'lowpass',at:.11}); noise(G,o,t,p,{f:1700,f2:300,dur:.6,vol:.3,at:.11,q:.5}); },
+  bomb: (G, o, t, p) => {
+    tone(G, o, t, p, { f: 100, f2: 28, dur: 1.4, vol: 0.55 });
+    noise(G, o, t, p, { f: 7000, f2: 200, dur: 1.5, vol: 0.4, type: 'lowpass', wet: 0.5, a: 0.02 });
+    noise(G, o, t, p, { f: 300, f2: 2600, dur: 0.5, vol: 0.2, a: 0.1, at: 0, wet: 0.3 });
+    tone(G, o, t, p, { f: 220, f2: 55, dur: 1.2, vol: 0.2, type: 'sawtooth', lp: 800, lp2: 120, at: 0.05 });
+  },
   brush_start: (G, o, t, p) => { noise(G, o, t, p, { f: 250, f2: 1100, dur: 0.55, vol: 0.2, a: 0.25, q: 0.9, wet: 0.35 }); tone(G, o, t, p, { f: 220, f2: 150, dur: 0.5, vol: 0.12, wet: 0.3 }); },
   brush_release:(G,o,t,p)=>{
     // 执笔有弦锋的上挑，释放落到印封之前的低铜音。
@@ -136,6 +141,8 @@ export const SFX_LIMITS: Partial<Record<Sfx, { gap: number; max: number; life: n
   explode_s: { gap: 0.06, max: 3, life: 0.35 }, explode_m: { gap: 0.08, max: 3, life: 0.65 }, explode_l: { gap: 0.15, max: 2, life: 1 },
   explode_boss: { gap: 0.5, max: 1, life: 2.5 }, item: { gap: 0.05, max: 3, life: 0.4 }, medal: { gap: 0.05, max: 3, life: 0.5 },
   slash: { gap: 0.05, max: 3, life: 0.3 }, seal: { gap: 0.1, max: 2, life: 1.5 }, menu_move: { gap: 0.03, max: 2, life: 0.06 },
+  item_power:{gap:.05,max:3,life:.23},item_bomb:{gap:.05,max:3,life:.23},item_ink:{gap:.05,max:3,life:.23},item_medal:{gap:.05,max:3,life:.23},
+  workship_hit:{gap:.1,max:2,life:.35},bomb_land:{gap:.08,max:3,life:.8},boss_part:{gap:.08,max:2,life:.9},
   thunder: { gap: 0.3, max: 2, life: 2.3 }, laser_charge: { gap: 0.5, max: 1, life: 1.2 }, laser_fire: { gap: 0.3, max: 2, life: 1 },
   boss_phase:{gap:.30,max:1,life:1.05}, bomb:{gap:.5,max:1,life:1.85}, brush_release:{gap:.13,max:2,life:.48},
   warning: { gap: 1, max: 1, life: 1.3 }, powerup: { gap: 0.1, max: 2, life: 0.8 },
@@ -146,9 +153,9 @@ export function playSfx(G: Graph, id: Sfx, t: number, opts?: { pan?: number; vol
   const finite=(v:number|undefined,f:number,a:number,b:number)=>Math.max(a,Math.min(b,Number.isFinite(v)?v!:f));
   const p:P={v:finite(opts?.vol,1,0,2)*(BOOST[id]??1),pitch:finite(opts?.pitch,1,.25,4),pan:finite(opts?.pan,0,-1,1)};
   const danger=id==='warning'||id==='laser_charge'||id==='laser_fire';
-  const accent=id==='boss_phase'||id==='bomb'||id==='seal'||id==='brush_release';
-  if(p.v>0 && (danger||accent))focusCue(G,t,danger?(id==='warning'?1.25:1.1):id==='bomb'?1.0:.6,danger?.23:.53);
-  const important=danger||accent||id==='player_die'||id==='enemy_shot_big'||id==='graze'||id.startsWith('menu_');
+  const accent=id==='boss_phase'||id==='seal'||id==='brush_release';
+  if(p.v>0 && (danger||accent))focusCue(G,t,danger?(id==='warning'?1.25:1.1):.6,danger?.23:.53);
+  const important=id==='bomb'||danger||accent||id==='player_die'||id==='enemy_shot_big'||id==='graze'||id.startsWith('menu_');
   (FX[id] ?? FX.hit!)(G,important?G.sfxOut:G.combatOut,t,p);
 }
 export const SFX_IDS = Object.keys(FX) as Sfx[];

@@ -108,8 +108,6 @@ export const TEST_STAGE: StageDef = {
     g.spawn(Turtle, 250, -60);
     g.spawn(Turtle, 650, -160);
     for (let i = 0; i < 4; i++) g.spawn(Crane, 180 + i * 180, -40 - i * 30);
-    g.drop('weapon', 450, 300);
-    g.drop('missile', 300, 300);
     yield* g.waitClear(20);
     yield* g.boss(MiniBoss, 450, -200, { subtitle: 'TEST' });
   },

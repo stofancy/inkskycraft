@@ -6,7 +6,11 @@ const HI_KEY = 'inksky.hiscore.v1';
 export function loadSettings(): Settings {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    if (raw) {
+      const settings = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+      settings.renderScale = Math.max(1, settings.renderScale);
+      return settings;
+    }
   } catch { /* 隐私模式等 */ }
   return { ...DEFAULT_SETTINGS };
 }

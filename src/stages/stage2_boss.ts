@@ -1,95 +1,104 @@
-import type { Co, G } from '../game/api';
-import type { Enemy, EnemyDef } from '../game/enemy';
+// 蜃：四阶段，壳、真影、假航灯、合壳；破招复用 BossCombat。
+import type { Co,G } from '../game/api';
+import type { Enemy,EnemyDef } from '../game/enemy';
+import type { World } from '../game/world';
+import { director } from './dialogue1';
+import { storyFrame } from '../art/ch2_story_assets';
+import { beaconWave,spawnBeacon } from './stage2_beacon';
 const PI=Math.PI;
-const Node:EnemyDef={sprite:'s2_node',hp:90,score:600,noCollide:true,explosion:'s'};
-const Pearl:EnemyDef={sprite:'b_mirage_pearl',hp:100000,score:0,noCollide:true};
-const Shell:EnemyDef={sprite:'b_mirage_shell',hp:1,invulnerable:true,noCollide:true};
-const Head:EnemyDef={sprite:'b_mirage_head',hp:1,invulnerable:true,noCollide:true};
-function part(g:G,e:Enemy,x:number,y:number,weapon:'red'|'blue'|'purple',label:string,hp=90):Enemy {
- const n=g.attach(e,Node,[x,y]);n.hp=n.maxHp=hp;n.data.weakWeapon=weapon;n.data.weakLabel=label;n.data.linkTo=e;n.data.contentRole='part';return n;
+// P6-14 暂定值：flow power=4。壳/真身延长打血，壳铰保持原流程；只调血量。
+export const MIRAGE_HP={shell:1800,trueBody:3200,lamp:2700,hinges:360,body:2000};
+const VALVE_HP=220;
+export class ClosureModel {
+ closure=0;elapsed=0;pause=0;bow=859;passed=false;failed=false;
+ step(dt:number,broken:number){this.elapsed+=dt;if(this.pause>0)this.pause=Math.max(0,this.pause-dt);else this.closure=Math.min(1,this.closure+dt*.05*Math.pow(.5,broken));this.bow-=22*dt;if(this.bow<=540&&!this.passed&&!this.failed){this.passed=420*(1-this.closure)>=240;this.failed=!this.passed;}}
+ reset(){this.closure=.2;this.elapsed=0;this.pause=0;this.bow=859;this.passed=this.failed=false;}
 }
-const finished=(n:Enemy)=>n.dead||n.sealed>0;
-function erase(g:G,n:Enemy):void{if(!n.dead)g.remove(n);}
-/** 结构目标必须真实击破/圈封，时限只结束常规攻击，收尾保留安全可击窗口。 */
-function* resolve(g:G,nodes:Enemy[],label:string):Co {
- g.clearBullets();g.caption('青璃',label,2.4);g.player.ink=Math.max(g.player.ink,0.7);
- while(nodes.some(n=>!finished(n))){yield* g.wait(0.5);}
- nodes.forEach(n=>erase(g,n));
+const decor=(sprite:string):EnemyDef=>({sprite,hp:1,decorative:true,noCollide:true,score:0});
+const say=(g:G,id:number)=>director(g).event(`B-MR-${String(id).padStart(2,'0')}`);
+const clock=(g:G)=>(g as World).bossCombat.clock;
+function* waitClock(g:G,sec:number):Co{const at=clock(g);while(clock(g)-at<sec)yield;}
+function mode(g:G,name:string,kind:'对白演出'|'机制段'|'打血时间'){(g as World).bossCombat.mode(name,kind);}
+interface Rig {shells:Enemy[];bay:Enemy;hinges:Enemy[];shadows:Enemy[];lights:Enemy[];open:number;closure?:ClosureModel}
+function frame(e:Enemy,key:string,state:string,g:G){e.data.manualFrame=true;e.frame=storyFrame(key,state,g.presentationTime);}
+function valve(e:Enemy,g:G,x:number,mirror:boolean):Enemy{const n=g.attach(e,{sprite:'c2_mirage-valve',hp:VALVE_HP/g.difficulty.hp,radius:60,noCollide:true,score:0},[x,0],mirror?{mirror:true}:undefined);n.phaseLock=true;n.data.bossOwner=e;n.data.contentRole='part';n.data.manualFrame=true;n.data.weakWeapon='red';n.data.weakLabel='壳阀';return n;}
+function rig(e:Enemy,g:G):Rig {const shells=[valve(e,g,-180,false),valve(e,g,180,true)];const bay=g.attach(e,decor('c2_battery-bay'),[0,70]);bay.alpha=0;return {shells,bay,hinges:[],shadows:[],lights:[],open:0};}
+function remove(g:G,es:Enemy[]){for(const e of es)if(!e.dead)g.remove(e);}
+function* phase(e:Enemy,g:G,index:number,hp:number,limit:number,min:number,name:string,body:()=>Co,complete:()=>boolean=()=>e.hp<=0):Co{
+ e.data.phaseIndex=index;e.data.phaseStartedClock=clock(g);e.data.attackRounds=0;e.data.qteCount=0;e.data.c2PhaseMin=min;
+ yield* g.phase(e,{hp:hp/g.difficulty.hp,time:limit,clock:'boss',name,transitionTime:0,complete:()=>clock(g)-e.data.phaseStartedClock>=min&&complete()},body);
+ (e.data.phaseResults??=[]).push({phase:index,seconds:clock(g)-e.data.phaseStartedClock,attackRounds:e.data.attackRounds,qteCount:e.data.qteCount,last:(g as World).bossCombat.recent.at(-1)?.last});
 }
-function* aimed(e:Enemy,g:G,interval=2.8):Co {
- for(;;){g.fx.charge(e.x,e.y+150,50,0.9,[0.2,1.2,1.4]);yield* g.wait(0.9);g.fan(e.x,e.y+150,g.aim(e.x,e.y+150),3,0.7,160,{shape:'rice',color:'cyan'});yield* g.wait(interval/g.difficulty.aggression);}
+function* scene(e:Enemy,g:G,seconds:number,name:string,ids:number[],animate?:(t:number)=>void):Co{mode(g,name,'对白演出');g.clearBullets(false);ids.forEach(id=>say(g,id));const at=clock(g);while(clock(g)-at<seconds){animate?.(Math.min(1,(clock(g)-at)/seconds));yield;}}
+function shadow(e:Enemy,g:G,r:Rig,i:number,trueOne:boolean):Enemy{
+ const n=g.spawn({sprite:'c2_mirage-shadow',hp:100000,score:0,noCollide:true,radius:62,onHit(v){if(!trueOne)v.data.fakeHit=true;}},250+(i%3)*200,350+Math.floor(i/3)*170,v=>{v.data.contentRole='part';v.data.noSupplementFire=true;v.data.c2Fake=!trueOne;v.data.c2True=trueOne;v.data.bossOwner=trueOne?e:undefined;v.data.weakWeapon=trueOne?'purple':undefined;v.data.targetDisabled=false;v.data.manualFrame=true;});n.phaseLock=true;n.alpha=.65;r.shadows.push(n);return n;
 }
-export const Pagoda:EnemyDef={sprite:'m_pagoda',hp:1,score:30000,drops:['medal','ink'],explosion:'xl',invulnerable:true,boss:{name:'宝塔 · 锁名断链',phases:3},
- *ai(e,g):Co {const start=e.data.startPhase??1;yield* e.moveTo(450,210,2);
-    if(start <= 1){
-const chains=[part(g,e,-220,160,'red','下层链'),part(g,e,220,180,'red','中层链'),part(g,e,0,225,'purple','上层锁')];
- yield* g.phase(e,{hp:650,time:20,name:'逐层断链'},function*():Co{for(;;){for(let i=0;i<chains.length;i++){if(!finished(chains[i]))g.laser(chains[i].x,chains[i].y,PI/2,{warn:1,duration:0.6,width:7,color:'violet',follow:chains[i]});else{chains[i].alpha=0.25;e.scaleY=1-0.12*chains.filter(finished).length;}}yield* g.wait(3/g.difficulty.aggression);}});
- yield* resolve(g,chains,'射断三链，塔层才会下沉。');
-    }
-    if(start <= 2){
- yield* g.phase(e,{hp:300,time:6,name:'断层下沉'},function*():Co{e.scaleY=0.6;g.fx.burst(e.x,e.y,25,120,[0.5,1.2,1.3]);yield* g.wait(1);yield* e.moveTo(450,300,1);yield* g.wait(4);});
-    }
- const core=part(g,e,0,140,'blue','塔心散热',200);yield* g.phase(e,{hp:500,time:18,name:'原契塔心'},function*():Co{yield* aimed(e,g,3);});yield* resolve(g,[core],'塔心已露，取回原契。');e.scaleY=1;
- }};
-export const Mirage:EnemyDef={sprite:'b_mirage_body',hp:1,score:80000,explosion:'xl',invulnerable:true,boss:{name:'蜃 · 藏灯',phases:6},
- *ai(e,g):Co {
- const start=e.data.startPhase??1;let dock=-1;
- yield* e.moveTo(450,230,2.4);
- const left=g.attach(e,Shell,[-255,-25]);const right=g.attach(e,Shell,[255,-25],{mirror:true});g.attach(e,Head,[0,-65]);
- const pearl=g.attach(e,Pearl,[0,185]);pearl.phaseLock=true;pearl.data.weakWeapon='blue';pearl.data.weakLabel='实珠 · 双波纹';pearl.data.linkTo=e;
- e.run((function*():Co{for(;;){const d=pearl.maxHp-pearl.hp;pearl.hp=pearl.maxHp;if(!pearl.invulnerable)e.hp-=d;yield;}})());
- const open=(yes:boolean)=>{pearl.invulnerable=!yes;pearl.alpha=yes?1:0.45;};
-    if(start <= 1){
- // 一：实珠始终有无遮挡窗口，空框幻珠可射/可封，消失后削减扰射。
- const phantoms=[part(g,e,-240,190,'purple','虚珠 · 空框',65),part(g,e,240,190,'purple','虚珠 · 空框',65)];phantoms.forEach(n=>{n.alpha=0.45;});open(true);
- yield* g.phase(e,{hp:700,time:20,name:'听潮辨珠'},function*():Co{for(;;){for(const p of phantoms)if(!finished(p))g.shoot(p.x,p.y,PI/2,100,{shape:'orb',color:'violet'});g.fan(pearl.x,pearl.y,g.aim(pearl.x,pearl.y),3,0.6,150,{shape:'rice',color:'cyan'});yield* g.wait(2.8/g.difficulty.aggression);}});phantoms.forEach(n=>erase(g,n));
-    }
-    if(start <= 2){
- // 二：首次破壳永久决定安全侧；剩余壳只压自身一侧。
- open(false);const hinges=[part(g,e,-290,210,'red','左壳铰链',150),part(g,e,290,210,'red','右壳铰链',150)];let chosen=false;
- yield* g.phase(e,{hp:650,time:22,name:'拆壳渡口'},function*():Co{for(;;){for(let i=0;i<2;i++){if(finished(hinges[i])){if(!chosen){dock=i===0?-1:1;chosen=true;} (i===0?left:right).alpha=0.22;}else g.laser(hinges[i].x,hinges[i].y,PI/2,{warn:1.1,duration:0.55,width:10,color:'red',follow:hinges[i]});}yield* g.wait(3.5/g.difficulty.aggression);}});
- // 在阶段超时后继续接收破壳顺序，影响救舟侧。
- while(hinges.every(n=>!finished(n)))yield* g.wait(0.2);if(!chosen){dock=finished(hinges[0])?-1:1;chosen=true;}
- yield* resolve(g,hinges,'两侧壳可拆，水道将永久开放。');left.alpha=right.alpha=0.18;
-    }
- const shellExit=dock;
- if(start>=3)left.alpha=right.alpha=.18;
-    if(start <= 3){
- // 三：首个节点决定资源停靠位置，逐点断链反馈。
- const towers=[part(g,e,-245,230,'purple','西楼锁名',100),part(g,e,0,265,'purple','中楼锁名',100),part(g,e,245,230,'purple','东楼锁名',100)];let supply=false;const released=new Set<number>();
- const release=()=>{towers.forEach((n,i)=>{if(finished(n)&&!released.has(i)){released.add(i);g.fx.burst(n.x,n.y,24,150,[0.5,1.3,1.4]);if(!supply){supply=true;dock=i===0?-1:i===2?1:dock;g.drop('ink',n.x,n.y+200);}erase(g,n);}});};
- yield* g.phase(e,{hp:700,time:20,name:'三楼锁名'},function*():Co{for(;;){release();for(const n of towers)if(!finished(n))g.shoot(n.x,n.y,PI/2,115,{shape:'orb',color:'violet'});yield* g.wait(2.7/g.difficulty.aggression);}});
- g.clearBullets();g.player.ink=1;while(towers.some(n=>!finished(n))){release();yield* g.wait(0.2);}release();
-    }
- // 四：新按集中稳住倒影；失败潮墙预告后缓推向先破壳渡口，玩家可逆流横移。
- for(let round=0;round<2;round++){
- if(start>4+round)continue;
- g.clearBullets();open(false);const success=yield* g.challenge({action:'focus',title:'潮声反制',hint:'新按集中稳住倒影；失手沿破壳侧绕潮',duration:2.4});
- if(!success){
-  g.caption('青璃',shellExit<0?'潮流将推向左侧渡口。':'潮流将推向右侧渡口。',2.5);
-  g.fx.charge(450,740,150,1,[0.2,1.2,1.4]);
-  g.fx.push(450,740,shellExit*90,0,160);
-  g.laser(shellExit<0?650:250,440,PI/2,{warn:1.1,duration:0.6,width:35,color:'cyan'});
-  g.player.ink=Math.max(g.player.ink,0.65);
-  yield* g.wait(1);
-  g.force({x:450,y:760,radius:950,strength:55,duration:1.5,mode:'wind',vx:shellExit,vy:0});
-  yield* g.wait(1.5);
- }
- open(true);yield* g.phase(e,{hp:success?480:380,time:success?9:7,name:'潮声 · 开珠'},function*():Co{yield* aimed(e,g,3.5);});}
- // 五：三拍停火变形，全程保留移动。
- g.clearBullets();open(false);g.caption('藏灯','壳开成镜，灯舟入河。',2.4);
- left.offRot=-0.55;right.offRot=0.55;yield* g.wait(0.8);pearl.offY=240;g.fx.burst(pearl.x,pearl.y,25,130,[0.5,1.3,1.8]);yield* g.wait(0.8);
- const rescue=g.spawn({sprite:'s2_rescueboat',hp:1,invulnerable:true,noCollide:true},450+dock*220,640,n=>{n.data.contentRole='prop';});yield* g.wait(0.8);
- const saved=yield* g.challenge({action:'bomb',title:'断镜救舟',hint:'新按爆发破镜；失手射断两座镜架',duration:2.2});
- if(!saved){const braces=[part(g,e,-230,285,'red','左镜架',90),part(g,e,230,285,'red','右镜架',90)];g.laser(450,410,PI/2,{warn:1.2,duration:0.45,width:12,color:'red'});yield* g.wait(1.8);yield* resolve(g,braces,'射断镜架，救舟航线仍可打开。');}else{g.drop('ink',rescue.x,rescue.y);e.data.rescueBoost=true;}
- rescue.vy=-70;e.data.rescueSide=dock;open(true);
- yield* g.phase(e,{hp:600,time:14,name:'灯舟开路'},function*():Co{for(;;){g.fan(450-dock*220,400,PI/2,3,0.7,140,{shape:'rice',color:'cyan'});yield* g.wait(3/g.difficulty.aggression);}});
- // 六：输入与可见封阵都完成后才退出。失败清三眼补墨重试，时限不能结算。
- open(false);for(;;){g.clearBullets();g.player.ink=1;
- const success=yield* g.challenge({action:'brush',title:'还名一笔',hint:'有效落笔后圈封姓名珠；失手清三眼回墨重试',duration:3});
- if(success){const name=part(g,e,0,280,'purple','姓名圆阵 · 圈封',95);yield* resolve(g,[name],'圈住姓名圆阵，把名字归还本人。');break;}
- const retry=[part(g,e,-240,285,'purple','姓名阵眼',60),part(g,e,0,320,'purple','姓名阵眼',60),part(g,e,240,285,'purple','姓名阵眼',60)];
- g.laser(450-dock*200,410,PI/2,{warn:1.2,duration:0.4,width:8,color:'violet'});yield* g.wait(1.7);yield* resolve(g,retry,'三眼可射可封，清除后再落笔。');
- }
- erase(g,pearl);erase(g,rescue);g.clearBullets();g.caption('藏灯','让他们自己选归处。',2.4);g.fx.burst(e.x,e.y,70,200,[0.4,1.5,1.7]);
+export const Mirage:EnemyDef={name:'蜃',sprite:'c2_mirage-body',hp:1,score:80000,noCollide:true,radius:100,boss:{name:'蜃 · 投影船闸',music:'boss-shen',phases:4,defeat:'disable'},
+ *ai(e,g):Co{
+ const w=g as World,c=w.chapter2!,start=e.data.startPhase??1,r=rig(e,g);e.stop();let hitPhase=0;e.data.bossCombat=true;e.data.c2Mirage=true;e.data.weakCustom=true;e.data.manualFrame=true;e.data.guides=[{x:450,y:540}];w.bossCombat.beginBattle(e);e.data.battleHardDeadline=w.real+300;
+ const render=g.fork((function*():Co{for(;;){if(e.data.playerHits&&hitPhase!==e.data.phaseIndex&&e.data.phaseIndex<=2){hitPhase=e.data.phaseIndex;e.data.playerHits=0;say(g,e.data.phaseIndex===2?12:4);}const open=r.closure?1-r.closure.closure:r.open;r.shells.forEach((s,i)=>{s.offX=(i?1:-1)*(open*210+34);frame(s,'mirage-valve',open>.75?'open':open>.2?'half-open':'closed',g);});r.bay.alpha=Math.min(1,r.open*1.5);frame(r.bay,'battery-bay',e.data.phaseIndex===4?'empty':r.open>.8?'full':'pried',g);frame(e,'mirage-body',e.data.truth?'truth':e.data.phaseIndex===4?'uneasy':'polite',g);yield;}})());
+ try {
+  e.invulnerable=true;r.open=0;mode(g,'蜃浮出云面','对白演出');yield* scene(e,g,start===1?16:1,'蜃登场',[1,2,3],t=>{e.alpha=t;for(const s of r.shells)s.alpha=t;});e.alpha=1;
+  // 部件没打掉前锁住本体血量；部件伤害会同步扣本体，这里每帧还原。
+  const gate=(lock:number,open:boolean)=>{if(!open){e.invulnerable=true;e.hp=lock;}else e.invulnerable=false;};
+  if(start<=1){e.data.weakWeapon='red';let lock=0,opened=false,nextWeak=0;
+   yield* phase(e,g,1,MIRAGE_HP.shell,60,20,'拆开壳甲',function*():Co{let fire=0,beam=0,ring=0;lock=e.hp;for(;;){const t=clock(g)-e.data.phaseStartedClock,k=t%21;mode(g,'M1 壳甲','打血时间');e.data.attackRounds=t>=21?2:1;
+    const broken=r.shells.filter(n=>n.hp<=0).length;r.open=opened?1:broken*.3;
+    for(const n of r.shells)if(n.hp<=0&&!n.data.targetDisabled){n.data.targetDisabled=true;n.data.weakLabel=undefined;n.alpha=.35;w.fx.explosion(n.x,n.y,'m');}
+    if(broken===2&&!opened){opened=true;nextWeak=clock(g)+10;w.bossCaps.openWeak(e,'壳阀已破');e.data.weakLabel='蜃身';}
+    if(opened&&clock(g)>=nextWeak){nextWeak=clock(g)+10;w.bossCaps.openWeak(e,'壳阀已破');}
+    gate(lock,opened);
+    if(k<7&&clock(g)>=fire){g.fan(450,410,PI/2,3,.8,150,{shape:'orb',color:'amber'});fire=clock(g)+2.4;}
+    if(k>=7&&k<13&&clock(g)>=beam){const x=beam%2?220:680;g.laser(x,330,PI/2,{warn:.8,duration:.6,width:40,color:'amber'});beam=clock(g)+2.4;}
+    if(k>=13&&clock(g)>=ring){g.ring(450,350,24,100,{shape:'orb',color:'amber'});ring=clock(g)+2.6;}
+    if(e.hpFrac<=.2)say(g,7);yield;
+   }});
+   e.invulnerable=true;remove(g,r.shells);r.open=1;yield* scene(e,g,3,'壳甲张开',[8]);c.short(16);
+  }else{r.open=1;remove(g,r.shells);}
+  if(start<=2){e.data.targetDisabled=true;e.data.weakWeapon=undefined;e.data.weakLabel=undefined;const trueOne=shadow(e,g,r,0,true);for(let i=1;i<4;i++)shadow(e,g,r,i,false);say(g,9);c.short(19);
+   yield* phase(e,g,2,MIRAGE_HP.trueBody,60,20,'识别真身',function*():Co{let shots=0,shuffle=0,second=false,pinUntil=0,sealed=trueOne.data.lastSealedAt??0,weakAt=0;for(;;){const t=clock(g)-e.data.phaseStartedClock;mode(g,'M2 真假影','打血时间');e.data.attackRounds=t>=15?2:1;
+    const pinned=clock(g)<pinUntil;trueOne.data.pinned=pinned;
+    if((trueOne.data.lastSealedAt??0)!==sealed){sealed=trueOne.data.lastSealedAt;pinUntil=clock(g)+9;trueOne.frame=2;trueOne.data.weakLabel='真影被钉住';w.bossCaps.openWeak(e,'真影被钉住');weakAt=pinUntil;for(const n of r.shadows.filter(n=>n.data.c2Fake&&!n.dead))n.data.c2FrozenUntil=pinUntil;}
+    const period=second?5:4,lit=(t%period)<(second?.6:.8);if(!pinned){trueOne.frame=lit?2:1;trueOne.data.weakLabel=lit?'闪紫的真影 · 执笔圈住':undefined;}
+    for(const n of [...r.shadows]){if(n.dead)continue;if(n.data.c2Fake&&n.data.fakeHit&&!n.data.respawnAt){n.alpha=0;n.data.targetDisabled=true;n.frame=3;n.data.respawnAt=clock(g)+3;}if(n.data.respawnAt&&clock(g)>=n.data.respawnAt){n.data.fakeHit=false;n.data.respawnAt=0;n.data.targetDisabled=false;n.alpha=.65;n.x=180+w.rng.next()*540;n.y=300+w.rng.next()*220;}}
+    if(t>=15&&!second){second=true;for(let i=4;i<6;i++)shadow(e,g,r,i,false);}
+    if(!pinned&&clock(g)>=shots){for(const n of r.shadows.filter(n=>!n.dead&&n.alpha>0&&clock(g)>=(n.data.c2FrozenUntil??0))){if(n.data.c2Fake&&w.bullets.list.filter(b=>!b.dead&&b.data.c2FakeShot).length<20){const b=g.shoot(n.x,n.y,PI/2,90,{shape:'orb',color:'violet'});b.data.c2FakeShot=1;}else if(n===trueOne)g.fan(n.x,n.y,PI/2,3,.7,150,{shape:'rice',color:'violet'});}shots=clock(g)+3;}
+    if(!pinned&&t>6&&clock(g)>=shuffle){const alive=r.shadows.filter(n=>!n.dead&&clock(g)>=(n.data.c2FrozenUntil??0)),positions=alive.map(n=>({x:n.x,y:n.y}));const at=clock(g);while(clock(g)-at<1&&clock(g)>=pinUntil){const k=clock(g)-at;alive.forEach((n,i)=>{const to=positions[(i+1)%positions.length];n.x=positions[i].x+(to.x-positions[i].x)*k;n.y=positions[i].y+(to.y-positions[i].y)*k;});yield;}g.fan(450,340,PI/2,3,.8,160,{shape:'rice',color:'violet'});if(second)g.laser(trueOne.x,trueOne.y,PI/2,{warn:1,duration:.4,width:12,color:'violet'});shuffle=clock(g)+6;}
+    if(e.hpFrac<=.2)say(g,13);yield;
+   }});
+   remove(g,r.shadows);e.data.targetDisabled=false;e.invulnerable=true;yield* scene(e,g,3,'假景收拢',[14]);
+  }
+  if(start<=3){e.invulnerable=true;c.fleet.scene.x=450;c.fleet.scene.y=900;
+   yield* phase(e,g,3,MIRAGE_HP.lamp,60,20,'打灭假航灯',function*():Co{let lock=e.hp,master:Enemy|null=null,ring=0,rain=0,stage=0,nextWeak=0;e.data.weakLabel=undefined;
+    for(;;){const t=clock(g)-e.data.phaseStartedClock;mode(g,'M3 航灯引船',master?'打血时间':'机制段');
+     if(stage<2){say(g,15);const pts:[number,number][]=stage===0?[[70,380],[830,600]]:[[70,380],[70,600]];const ok=yield* beaconWave(w,pts,true);c.fleet.scene.x=450;stage++;if(!ok)stage--;if(stage===2||t>26)stage=2;yield* waitClock(g,.8);continue;}
+     if(!master){master=spawnBeacon(w,450,250,true);master.hp=master.maxHp=100000;master.data.bossOwner=e;master.data.weakLabel='总航灯';master.phaseLock=true;e.invulnerable=true;w.bossCaps.openWeak(e,'总航灯露出');nextWeak=clock(g)+10;}
+     if(clock(g)>=nextWeak){nextWeak=clock(g)+10;w.bossCaps.openWeak(e,'总航灯露出');}
+     e.invulnerable=false;
+     if(clock(g)>=ring){g.ring(master.x,master.y,8,70,{shape:'orb',color:'amber'});ring=clock(g)+2.6;}
+     if(clock(g)>=rain){g.fan(450,370,PI/2,3,1.4,100,{shape:'rice',color:'amber'});rain=clock(g)+3;}
+     yield;
+    }},()=>e.hp<=0);
+   remove(g,r.lights);for(const n of w.enemies.filter(n=>n.data.c2Master))w.remove(n);yield* scene(e,g,10,'向山门报信',[18,19,20],t=>{const x=450+t*500,y=300-t*350;w.r.ribbonTop.line(x-40,y+28,x,y,5,1,1.2,.3,2,.9);if(t>.65&&!e.data.signalled){e.data.signalled=true;w.bgFlash(.8);}});
+  }
+  e.data.targetDisabled=true;e.invulnerable=true;r.closure=new ClosureModel();e.data.closure=r.closure;c.fleet.scene.x=450;c.fleet.scene.y=963; // 船首(.8×130)距闸线319，约14.5秒。
+  say(g,21);g.caption('','打坏两只壳铰 · 壳缝才不会合拢',5);for(const x of [-290,290]){const n=g.attach(e,{sprite:'c2_mirage-hinge',hp:MIRAGE_HP.hinges/2/g.difficulty.hp,radius:45,noCollide:true,score:0},[x,210]);n.phaseLock=true;n.data.bossOwner=e;n.data.contentRole='part';n.data.manualFrame=true;n.data.weakWeapon='red';n.data.weakLabel='壳铰';r.hinges.push(n);}
+  let finished=false;yield* phase(e,g,4,MIRAGE_HP.body,70,20,'撑开壳缝',function*():Co{let attempts=0,last=clock(g),shot=clock(g),lock=e.hp,opened=false,nextWeak=0,passedAt=0;const model=r.closure!;for(;;){const now=clock(g),dt=now-last;last=now;mode(g,'M4 合拢与壳铰',opened?'打血时间':'机制段');const broken=r.hinges.filter(n=>n.hp<=0).length;
+    r.hinges.forEach(n=>{frame(n,'mirage-hinge',n.hp<=0?'broken':n.hp<n.maxHp*.5?'smoke':'intact',g);if(n.hp<=0)n.data.targetDisabled=true;});if(broken)say(g,22);
+    if(broken===2&&!opened){opened=true;nextWeak=now+10;e.data.targetDisabled=false;e.data.weakLabel='蜃身';w.bossCaps.openWeak(e,'壳铰已断');}
+    if(opened&&now>=nextWeak){nextWeak=now+10;w.bossCaps.openWeak(e,'壳铰已断');}
+    gate(lock,opened);
+    if(!model.passed&&!passedAt)model.step(dt,broken);c.fleet.approach=Math.min(1,model.elapsed/14.5);if(!passedAt)c.fleet.scene.y=model.bow+130*(.8-.4*c.fleet.approach);
+    if(now>=shot&&!model.passed){g.fan(450,390,PI/2,3,1.4,95,{shape:'orb',color:'amber'});if(model.elapsed>=7)g.laser(model.elapsed%4<2?210:690,400,PI/2,{warn:.8,duration:.4,width:24,color:'amber'});shot=now+3;}
+    if(opened&&now>=shot&&model.passed){g.fan(e.x,e.y+60,PI/2,5,1.2,110,{shape:'orb',color:'amber'});shot=now+2.6;}
+    if(model.failed){attempts++;say(g,26);c.fleet.clamped=true;c.fleet.hit(30);(e.data.closureAttempts??=[]).push({attempt:attempts,closure:model.closure,broken,passed:false});g.clearBullets(false);mode(g,'夹船后重新张壳','机制段');yield* waitClock(g,.4);c.fleet.clamped=false;
+     if(attempts>=2){c.assisted=e.data.assisted=true;c.log('MR.assisted');say(g,37);mode(g,'墨鸢投假光','机制段');g.fx.charge(740,180,80,5,[.5,1,2]);yield* waitClock(g,5);model.passed=true;model.failed=false;model.closure=.2;}
+     else {model.reset();for(const n of r.hinges){n.hp=n.maxHp*.5;n.data.targetDisabled=false;}opened=false;e.data.weakLabel=undefined;last=clock(g);continue;}}
+    if(model.passed&&!passedAt){c.log('MR.passed');say(g,25);(e.data.closureAttempts??=[]).push({attempt:attempts+1,closure:model.closure,broken,passed:true});passedAt=now;}
+    if(passedAt&&now-passedAt<3)c.fleet.scene.y-=60*w.dt;
+    if(passedAt&&opened&&now-passedAt>=3)finished=true;yield;
+  }},()=>finished&&e.hp<=0);
+  remove(g,r.hinges);e.data.targetDisabled=false;e.invulnerable=true;r.closure=undefined;r.open=1;mode(g,'蜃说出实情','对白演出');yield* scene(e,g,12,'壳摊平，投影熄灭',[27,28,29],()=>{c.changeBackground('cloud-town-real');e.data.truth=true;frame(e,'mirage-body','truth',g);});
+  e.data.finalSource=w.bossCombat.recent.at(-1)?.last??'';c.bossResults.mirage={assisted:c.assisted,finalSource:e.data.finalSource,breakResults:e.data.breakResults,phaseResults:e.data.phaseResults,closureAttempts:e.data.closureAttempts};
+ }finally{remove(g,[...r.shells,r.bay,...r.hinges,...r.shadows,...r.lights]);w.bossCombat.endBattle(e);g.clearBullets(false);}
  }};

@@ -6,20 +6,20 @@
   "fps": 10,
   "mode": "once",
   "frameSize": [
-    320,
-    400
+    256,
+    256
   ],
   "runtimeSize": [
-    320,
-    400
+    256,
+    256
   ],
   "targetBodySize": [
-    220,
-    300
+    134,
+    220
   ],
   "anchorPixel": [
-    160,
-    200
+    128,
+    128
   ],
   "pivot": [
     0.0,
@@ -32,33 +32,33 @@
     ],
     "bow": [
       0,
-      -145
+      -110
     ],
     "propellerL": [
-      -86,
-      100
+      -14,
+      43
     ],
     "propellerR": [
-      86,
-      100
+      14,
+      43
     ]
   },
   "anchorPixels": {
     "root": [
-      160,
-      200
+      128,
+      128
     ],
     "bow": [
-      160,
-      55
+      128,
+      18
     ],
     "propellerL": [
-      74,
-      300
+      114,
+      171
     ],
     "propellerR": [
-      246,
-      300
+      142,
+      171
     ]
   },
   "segments": {
@@ -87,318 +87,318 @@
       "mode": "once"
     }
   },
-  "sourceAlignment": "local-source/sheet.json",
+  "sourceAlignment": "studio/art/ART-09/workship-base-clean.png",
   "registrationScale": [
-    0.6853582554517134,
-    0.7792207792207793
+    0.17120622568093385,
+    0.17120622568093385
   ],
   "frames": [
     {
       "index": 0,
       "contentBounds": [
-        49,
-        53,
-        269,
-        353
+        61,
+        18,
+        195,
+        241
       ],
       "anchorPixel": [
-        160,
-        200
+        128,
+        128
       ],
       "sourceAlignmentFrame": 0,
-      "registrationCorrection": [
-        -9.432835820895548,
-        0.0
-      ],
-      "opaquePixels": 36033
-    },
-    {
-      "index": 1,
-      "contentBounds": [
-        51,
-        53,
-        272,
-        355
-      ],
-      "anchorPixel": [
-        160,
-        200
-      ],
-      "sourceAlignmentFrame": 1,
-      "registrationCorrection": [
-        -0.6724137931034306,
-        0.0
-      ],
-      "opaquePixels": 36448
-    },
-    {
-      "index": 2,
-      "contentBounds": [
-        49,
-        53,
-        271,
-        354
-      ],
-      "anchorPixel": [
-        160,
-        200
-      ],
-      "sourceAlignmentFrame": 2,
-      "registrationCorrection": [
-        6.530303030303031,
-        0.0
-      ],
-      "opaquePixels": 36877
-    },
-    {
-      "index": 3,
-      "contentBounds": [
-        49,
-        53,
-        272,
-        354
-      ],
-      "anchorPixel": [
-        160,
-        200
-      ],
-      "sourceAlignmentFrame": 3,
-      "registrationCorrection": [
-        12.892307692307696,
-        0.0
-      ],
-      "opaquePixels": 36785
-    },
-    {
-      "index": 4,
-      "contentBounds": [
-        51,
-        47,
-        271,
-        345
-      ],
-      "anchorPixel": [
-        160,
-        200
-      ],
-      "sourceAlignmentFrame": 4,
-      "registrationCorrection": [
-        -8.724637681159436,
-        0.0
-      ],
-      "opaquePixels": 35927
-    },
-    {
-      "index": 5,
-      "contentBounds": [
-        50,
-        45,
-        272,
-        346
-      ],
-      "anchorPixel": [
-        160,
-        200
-      ],
-      "sourceAlignmentFrame": 5,
-      "registrationCorrection": [
-        -1.0476190476190368,
-        0.0
-      ],
-      "opaquePixels": 37573
-    },
-    {
-      "index": 6,
-      "contentBounds": [
-        50,
-        46,
-        289,
-        345
-      ],
-      "anchorPixel": [
-        160,
-        200
-      ],
-      "sourceAlignmentFrame": 6,
-      "registrationCorrection": [
-        6.7457627118644155,
-        0.0
-      ],
-      "opaquePixels": 38553
-    },
-    {
-      "index": 7,
-      "contentBounds": [
-        49,
-        45,
-        296,
-        357
-      ],
-      "anchorPixel": [
-        160,
-        200
-      ],
-      "sourceAlignmentFrame": 7,
-      "registrationCorrection": [
-        12.485714285714295,
-        0.0
-      ],
-      "opaquePixels": 39838
-    },
-    {
-      "index": 8,
-      "contentBounds": [
-        49,
-        40,
-        305,
-        339
-      ],
-      "anchorPixel": [
-        160,
-        200
-      ],
-      "sourceAlignmentFrame": 8,
-      "registrationCorrection": [
-        -9.041666666666686,
-        0.0
-      ],
-      "opaquePixels": 37642
-    },
-    {
-      "index": 9,
-      "contentBounds": [
-        53,
-        40,
-        311,
-        337
-      ],
-      "anchorPixel": [
-        160,
-        200
-      ],
-      "sourceAlignmentFrame": 9,
-      "registrationCorrection": [
-        -0.5882352941176237,
-        0.0
-      ],
-      "opaquePixels": 36416
-    },
-    {
-      "index": 10,
-      "contentBounds": [
-        52,
-        46,
-        307,
-        336
-      ],
-      "anchorPixel": [
-        160,
-        200
-      ],
-      "sourceAlignmentFrame": 10,
-      "registrationCorrection": [
-        8.51666666666668,
-        0.0
-      ],
-      "opaquePixels": 36191
-    },
-    {
-      "index": 11,
-      "contentBounds": [
-        53,
-        49,
-        310,
-        342
-      ],
-      "anchorPixel": [
-        160,
-        200
-      ],
-      "sourceAlignmentFrame": 11,
-      "registrationCorrection": [
-        11.455882352941188,
-        0.0
-      ],
-      "opaquePixels": 35642
-    },
-    {
-      "index": 12,
-      "contentBounds": [
-        58,
-        31,
-        277,
-        326
-      ],
-      "anchorPixel": [
-        160,
-        200
-      ],
-      "sourceAlignmentFrame": 12,
       "registrationCorrection": [
         0.0,
         0.0
       ],
-      "opaquePixels": 34034
+      "opaquePixels": 11029
+    },
+    {
+      "index": 1,
+      "contentBounds": [
+        61,
+        18,
+        194,
+        239
+      ],
+      "anchorPixel": [
+        128,
+        128
+      ],
+      "sourceAlignmentFrame": 0,
+      "registrationCorrection": [
+        0.0,
+        0.0
+      ],
+      "opaquePixels": 11048
+    },
+    {
+      "index": 2,
+      "contentBounds": [
+        61,
+        17,
+        195,
+        236
+      ],
+      "anchorPixel": [
+        128,
+        128
+      ],
+      "sourceAlignmentFrame": 0,
+      "registrationCorrection": [
+        0.0,
+        0.0
+      ],
+      "opaquePixels": 10884
+    },
+    {
+      "index": 3,
+      "contentBounds": [
+        62,
+        18,
+        195,
+        238
+      ],
+      "anchorPixel": [
+        128,
+        128
+      ],
+      "sourceAlignmentFrame": 0,
+      "registrationCorrection": [
+        0.0,
+        0.0
+      ],
+      "opaquePixels": 11058
+    },
+    {
+      "index": 4,
+      "contentBounds": [
+        61,
+        18,
+        196,
+        241
+      ],
+      "anchorPixel": [
+        128,
+        128
+      ],
+      "sourceAlignmentFrame": 0,
+      "registrationCorrection": [
+        0.0,
+        0.0
+      ],
+      "opaquePixels": 11260
+    },
+    {
+      "index": 5,
+      "contentBounds": [
+        61,
+        18,
+        194,
+        239
+      ],
+      "anchorPixel": [
+        128,
+        128
+      ],
+      "sourceAlignmentFrame": 0,
+      "registrationCorrection": [
+        0.0,
+        0.0
+      ],
+      "opaquePixels": 11062
+    },
+    {
+      "index": 6,
+      "contentBounds": [
+        61,
+        17,
+        196,
+        236
+      ],
+      "anchorPixel": [
+        128,
+        128
+      ],
+      "sourceAlignmentFrame": 0,
+      "registrationCorrection": [
+        0.0,
+        0.0
+      ],
+      "opaquePixels": 11085
+    },
+    {
+      "index": 7,
+      "contentBounds": [
+        62,
+        18,
+        195,
+        238
+      ],
+      "anchorPixel": [
+        128,
+        128
+      ],
+      "sourceAlignmentFrame": 0,
+      "registrationCorrection": [
+        0.0,
+        0.0
+      ],
+      "opaquePixels": 11040
+    },
+    {
+      "index": 8,
+      "contentBounds": [
+        60,
+        18,
+        195,
+        241
+      ],
+      "anchorPixel": [
+        128,
+        128
+      ],
+      "sourceAlignmentFrame": 0,
+      "registrationCorrection": [
+        0.0,
+        0.0
+      ],
+      "opaquePixels": 11249
+    },
+    {
+      "index": 9,
+      "contentBounds": [
+        61,
+        18,
+        194,
+        239
+      ],
+      "anchorPixel": [
+        128,
+        128
+      ],
+      "sourceAlignmentFrame": 0,
+      "registrationCorrection": [
+        0.0,
+        0.0
+      ],
+      "opaquePixels": 11021
+    },
+    {
+      "index": 10,
+      "contentBounds": [
+        60,
+        17,
+        195,
+        236
+      ],
+      "anchorPixel": [
+        128,
+        128
+      ],
+      "sourceAlignmentFrame": 0,
+      "registrationCorrection": [
+        0.0,
+        0.0
+      ],
+      "opaquePixels": 11093
+    },
+    {
+      "index": 11,
+      "contentBounds": [
+        62,
+        18,
+        195,
+        238
+      ],
+      "anchorPixel": [
+        128,
+        128
+      ],
+      "sourceAlignmentFrame": 0,
+      "registrationCorrection": [
+        0.0,
+        0.0
+      ],
+      "opaquePixels": 11057
+    },
+    {
+      "index": 12,
+      "contentBounds": [
+        61,
+        18,
+        195,
+        241
+      ],
+      "anchorPixel": [
+        128,
+        128
+      ],
+      "sourceAlignmentFrame": 0,
+      "registrationCorrection": [
+        0.0,
+        0.0
+      ],
+      "opaquePixels": 11029
     },
     {
       "index": 13,
       "contentBounds": [
         61,
-        31,
-        276,
-        325
+        18,
+        194,
+        239
       ],
       "anchorPixel": [
-        160,
-        200
+        128,
+        128
       ],
-      "sourceAlignmentFrame": 13,
+      "sourceAlignmentFrame": 0,
       "registrationCorrection": [
         0.0,
         0.0
       ],
-      "opaquePixels": 33964
+      "opaquePixels": 11048
     },
     {
       "index": 14,
       "contentBounds": [
-        59,
-        40,
-        288,
-        324
+        61,
+        17,
+        195,
+        236
       ],
       "anchorPixel": [
-        160,
-        200
+        128,
+        128
       ],
-      "sourceAlignmentFrame": 14,
+      "sourceAlignmentFrame": 0,
       "registrationCorrection": [
         0.0,
         0.0
       ],
-      "opaquePixels": 32142
+      "opaquePixels": 10884
     },
     {
       "index": 15,
       "contentBounds": [
-        63,
-        44,
-        271,
-        322
+        62,
+        18,
+        195,
+        238
       ],
       "anchorPixel": [
-        160,
-        200
+        128,
+        128
       ],
-      "sourceAlignmentFrame": 15,
+      "sourceAlignmentFrame": 0,
       "registrationCorrection": [
         0.0,
         0.0
       ],
-      "opaquePixels": 28527
+      "opaquePixels": 11058
     }
   ],
-  "sourceJitterPx": 1.097603702778065,
-  "note": "逐帧共用横纵缩放和固定锚点；格外透明留边保留烟气、坠落炸弹及倾斜。按 segments 选择状态，禁止直接整张循环。",
-  "approval": "待总导演审图；未正式接入"
+  "sourceJitterPx": 0.0,
+  "note": "单张完好基础帧围绕固定中心派生；四段全部完好。轻微起伏、侧倾、尾焰明暗循环；segment 名和播放契约保留。游戏端按玩家机约1.25倍缩放。",
+  "approval": "待总导演与制作人审图"
 }

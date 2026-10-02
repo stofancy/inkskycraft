@@ -323,83 +323,6 @@ function drawRoofTier(ctx: Ctx, h: number, cy: number, seed: number, tone: { hi:
     body(ctx, ell(x, y, h * 0.06 + 1.5), TONE.goldm, { line: 1.2, bev: 0.8, blots: 0, wear: 0 });
   }
 }
-function drawPagodaGun(ctx: Ctx, x: number, y: number, r = 11): void {
-  body(ctx, ell(x, y, r), TONE.bronze, { line: 2, bev: 1.6, blots: 3, seed: 71 });
-  rivetRing(ctx, x, y, r - 2.6, 8, 0.8);
-  ctx.save(); ctx.translate(x, y);
-  barrel(ctx, 0, 3, r + 8, 6.5, TONE.iron);
-  body(ctx, ell(-0.4, -0.4, r * 0.5), TONE.verd, { line: 1.6, bev: 1.2, blots: 1 });
-  ctx.restore();
-}
-const PAGODA_GUNS: Pt[] = [[-46, 130], [46, 130], [-118, 44], [118, 44], [-118, -76], [118, -76]];
-function drawPagoda(ctx: Ctx): void {
-  // 侧舱（先画，在船体之后被压住）
-  for (const sgn of [-1, 1]) {
-    ctx.save(); ctx.scale(sgn, 1);
-    // 连接撑杆
-    for (const y of [-80, 30]) {
-      const st = rrect(60, y - 7, 62, 14, 3);
-      body(ctx, st, TONE.iron, { line: 2, bev: 1.5, blots: 2, seed: 80 + y });
-      rivetLine(ctx, [72, y], [112, y], 4, 0.9);
-    }
-    const pod = poly([[96, -112], [118, -122], [140, -108], [142, 60], [130, 96], [112, 106], [98, 92]], true);
-    body(ctx, pod, TONE.bronze, { line: 2.6, blots: 8, seed: 82, bev: 3 });
-    const cover = poly([[104, -96], [132, -96], [134, 52], [124, 84], [108, 84], [104, 40]], true);
-    body(ctx, cover, TONE.verd, { line: 1.8, bev: 2, blots: 5, seed: 83 });
-    for (let y = -90; y < 70; y += 9) seamLine(ctx, [[105, y], [133, y]], 0.9);
-    // 尾喷口
-    const noz = rrect(106, -128, 24, 14, 4);
-    body(ctx, noz, TONE.iron, { line: 2, bev: 1.3, blots: 1 });
-    ctx.restore();
-  }
-  // 船体
-  const hull = sym([[0, -152], [40, -150], [70, -128], [82, -90], [92, -30], [96, 50], [84, 100], [56, 132], [24, 150], [0, 158]], true);
-  body(ctx, hull, TONE.lacquer, { line: 3, blots: 10, seed: 84, bev: 3.5 });
-  // 甲板栏杆纹
-  hatch(ctx, hull, Math.PI / 2, 6, 'rgba(0,0,0,0.35)', 0.8, 0.6);
-  // 船首镶铜 + 龙首
-  const prow = sym([[0, 158], [14, 146], [30, 122], [16, 118], [0, 132]], false);
-  body(ctx, prow, TONE.bronze, { line: 2, bev: 1.4, blots: 2 });
-  // 艉部尾舱铜环
-  const tail = sym([[0, -152], [30, -150], [46, -132], [0, -118]]);
-  body(ctx, tail, TONE.bronze, { line: 2, bev: 1.4, blots: 3, seed: 85 });
-  body(ctx, rrect(-16, -156, 32, 14, 4), TONE.iron, { line: 2, bev: 1.3, blots: 1 });
-  // 五层宝塔屋顶
-  drawRoofTier(ctx, 98, 8, 90, TONE.verd);
-  drawRoofTier(ctx, 74, 8, 91, { hi: '#a8503f', base: '#6a2226', lo: '#240c10' });
-  drawRoofTier(ctx, 52, 8, 92, TONE.verd);
-  drawRoofTier(ctx, 34, 8, 93, TONE.bronze);
-  // 塔顶：金莲座 + 宝珠
-  const lotus = ngon(0, 8, 14, 8, Math.PI / 8, 9.5);
-  body(ctx, lotus, TONE.goldm, { line: 1.8, bev: 1.5, blots: 2, seed: 94 });
-  body(ctx, ell(-0.5, 7.5, 6.2), { hi: '#5a3a5f', base: '#26142c', lo: '#0c0610' }, { line: 1.6, bev: 1.5, blots: 0, wear: 0 });
-  // 炮座
-  for (const [x, y] of PAGODA_GUNS) drawPagodaGun(ctx, x, y, x === 0 ? 11 : 12);
-}
-function glowPagoda(ctx: Ctx): void {
-  orb(ctx, 0, 8, 22, PAL.neonMagenta, 0.3);
-  ctx.fillStyle = PAL.neonMagenta; ctx.beginPath(); ctx.arc(0, 8, 4.5, 0, TAU); ctx.fill();
-  // 檐角风铃灯
-  for (const h of [98, 74, 52]) {
-    for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]] as Pt[]) orb(ctx, sx * h * 1.1, 8 + sy * h * 1.1, 4.5, PAL.neonAmber, 0.35);
-  }
-  // 屋檐霓虹缝
-  for (const h of [98, 52]) {
-    ctx.save(); ctx.globalAlpha = 0.5; neonPath(ctx, roofPath(h * 0.94, 0, 8), PAL.neonMagenta, 0.8, false); ctx.restore();
-  }
-  // 侧舱喷口 + 主喷口
-  for (const x of [-118, 118]) { orb(ctx, x, -120, 12, PAL.neonCyan, 0.4); }
-  orb(ctx, 0, -152, 12, PAL.neonCyan, 0.4);
-  // 炮座
-  for (const [x, y] of PAGODA_GUNS) {
-    const p = new Path2D(); p.arc(x, y, 8, 0, TAU); ctx.save(); ctx.globalAlpha = 0.85; neonPath(ctx, p, PAL.neonCyan, 1, false); ctx.restore();
-    orb(ctx, x, y + 19, 3.5, PAL.neonMagenta, 0.5);
-  }
-  // 船体缝
-  neon(ctx, [[-60, -138], [-76, -112]], PAL.neonViolet, 1.1); neon(ctx, [[60, -138], [76, -112]], PAL.neonViolet, 1.1);
-  neon(ctx, [[0, 146], [14, 132], [30, 122]], PAL.neonCyan, 1.1); neon(ctx, [[0, 146], [-14, 132], [-30, 122]], PAL.neonCyan, 1.1);
-}
-
 /* ============================================================== 蜃 */
 const NACRE: { hi: string; base: string; lo: string } = { hi: '#e2d4f4', base: '#8462b8', lo: '#2b1a4e' };
 const SHELL_PIVOT: Pt = [115, 0];
@@ -700,7 +623,7 @@ function glowMirageHead(ctx: Ctx): void {
   neon(ctx, [[0, -66], [0, 12]], PAL.neonCyan, 0.9);
 }
 
-/* ---------- 预览：蜃 / 宝塔拼装（游戏不使用） */
+/* ---------- 预览：蜃拼装（游戏不使用） */
 function previewMirage(ctx: Ctx, glow: boolean): void {
   const g = glow ? 1 : 0;
   const B = g ? glowMirageBody : drawMirageBody, S = g ? glowShell : drawShell;
@@ -721,10 +644,6 @@ export const STAGE2_SPRITES: SpriteDef[] = [
   { id: 'e_junk_gun', w: 36, h: 36, radius: 12, draw: drawJunkGun, glow: glowJunkGun, anchors: { muzzle: [0, 17] } },
   { id: 'e_rotor', w: 60, h: 60, frames: ROTOR_FRAMES, radius: 20, draw: drawRotor, glow: glowRotor },
   { id: 'e_moth', w: 70, h: 56, frames: 2, radius: 20, draw: drawMoth, glow: glowMoth },
-  {
-    id: 'm_pagoda', w: 280, h: 320, radius: 90, draw: drawPagoda, glow: glowPagoda,
-    anchors: { gun1: PAGODA_GUNS[0], gun2: PAGODA_GUNS[1], gun3: PAGODA_GUNS[2], gun4: PAGODA_GUNS[3], gun5: PAGODA_GUNS[4], gun6: PAGODA_GUNS[5], core: [0, 8] },
-  },
   {
     id: 'b_mirage_body', w: 360, h: 300, radius: 110, draw: drawMirageBody, glow: glowMirageBody,
     anchors: { shellL: MIRAGE_SHELL_L, pearl: MIRAGE_PEARL, head: MIRAGE_HEAD },

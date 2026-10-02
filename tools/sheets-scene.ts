@@ -24,14 +24,15 @@ export async function installSheetScene(game: Game, version: 1 | 2 = 2) {
   const doc = r.canvas.ownerDocument, sceneWindow = doc.defaultView!;
   game.state = 'paused';
   const defs = await Promise.all(samples.map(s => loadSheetSprite(`sheet_${s.id}`, `art/sheets/${s.id}/${version === 2 && ['bird','enemy','portrait'].includes(s.id) ? 'aligned-v2' : 'aligned'}`, s.size)));
-  const oldAlbedo = r.atlas.albedo, oldGlow = r.atlas.glow;
+  const oldPages = r.atlas.pages.slice();
   // 在独立图集中完整构建后同步切换，加载期间游戏仍可使用旧图集绘制。
   const next = new Atlas(r.gl);
   await next.build([...ALL_SPRITES, ...defs], 1.5);
   r.atlas.map.clear();
   for (const [id, info] of next.map) r.atlas.map.set(id, info);
   r.atlas.albedo = next.albedo; r.atlas.glow = next.glow;
-  r.gl.deleteTexture(oldAlbedo); r.gl.deleteTexture(oldGlow);
+  r.atlas.pages.splice(0,r.atlas.pages.length,...next.pages);
+  for(const page of oldPages){r.gl.deleteTexture(page.albedo);r.gl.deleteTexture(page.glow);}
   w.resetStage(); w.player.reset(false); w.player.entering = 0; w.player.invuln = 1e6;
   w.player.x = 450; w.player.y = 1100; w.player.weapon = 'red';
   game.state = 'playing'; game.ui.screen('none');

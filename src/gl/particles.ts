@@ -13,9 +13,15 @@ export enum PK {
   Petal = 6,   // 花瓣（混合）
   Shard = 7,   // 碎片（混合）
   Ember = 8,   // 余烬（加色，抖动）
+  Flame = 9,   // 柔软火舌：白金芯 → 橙 → 朱红（加色）
+  Blade = 10,  // 叶片：尖椭圆带中脉，正反面翻转（混合）
+  PetalFlip = 11, // 翻转花瓣：正反两面（混合）
+  FlameTex = 12,  // 贴图火舌：火焰图集第 1、2 行 8 格随机取一格（加色）
+  EmberTex = 13,  // 贴图火星：图集第 3 行 4 格（加色）
+  SmokeTex = 14,  // 贴图烟团：图集第 4 行 4 格（混合）
 }
 
-const ADDITIVE = new Set([PK.Dot, PK.Spark, PK.Leaf, PK.Ring, PK.Ember]);
+const ADDITIVE = new Set([PK.Dot, PK.Spark, PK.Leaf, PK.Ring, PK.Ember, PK.Flame, PK.FlameTex, PK.EmberTex]);
 
 const VS = `#version 300 es
 layout(location=0) in vec4 aA; // x0 y0 vx vy
@@ -25,9 +31,12 @@ layout(location=3) in vec4 aD; // color0 rgba
 layout(location=4) in vec4 aE; // color1 rgb, kind
 uniform float uTime;
 uniform vec2 uView;
+uniform float uRetireBefore;
+out vec2 vWorld;
 out vec2 vQ;
 out vec4 vCol;
 flat out float vKind;
+out float vFace;
 flat out float vSeed;
 out float vU;
 void main() {
@@ -45,6 +54,7 @@ void main() {
   float kind = aE.w;
   vec2 corner = vec2(float(gl_VertexID & 1), float(gl_VertexID >> 1)) * 2.0 - 1.0;
   vec2 local;
+  float vFaceV = 1.0;
   if (kind == 1.0) {
     float sp = length(vel);
     vec2 dir = sp > 0.001 ? vel / sp : vec2(1.0, 0.0);
@@ -55,19 +65,31 @@ void main() {
     float c = cos(r), s = sin(r);
     vec2 q = corner * size;
     if (kind == 4.0) q.x *= 0.55 + 0.45 * sin(r * 2.3); // 金箔翻转
+    if (kind >= 10.0 && kind < 12.0) {
+      float sd = fract(float(gl_InstanceID) * 0.61803398875);
+      float fl = cos(t * (4.5 + 4.0 * sd) + sd * 6.28);
+      vFaceV = fl;
+      q.x *= max(abs(fl), 0.14);
+      if (kind == 10.0) q.y *= 1.35;
+    }
     local = vec2(q.x * c - q.y * s, q.x * s + q.y * c);
   }
   if (kind == 8.0) pos += vec2(sin(t * 13.0 + float(gl_InstanceID)), cos(t * 11.0 + float(gl_InstanceID) * 1.7)) * 2.0;
+  if (kind == 9.0) pos += vec2(sin(t * 18.0 + float(gl_InstanceID) * 1.7), cos(t * 13.0 + float(gl_InstanceID))) * u * 5.0;
   vec2 p = pos + local;
+  vWorld = p;
   gl_Position = vec4(p.x / uView.x * 2.0 - 1.0, 1.0 - p.y / uView.y * 2.0, 0.0, 1.0);
   vQ = corner;
   vec3 col = mix(aD.rgb, aE.rgb, u);
+  if (kind == 9.0) col = mix(mix(aD.rgb, vec3(2.0, 0.44, 0.035), smoothstep(0.0, 0.4, u)), aE.rgb, smoothstep(0.4, 1.0, u));
   float a = aD.a;
+  if (aB.x < uRetireBefore) a *= clamp(1.0 - (uTime - uRetireBefore) / 0.15, 0.0, 1.0);
   if (kind == 5.0) a *= 1.0 - u;
-  else if (kind == 2.0 || kind == 3.0) a *= smoothstep(1.0, 0.55, u) * smoothstep(0.0, 0.06, u);
+  else if (kind == 2.0 || kind == 3.0 || kind == 14.0) a *= smoothstep(1.0, 0.55, u) * smoothstep(0.0, 0.06, u);
   else a *= (1.0 - u * u);
   vCol = vec4(col, a);
   vKind = kind;
+  vFace = vFaceV;
   vSeed = fract(float(gl_InstanceID) * 0.61803398875);
   vU = u;
 }`;
@@ -77,11 +99,15 @@ precision highp float;
 in vec2 vQ;
 in vec4 vCol;
 flat in float vKind;
+in float vFace;
 flat in float vSeed;
 in float vU;
+in vec2 vWorld;
+uniform vec3 uClearZone;
 uniform vec3 uSun;
 uniform vec3 uSunCol;
 uniform vec3 uAmb;
+uniform sampler2D uFlame;
 out vec4 o;
 float h(float n) { return fract(sin(n) * 43758.5453); }
 void main() {
@@ -90,8 +116,14 @@ void main() {
   float a;
   vec3 extra = vec3(0.0);
   vec3 shard = vec3(0.0);
-  bool add = (k == 0 || k == 1 || k == 4 || k == 5 || k == 8);
+  vec3 tint = vCol.rgb;
+  bool add = (k == 0 || k == 1 || k == 4 || k == 5 || k == 8 || k == 9 || k == 12 || k == 13);
   if (k == 0 || k == 8) a = exp(-r * r * 5.0);
+  else if (k == 9) {
+    vec2 q = vQ;
+    q.x += sin(q.y * 5.0 + vSeed * 37.0 + vU * 8.0) * 0.13;
+    a = exp(-(q.x * q.x * 5.5 + q.y * q.y * 2.6)) * smoothstep(1.0, 0.65, r);
+  }
   else if (k == 1) {
     // 火花：尾部渐隐的运动模糊拖尾 + 头部 HDR 白热
     float along = vQ.x * 0.5 + 0.5;
@@ -110,12 +142,35 @@ void main() {
     float n = 0.6 + 0.2 * sin(ang * 4.0 + vSeed * 20.0 + vU * 3.0);
     a = smoothstep(n + 0.3, n - 0.3, r) * 0.6;
   }
+  else if (k >= 12) {
+    // 火焰图集 4x4，每格 256：第 1、2 行火舌（黑底加色），第 3 行火星（黑底加色），第 4 行烟（透明底）
+    float cell = floor(vSeed * (k == 12 ? 8.0 : 4.0));
+    vec2 org = k == 12 ? vec2(mod(cell, 4.0), floor(cell / 4.0)) : vec2(cell, k == 13 ? 2.0 : 3.0);
+    vec4 tx = texture(uFlame, (org + vQ * 0.49 + 0.5) * 0.25);
+    float edgeFade = smoothstep(1.0, 0.8, max(abs(vQ.x), abs(vQ.y)));
+    if (k == 14) { a = tx.a * edgeFade; tint = tx.rgb * vCol.rgb; }
+    else { a = 0.0; extra = tx.rgb * vCol.rgb * vCol.a * edgeFade; }
+  }
   else if (k == 4) {
     vec2 q = abs(vQ);
     a = step(q.x, 0.9) * step(q.y, 0.9);
     a *= 0.6 + 0.4 * sin(vU * 40.0 + vSeed * 20.0);
   }
   else if (k == 5) a = exp(-pow((r - 0.85) * 9.0, 2.0));
+  else if (k == 10) {
+    float yy = clamp(vQ.y * 0.74, -1.0, 1.0);
+    float w = 0.62 * pow(max(1.0 - yy * yy, 0.0), 0.8) * (0.55 + 0.45 * smoothstep(-1.0, -0.2, yy));
+    a = smoothstep(0.06, -0.02, abs(vQ.x) - w) * step(abs(yy), 0.99);
+    float rib = exp(-vQ.x * vQ.x * 260.0);
+    float lit = vFace > 0.0 ? 1.0 : 0.5;
+    tint = vCol.rgb * lit * (0.85 + 0.35 * rib + 0.2 * vQ.y * vQ.y) + vec3(0.5, 0.35, 0.08) * rib * 0.4 * lit;
+  }
+  else if (k == 11) {
+    vec2 q = vQ;
+    float petal = length(vec2(q.x * 1.5, q.y + 0.25 * q.x * q.x)) - 0.7 - 0.15 * q.y;
+    a = smoothstep(0.05, -0.05, petal);
+    tint = vCol.rgb * (vFace > 0.0 ? 1.0 : 0.55) * (0.9 + 0.3 * smoothstep(-0.6, 0.6, q.y));
+  }
   else if (k == 6) {
     vec2 q = vQ;
     float petal = length(vec2(q.x * 1.6, q.y + 0.25 * q.x * q.x)) - 0.6 - 0.15 * q.y;
@@ -138,12 +193,43 @@ void main() {
           + vec3(2.0, 0.62, 0.13) * hot * (0.55 + 0.45 * dif);
   }
   a *= vCol.a;
+  // 专用玩家粒子在判定点附近留白；普通特效的半径为零。
+  float clear = uClearZone.z > 0.0 ? mix(0.035, 1.0, smoothstep(uClearZone.z * 0.5, uClearZone.z, distance(vWorld, uClearZone.xy))) : 1.0;
+  a *= clear;
+  extra *= clear;
   if (a < 0.002 && max(extra.r, max(extra.g, extra.b)) < 0.002) discard;
   if (k == 7) o = vec4(shard * a, a);
-  else o = add ? vec4(vCol.rgb * a + extra, 0.0) : vec4(vCol.rgb * a, a);
+  else o = add ? vec4(vCol.rgb * a + extra, 0.0) : vec4(tint * a, a);
 }`;
 
 const FLOATS = 20;
+
+/** 火焰图集：每个 GL 上下文只建一张，构造粒子系统时创建，图片异步到位后一次性上传。 */
+const flameSheets = new WeakMap<GL, WebGLTexture>();
+function flameSheet(gl: GL): WebGLTexture {
+  let t = flameSheets.get(gl);
+  if (t) return t;
+  t = gl.createTexture()!;
+  flameSheets.set(gl, t);
+  gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  const img = new Image();
+  img.src = '/art/vfx/burn/flame-sheet.png';
+  const tex = t;
+  void img.decode().then(() => {
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, 0);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  }).catch(() => {});
+  return t;
+}
 
 export interface ParticleSpec {
   x: number; y: number;
@@ -166,6 +252,7 @@ export interface ParticleSpec {
 
 export class ParticleSystem {
   private prog: Program;
+  private flameTex: WebGLTexture;
   private vao: WebGLVertexArrayObject;
   private vbo: WebGLBuffer;
   private staging: Float32Array;
@@ -175,6 +262,9 @@ export class ParticleSystem {
   private used = 0;
   /** 粒子时钟（游戏时间），由外部每帧推进。 */
   time = 0;
+  /** 可选的判定点留白与换色时旧粒子 150ms 淡出。 */
+  clearZone: [number, number, number] = [0, 0, 0];
+  retireBefore = -1;
   /** 日光（屏幕空间，指向太阳）、日光色与天光：碎片受光用。 */
   sun: [number, number, number] = [-0.78, 0.12, 0.48];
   sunCol: [number, number, number] = [1, 0.98, 0.92];
@@ -182,6 +272,7 @@ export class ParticleSystem {
 
   constructor(readonly gl: GL, readonly capacity = 262144) {
     this.prog = new Program(gl, VS, FS);
+    this.flameTex = flameSheet(gl);
     this.vao = gl.createVertexArray()!;
     this.vbo = gl.createBuffer()!;
     this.staging = new Float32Array(16384 * FLOATS);
@@ -246,7 +337,7 @@ export class ParticleSystem {
     this.upload();
     if (!this.used) return;
     const gl = this.gl;
-    this.prog.use().set('uTime', this.time).set('uView', PLAY_W, PLAY_H).set('uSun', this.sun).set('uSunCol', this.sunCol).set('uAmb', this.amb);
+    this.prog.use().set('uTime', this.time).set('uView', PLAY_W, PLAY_H).set('uSun', this.sun).set('uSunCol', this.sunCol).set('uAmb', this.amb).set('uClearZone', this.clearZone).set('uRetireBefore', this.retireBefore).tex('uFlame', this.flameTex);
     gl.bindVertexArray(this.vao);
     gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, this.used);
     gl.bindVertexArray(null);

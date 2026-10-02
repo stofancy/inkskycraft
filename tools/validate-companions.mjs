@@ -1,91 +1,93 @@
-// P2-02：实际 World 结算、获取界面与自然关卡 60 秒；固定样本验证不替代有损试玩。
-// node tools/validate-companions.mjs [URL] [证据目录]
+// P4-12 验收：真实 Q/E/R 键鼠、正式伤害/阶段管线与连续渲染帧。
+// node tools/validate-companions.mjs [url] [out]
+// 固定游戏时钟；每组五帧的游戏时间间隔为1/30秒，1600×900。
 import puppeteer from 'puppeteer-core';
 import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync} from 'node:fs';
-const base=process.argv[2]??'http://127.0.0.1:5176/';
-const out=process.argv[3]??'.shots/p2-02';mkdirSync(out,{recursive:true});
+const base=process.argv[2]??'http://127.0.0.1:5182/';
+const out=process.argv[3]??'.shots/p4-12';mkdirSync(out,{recursive:true});
 const errors=[],checks=[],shots=[];
 const browser=await puppeteer.launch({executablePath:'/usr/bin/google-chrome',headless:true,protocolTimeout:120000,args:['--use-angle=vulkan','--enable-features=Vulkan','--ignore-gpu-blocklist','--autoplay-policy=no-user-gesture-required','--no-first-run']});
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-try{
+const close=(a,b)=>assert.ok(Math.abs(a-b)<.001,`${a} != ${b}`);
+try {
  const page=await browser.newPage();await page.setViewport({width:1600,height:900});
- page.on('pageerror',e=>errors.push(e.message));
- page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
- await page.goto('about:blank');await sleep(2000);
- await page.goto(`${base}?stage=1&god=1&diff=normal`,{waitUntil:'networkidle0'});
- await page.waitForFunction(()=>window.__game?.state==='playing',{timeout:60000});
- await page.evaluate(()=>{window.requestAnimationFrame=()=>0;});await sleep(100);
+ page.on('pageerror',e=>errors.push(e.stack??e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+ await page.goto('about:blank');await new Promise(r=>setTimeout(r,2000));
+ await page.goto(`${base}?stage=1&god=1`,{waitUntil:'networkidle0'});
+ await page.waitForFunction(()=>window.__game?.state==='playing');
+ await page.evaluate(()=>window.requestAnimationFrame=()=>0);await new Promise(r=>setTimeout(r,100));
  await page.evaluate(()=>{
   const g=window.__game,w=g.world;
-  window.__reset=()=>{w.resetStage();w.progression.resetRun();w.player.reset(true);w.companions.resetRun();w.scrollV=0;w.player.entering=0;w.player.x=450;w.player.y=850;w.player.ink=.8;w.player.invuln=999;w.debugAuto=false;g.state='playing';g.ui.screen('none');g.input.down=()=>false;g.input.pressed=()=>false;g.input.axisX=g.input.axisY=0;for(const s of w.companions.team)s.cooldown=99;g.render();};
-  window.__step=n=>{for(let i=0;i<n;i++){w.tick(1/60);g.render();}};
-  window.__enemy=(x=450,y=620)=>w.spawn({sprite:'e_hornet',hp:1000,noCollide:true},x,y);
+  window.setup=(kinds)=>{w.resetStage();w.progression.resetRun();w.player.reset(true);w.companions.resetRun();w.scrollV=0;w.player.entering=0;w.player.x=450;w.player.y=1000;w.player.ink=.5;w.player.invuln=999;w.debugAuto=false;g.state='playing';g.ui.screen('none');w.companions.setRoster(kinds);g.input.poll();g.ui.hud(w.hud(60),false);document.querySelectorAll('.fx .pop').forEach(e=>e.style.display='none');document.querySelector('.opening-controls').hidden=true;document.querySelectorAll('.presentation-dock .cardl,.presentation-dock .warnl,.presentation-dock .capl,.hero-letter').forEach(e=>e.style.visibility='hidden');g.render();};
+  window.step=(n=1)=>{for(let i=0;i<n;i++){g.input.poll();w.tick(1/60);g.render();}};
+  window.enemy=(x,y,hp=1000)=>w.spawn({sprite:'e_hornet',hp,noCollide:true},x,y);
  });
- async function shot(name){await page.evaluate(()=>window.__game.render());await sleep(230);await page.screenshot({path:`${out}/${name}.png`});shots.push(name);}
- // 赤燕：45帧前起势，命中一次，归位。
- await page.evaluate(()=>{window.__reset();const w=window.__game.world;window.__target=window.__enemy();});await shot('chiyan-before');
- await page.evaluate(()=>window.__game.world.companions.burst('chiyan'));await shot('chiyan-preview');
- await page.evaluate(()=>window.__step(40));await shot('chiyan-active');
- const attack=await page.evaluate(()=>{window.__step(80);const w=window.__game.world;return{hp:window.__target.hp,damage:window.__target.maxHp-window.__target.hp,stats:w.companions.stats,active:w.companions.team[0].active};});
- assert.equal(attack.damage,18);assert.equal(attack.active,0);checks.push({kind:'chiyan',...attack});await shot('chiyan-after');
- // 老盾：盾面内普通弹吸收；硬弹与侧外弹保留；容量最多六发。
- await page.evaluate(()=>{window.__reset();const w=window.__game.world;for(let i=0;i<8;i++)w.bullets.spawn(410+i*12,725+i*3,Math.PI/2,200);window.__hard=w.bullets.spawn(450,730,Math.PI/2,180,{hard:true});window.__outside=w.bullets.spawn(650,730,Math.PI/2,180);});await shot('laodun-before');
- await page.evaluate(()=>{window.__game.world.companions.burst('laodun');window.__step(15);});await shot('laodun-active');
- const shield=await page.evaluate(()=>{window.__step(40);const w=window.__game.world;return{blocked:w.companions.stats.blocked,count:w.companions.team[1].count,hard:window.__hard.dead,outside:window.__outside.dead};});
- assert.equal(shield.blocked,6);assert.equal(shield.hard,false);assert.equal(shield.outside,false);checks.push({kind:'laodun',...shield});await shot('laodun-after');
- // 墨鸢：50px/s样本，以55%移动，主射18%增伤；到期和死亡恢复。
- await page.evaluate(()=>{window.__reset();window.__target=window.__enemy(450,620);window.__target.vx=50;});await shot('moyuan-before');
- await page.evaluate(()=>window.__game.world.companions.burst('moyuan'));
- const debuff=await page.evaluate(()=>{window.__step(60);const w=window.__game.world,e=window.__target;const hp=e.hp;w.damage(e,10,e.x,e.y,true,'red');return{x:e.x,delta:hp-e.hp,speed:e.companionSpeed};});
- assert.ok(Math.abs(debuff.x-477.5)<.01);assert.ok(Math.abs(debuff.delta-11.8)<.001);await shot('moyuan-active');
- const restore=await page.evaluate(()=>{window.__step(130);return{speed:window.__target.companionSpeed,marked:window.__game.world.companions.isMarked(window.__target)};});assert.equal(restore.speed,1);assert.equal(restore.marked,false);checks.push({kind:'moyuan',...debuff,...restore});await shot('moyuan-after');
- // 算盘：600ms算珠飞行只结算一次；资源已高时不会减少墨。
- await page.evaluate(()=>{window.__reset();window.__game.world.player.ink=.3;});await shot('suanpan-before');
- await page.evaluate(()=>{window.__game.world.companions.burst('suanpan');window.__step(18);});await shot('suanpan-active');
- const support=await page.evaluate(()=>{window.__step(30);const w=window.__game.world;const once=w.companions.stats.ink;window.__step(160);return{once,after:w.companions.stats.ink,active:w.companions.team[3].active};});assert.ok(Math.abs(support.once-.08)<.00001);assert.equal(support.once,support.after);checks.push({kind:'suanpan',...support});await shot('suanpan-after');
- const rising=await page.evaluate(()=>{window.__reset();const w=window.__game.world;w.player.ink=.3;w.companions.burst('suanpan');w.player.ink=.8;window.__step(50);return w.player.ink;});assert.ok(rising>=.8);
- const lifecycle=await page.evaluate(()=>{window.__reset();const w=window.__game.world;const e=window.__enemy();w.companions.burst('moyuan');const bound=e.companionSpeed;w.player.alive=false;w.companions.update(1/60);return{bound,after:e.companionSpeed,active:w.companions.team.map(s=>s.active)};});assert.equal(lifecycle.bound,.55);assert.equal(lifecycle.after,1);assert.ok(lifecycle.active.every(t=>t===0));checks.push({kind:'death-clears-effects',...lifecycle});
- // 用正式milestone打开三选一，再用真实鼠标选卡；重复里程碑与XP不能额外发点。
- await page.evaluate(()=>{window.__reset();const g=window.__game,w=g.world;w.root.run(w.growthChoice(1));w.tick(1/60);g.render();});
- assert.equal(await page.$eval('.choice-grid',e=>e.children.length),3);assert.equal(await page.$$eval('.passive-preview',e=>e.length),3);await shot('three-choice');
- await sleep(400);await page.click('.choice-card');
- const acquired=await page.evaluate(()=>{const g=window.__game,w=g.world;const selected=[...w.progression.talents.keys()];w.progression.grant('combat',9999);const duplicate=w.progression.claimChoice(1,1);g.input.down=a=>a==='shoot';window.__step(3);g.render();return{selected,pending:w.progression.pendingChoices,duplicate,state:g.state,passives:w.progression.passiveHud()};});assert.equal(acquired.state,'playing');assert.equal(acquired.pending,0);assert.equal(acquired.duplicate,false);assert.equal(acquired.passives.length,1);checks.push({kind:'acquire',...acquired});await shot('passive-trigger');
- // 九个入口行为走正式更新与伤害管线，检查形态、互斥、资源隔离。
- const behaviors=await page.evaluate(()=>{
-  const g=window.__game,w=g.world,results=[];
-  const setup=id=>{window.__reset();w.progression.talents.set(id,1);};
-  window.__reset();g.input.down=a=>a==='shoot';window.__step(1);const baseShots=w.player.shots.filter(s=>s.kind===0);const baseline={count:baseShots.length,damage:baseShots.reduce((n,s)=>n+s.dmg,0)};
-  setup('R1');g.input.down=a=>a==='shoot';window.__step(1);
-  const red=w.player.shots.filter(s=>s.kind===0);results.push({id:'R1',baseline,count:red.length,damage:red.reduce((n,s)=>n+s.dmg,0),left:red.filter(s=>s.vx<0).length,right:red.filter(s=>s.vx>0).length});
-  setup('B1');w.player.weapon='blue';g.input.down=a=>a==='shoot'||a==='focus';g.input.axisX=1;window.__step(1);const tilt=w.player.beamTilt;g.input.axisX=0;window.__step(2);const hold=w.player.beamTilt;g.input.down=a=>a==='shoot';window.__step(1);results.push({id:'B1',tilt,hold,released:w.player.beamTilt});
-  setup('T1');w.player.weapon='purple';const near=window.__enemy(450,730),marked=window.__enemy(500,610);w.companions.marked.set(marked,3);g.input.down=a=>a==='shoot';window.__step(1);results.push({id:'T1',first:w.player.thunderTargets[0]?.id,marked:marked.id,near:near.id});
-  setup('W1');const echo=window.__enemy(450,620);const hp=echo.hp;w.progression.onBrushRelease([300,600,450,620,600,600],1,0,0);window.__step(70);results.push({id:'W1',damage:hp-echo.hp,trigger:w.progression.passiveHud()[0].triggers});
-  setup('W2');const circle=[];for(let i=0;i<=24;i++){const a=i/24*Math.PI*2;circle.push(450+Math.cos(a)*75,620+Math.sin(a)*75);}const bound=window.__enemy(250,620);w.progression.onBrushRelease(circle,0,0,0);window.__step(1);bound.x=450;window.__step(1);const sealed=bound.sealed;bound.sealed=0;bound.x=250;window.__step(1);bound.x=450;window.__step(1);results.push({id:'W2',sealed,repeat:bound.sealed});
-  for(const id of ['I1','I2']){setup(id);w.progression.onBomb();const before=w.progression.fields[0].x;w.player.x+=80;window.__step(1);results.push({id,move:w.progression.fields[0].x-before,radius:w.progression.fields[0].r});}
-  for(const id of ['Q1','Q2']){setup(id);window.__step(120);results.push({id,offsets:w.companions.team.map(c=>[Math.round(c.x-w.player.x),Math.round(c.y-w.player.y)])});}
-  setup('W1');w.progression.claimChoice(1,1);const offers=w.progression.offerTalents().map(t=>t.id);results.push({id:'eligibility',offers,excluded:!offers.includes('W2'),numericRequires:!offers.includes('B4')});
+ async function aim(x,y){const rect=await page.evaluate(()=>window.__game.r.playCss);assert.ok(rect);await page.mouse.move(rect.x+x*rect.w/900,rect.y+y*rect.h/1200);}
+ async function key(key){await page.keyboard.down(key);await page.evaluate(()=>window.step());await page.keyboard.up(key);await page.evaluate(()=>window.__game.input.poll());}
+ async function frames(name){for(let i=0;i<5;i++){await page.evaluate(()=>window.__game.render());const path=`${out}/${name}-${i}.png`;await page.screenshot({path});shots.push(path);await page.evaluate(()=>window.step(2));}}
+ await page.evaluate(()=>{window.setup(['chiyan']);const c=window.__game.world.companions.team[0];c.x=200;c.y=600;window.target=window.enemy(320,600);window.outside=window.enemy(320,641);});await aim(800,600);await key('q');close(await page.evaluate(()=>window.__game.world.companions.team[0].x),230);close(await page.evaluate(()=>window.__game.world.companions.slot('Q').cooldown),8);await frames('chiyan');
+ const dash=await page.evaluate(()=>{const c=window.__game.world.companions;return {damage:window.target.maxHp-window.target.hp,outside:window.outside.maxHp-window.outside.hp,casts:c.stats.casts.chiyan,cooldown:c.slot('Q').cooldown,ready:c.slot('Q').ready};});
+ close(dash.damage,120);close(dash.outside,0);assert.equal(dash.casts,1);assert.equal(dash.ready,false);assert.ok(dash.cooldown>6&&dash.cooldown<8);checks.push({id:'dive-path-once',...dash});await page.evaluate(()=>{window.target.invulnerable=window.outside.invulnerable=true;window.step(100);});await key('q');assert.equal(await page.evaluate(()=>window.__game.world.companions.stats.casts.chiyan),1);
+ await page.evaluate(()=>window.step(500));assert.equal(await page.evaluate(()=>window.__game.world.companions.slot('Q').ready),true);
+ await page.evaluate(()=>{window.setup(['laodun']);const w=window.__game.world;window.ordinary=w.bullets.spawn(450,550,Math.PI/2,0);window.hard=w.bullets.spawn(460,550,Math.PI/2,0,{hard:true});window.outside=w.bullets.spawn(570,550,Math.PI/2,0);});await aim(450,550);await key('q');close(await page.evaluate(()=>window.__game.world.companions.slot('Q').cooldown),12);await frames('laodun');
+ const shield=await page.evaluate(()=>({ordinary:window.ordinary.dead,hard:window.hard.dead,outside:window.outside.dead,active:window.__game.world.companions.team[0].active}));assert.equal(shield.ordinary,true);assert.equal(shield.hard,false);assert.equal(shield.outside,false);checks.push({id:'shield-110-normal-only',...shield});
+ await page.evaluate(()=>window.step(190));assert.equal(await page.evaluate(()=>window.__game.world.companions.team[0].active),0);
+ await page.evaluate(()=>{window.setup(['moyuan']);window.target=window.enemy(450,550);window.target.vx=10;window.mark=window.enemy(750,300,2000);});await aim(450,550);await key('q');close(await page.evaluate(()=>window.__game.world.companions.slot('Q').cooldown),12);await frames('moyuan');
+ const net=await page.evaluate(()=>{const w=window.__game.world,e=window.target,m=window.mark;let hp=e.hp;w.damage(e,10,e.x,e.y,true,'ink');const netDamage=hp-e.hp;hp=m.hp;w.damage(m,10,m.x,m.y,true,'red');return{speed:e.companionSpeed,netDamage,markDamage:hp-m.hp,mark:w.companions.isMarked(m),cooldown:w.companions.slot('Q').cooldown};});close(net.speed,.4);close(net.netDamage,12);close(net.markDamage,11.5);assert.equal(net.mark,true);checks.push({id:'net-140-and-highest-hp-mark',...net});
+ await page.evaluate(()=>window.step(250));assert.equal(await page.evaluate(()=>window.target.companionSpeed),1);
+ await page.evaluate(()=>{window.setup(['suanpan']);const w=window.__game.world;for(let i=0;i<5;i++)w.bullets.spawn(420+i*10,550,0,0,{hard:i===0});window.outside=w.bullets.spawn(580,550,0,0);});await aim(450,550);await key('q');close(await page.evaluate(()=>window.__game.world.companions.slot('Q').cooldown),14);await frames('suanpan');
+ const intercept=await page.evaluate(()=>{const c=window.__game.world.companions;return{ink:c.stats.ink,outside:window.outside.dead,cooldown:c.slot('Q').cooldown,casts:c.stats.casts.suanpan};});close(intercept.ink,.025);assert.equal(intercept.outside,false);assert.equal(intercept.casts,1);checks.push({id:'intercept-120-five-drops',...intercept});
+ await page.evaluate(()=>{window.setup(['laodun']);const w=window.__game.world;window.first=w.bullets.spawn(450,940,Math.PI/2,1);window.second=w.bullets.spawn(450,940,Math.PI/2,1);window.step();});
+ assert.equal(await page.evaluate(()=>window.first.dead),true);assert.equal(await page.evaluate(()=>window.second.dead),false);await page.evaluate(()=>window.step(121));assert.equal(await page.evaluate(()=>window.second.dead),true);checks.push({id:'passive-shield-one-per-two-seconds',ok:true});
+ await page.evaluate(()=>{window.setup(['suanpan']);const w=window.__game.world;window.tracking=w.bullets.spawn(400,400,0,0,{homing:true,update:b=>b.angle+=.1});window.curving=w.bullets.spawn(500,400,0,0,{update:b=>b.angle+=.1});window.step(599);});assert.equal(await page.evaluate(()=>window.tracking.homing),true);await page.evaluate(()=>window.step(2));const interference=await page.evaluate(()=>({tracking:window.tracking.homing,callback:!!window.tracking.update,otherCallback:!!window.curving.update,count:window.__game.world.companions.stats.interfered}));assert.equal(interference.tracking,false);assert.equal(interference.callback,false);assert.equal(interference.otherCallback,true);assert.equal(interference.count,1);checks.push({id:'explicit-homing-only-ten-seconds',...interference});
+ await page.evaluate(()=>{window.setup(['suanpan','laodun']);});const slots=await page.evaluate(()=>['Q','E','R'].map(k=>window.__game.world.companions.slot(k)));assert.equal(slots[0].id,'suanpan');assert.equal(slots[1].id,'laodun');assert.equal(slots[2].visible,true);await aim(450,500);await key('e');assert.equal(await page.evaluate(()=>window.__game.world.companions.stats.casts.laodun),1);assert.equal(slots[0].cooldownMax,14);assert.equal(slots[1].cooldownMax,12);checks.push({id:'join-order-and-real-E',slots});
+ await page.evaluate(()=>{window.setup(['moyuan']);window.target=window.enemy(450,500);});await aim(450,500);await key('q');const cleared=await page.evaluate(()=>{const w=window.__game.world;w.player.alive=false;w.companions.update(1/60);return{speed:window.target.companionSpeed,bonus:w.companions.weaknessBonus(window.target)};});assert.equal(cleared.speed,1);assert.equal(cleared.bonus,1);checks.push({id:'death-restores-effects',...cleared});
+ // 赤燕正常射击：固定采样位置保持远/近距离，走实际 update、弹体与伤害。
+ const shooting=await page.evaluate(()=>{
+  const w=window.__game.world,c=w.companions;const results=[];
+  for(const near of [false,true]){window.setup(['chiyan']);const e=window.enemy(800,400);for(let i=0;i<60;i++){c.team[0].x=near?850:200;c.team[0].y=400;window.step();}results.push({near,shots:c.stats.shots,hits:c.stats.shotHits,damage:e.maxHp-e.hp});}
   return results;
- });
- assert.equal(behaviors[0].count,behaviors[0].baseline.count*2);assert.equal(behaviors[0].damage,behaviors[0].baseline.damage);assert.equal(behaviors[0].left,behaviors[0].count/2);assert.equal(behaviors[0].right,behaviors[0].count/2);
- assert.equal(behaviors[1].tilt,.16);assert.equal(behaviors[1].hold,.16);assert.equal(behaviors[1].released,0);
- assert.equal(behaviors[2].first,behaviors[2].marked);assert.equal(behaviors[3].damage,24);assert.ok(behaviors[4].sealed>0);assert.equal(behaviors[4].repeat,0);
- assert.equal(behaviors[5].move,80);assert.equal(behaviors[6].move,0);assert.deepEqual(behaviors[7].offsets,[[0,-130],[-90,10],[90,-110],[0,90]]);assert.deepEqual(behaviors[8].offsets,[[0,-80],[-110,-35],[0,-145],[110,-35]]);assert.ok(behaviors[9].excluded&&behaviors[9].numericRequires);checks.push({kind:'entry-behaviors',results:behaviors});
- // 实际关卡脚本、普通难度、60秒：新页面隔离固定样本的通讯与演出，只设无敌保证证据连续。
- await page.reload({waitUntil:'networkidle0'});await page.waitForFunction(()=>window.__game?.state==='playing');
- await page.evaluate(()=>{window.requestAnimationFrame=()=>0;});await sleep(100);
- await page.evaluate(()=>{const g=window.__game;g.toTitle();g.onStart();g.debug.bot=false;g.input.down=a=>a==='shoot';g.input.pressed=()=>false;g.input.axisX=g.input.axisY=0;});
- const natural=[];
- for(const target of [0,5,10,20,30,40,50,60]){
-  const state=await page.evaluate(target=>{const g=window.__game,w=g.world;let frames=0;while(w.t<target&&g.state==='playing'&&frames++<6000){w.player.invuln=999;g.update(1/60);g.render();}return{t:w.t,state:g.state,difficulty:w.diffId,team:w.companions.team.map(s=>({kind:s.kind,effective:s.effective})),stats:{...w.companions.stats},talents:[...w.progression.talents.keys()]};},target);
-  natural.push(state);await shot(`normal-${String(target).padStart(2,'0')}`);
- }
- assert.ok(natural.at(-1).t>=60);assert.equal(natural.at(-1).difficulty,'normal');checks.push({kind:'normal-60s',samples:natural});
- const firstChoice=await page.evaluate(()=>{const g=window.__game,w=g.world;while(w.t<90&&g.state==='playing'){w.player.invuln=999;g.update(1/60);g.render();}return{t:w.t,state:g.state,pending:w.progression.pendingChoices};});
- assert.equal(firstChoice.state,'growth');assert.ok(firstChoice.t>=60&&firstChoice.t<=90);checks.push({kind:'natural-first-choice',...firstChoice});await shot('natural-first-choice');
- await page.setViewport({width:900,height:1200});await sleep(200);await shot('three-choice-portrait');
-
+ });assert.equal(shooting[0].shots,3);assert.equal(shooting[1].shots,6);assert.ok(shooting[0].hits>0);assert.ok(shooting[1].hits>0);for(const r of shooting)close(r.damage,r.hits*5);checks.push({id:'chiyan-3-and-6-real-shots-5-damage',shooting});
+ const speed=await page.evaluate(()=>{window.setup(['chiyan']);const c=window.__game.world.companions;window.enemy(800,400);for(let i=0;i<20;i++){c.team[0].x=200;c.team[0].y=400;window.step();}const b=c.shots[0],x=b.x;c.team[0].x=200;window.step();return{distance:b.x-x,speed:Math.hypot(b.vx,b.vy)};});close(speed.distance,15);close(speed.speed,900);checks.push({id:'chiyan-projectile-900px-per-second',...speed});
+ await page.evaluate(()=>{window.setup(['chiyan']);const c=window.__game.world.companions;window.enemy(800,400);for(let i=0;i<20;i++){c.team[0].x=200;c.team[0].y=400;window.step();}});await frames('chiyan-normal');
+ const blocking=await page.evaluate(()=>{window.setup(['chiyan']);const w=window.__game.world,c=w.companions;const front=window.enemy(400,400),back=window.enemy(800,400);front.invulnerable=true;for(let i=0;i<80;i++){c.team[0].x=200;c.team[0].y=400;window.step();}return{front:front.maxHp-front.hp,back:back.maxHp-back.hp,hits:c.stats.shotHits};});close(blocking.front,0);close(blocking.back,0);assert.ok(blocking.hits>0);checks.push({id:'invulnerable-first-body-stops-shot',...blocking});
+ const piercing=await page.evaluate(()=>{window.setup(['laodun']);const w=window.__game.world,c=w.companions;const front=window.enemy(300,400),back=window.enemy(400,400);c.shots.push({x:200,y:400,vx:900,vy:0});window.step(30);return{front:front.maxHp-front.hp,back:back.maxHp-back.hp,remaining:c.shots.length};});close(piercing.front,5);close(piercing.back,0);assert.equal(piercing.remaining,0);checks.push({id:'first-hit-nonpiercing',...piercing});
+ const parts=await page.evaluate(()=>{window.setup(['chiyan']);const w=window.__game.world,c=w.companions;const boss=w.spawn({sprite:'e_hornet',hp:1000,boss:{name:'校验',phases:1},noCollide:true},800,1000),part=w.attach(boss,{sprite:'e_hornet',hp:100,noCollide:true},[0,-600]);for(let i=0;i<60;i++){c.team[0].x=850;c.team[0].y=400;window.step();}return{partDamage:part.maxHp-part.hp,bodyDamage:boss.maxHp-boss.hp};});assert.ok(parts.partDamage>0);close(parts.bodyDamage,0);checks.push({id:'normal-shots-target-boss-parts',...parts});
+ // 真实击破、阶段完成通知与保留规则。
+ const charging=await page.evaluate(()=>{
+  window.setup(['laodun']);const w=window.__game.world,c=w.companions,values=[];
+  const kill=(hp,source)=>{const e=window.enemy(450,400,hp);w.damage(e,e.hp+1,e.x,e.y,true,source);values.push(c.charge);};
+  kill(100,'red');kill(100,'companion');kill(400,'companion');
+  const boss=w.spawn({sprite:'e_hornet',hp:1000,boss:{name:'校验',phases:1},noCollide:true},600,400),part=w.attach(boss,{sprite:'e_hornet',hp:100,noCollide:true},[-100,0]);part.phaseLock=true;w.damage(part,200,part.x,part.y,true,'red');values.push(c.charge);w.kill(part);values.push(c.charge);
+  w.bossPhases=1;w.root.run((function*(){yield* w.phase(boss,{hp:10,time:1},function*(){w.damage(boss,100,boss.x,boss.y,true,'red');yield;});})());window.step(2);values.push(c.charge);
+  const atSingle=c.slot('R');w.player.alive=false;c.update(1/60);const afterDeath=c.charge;w.player.alive=true;c.resetStage();const afterStage=c.charge;c.setRoster(['chiyan','laodun']);const afterSwap=c.charge;
+  kill(400,'companion');return{values,atSingle,afterDeath,afterStage,afterSwap,cap:c.charge};
+ });assert.deepEqual(charging.values,[0,10,35,55,55,85,100]);assert.equal(charging.atSingle.ready,false);assert.equal(charging.atSingle.visible,true);assert.equal(charging.afterDeath,85);assert.equal(charging.afterStage,85);assert.equal(charging.afterSwap,85);assert.equal(charging.cap,100);checks.push({id:'kill-phase-charging-and-retention',...charging});
+ const timeout=await page.evaluate(()=>{window.setup(['laodun']);const w=window.__game.world;const boss=w.spawn({sprite:'e_hornet',hp:1000,boss:{name:'校验',phases:1},noCollide:true},600,400);w.bossPhases=1;w.root.run(w.phase(boss,{hp:1000,time:.1},function*(){while(true)yield;}));window.step(12);return w.companions.charge;});assert.equal(timeout,0);checks.push({id:'phase-timeout-gives-no-defeat-charge',charge:timeout});
+ const actualQKill=await page.evaluate(()=>{window.setup(['chiyan']);const c=window.__game.world.companions;c.team[0].x=200;c.team[0].y=500;window.enemy(300,500,100);});await aim(500,500);await key('q');await page.evaluate(()=>window.step(5));assert.equal(await page.evaluate(()=>window.__game.world.companions.charge),10);checks.push({id:'Q-dive-kill-charges-10',ok:true});
+ // 盾后突击：屏边整体平移、四趟各80、双向挡弹、停顿与归位。
+ await page.evaluate(()=>{window.setup(['chiyan','laodun']);const w=window.__game.world,c=w.companions;c.charge=100;c.team[0].x=300;c.team[0].y=492;c.team[0].cooldown=4;c.team[1].cooldown=5;window.target=window.enemy(500,470);window.outside=window.enemy(280,470);window.below=window.enemy(500,493);window.victim=window.enemy(550,470,60);window.boss=w.spawn({sprite:'e_hornet',hp:1000,boss:{name:'校验',phases:1},noCollide:true},800,450);window.part=w.attach(window.boss,{sprite:'e_hornet',hp:1000,noCollide:true},[-100,20]);window.aboveBullet=w.bullets.spawn(550,480,Math.PI/2,900);window.belowBullet=w.bullets.spawn(650,520,-Math.PI/2,900);window.hard=w.bullets.spawn(700,500,0,0,{hard:true});});await aim(850,500);await key('r');assert.equal(await page.evaluate(()=>window.__game.world.companions.charge),0);await frames('shield-dive');
+ const startShield=await page.evaluate(()=>{const c=window.__game.world.companions;return{center:c.joint.x,width:600,above:window.aboveBullet.dead,below:window.belowBullet.dead,hard:window.hard.dead,castQ:c.cast('Q'),castE:c.cast('E'),shots:c.stats.shots,cooldown:c.team[0].cooldown};});assert.equal(startShield.center,600);assert.equal(startShield.above,true);assert.equal(startShield.below,true);assert.equal(startShield.hard,false);assert.equal(startShield.castQ,false);assert.equal(startShield.castE,false);assert.equal(startShield.shots,0);assert.ok(startShield.cooldown<4);checks.push({id:'shield-wall-fit-two-way-and-QE-pause',...startShield});
+ const pass=await page.evaluate(()=>{const c=window.__game.world.companions;while(c.joint.pass<4)window.step();return{damage:window.target.maxHp-window.target.hp,outside:window.outside.maxHp-window.outside.hp,below:window.below.maxHp-window.below.hp,passes:c.joint.pass,age:c.joint.age,bossDamage:window.boss.maxHp-window.boss.hp,partDamage:window.part.maxHp-window.part.hp,charge:c.charge,victim:window.victim.dead};});close(pass.damage,320);close(pass.bossDamage,320);close(pass.partDamage,320);assert.equal(pass.victim,true);assert.equal(pass.charge,0);close(pass.outside,0);close(pass.below,0);assert.equal(pass.passes,4);assert.ok(pass.age>=2.45&&pass.age<2.55);checks.push({id:'four-half-second-passes-80-each',...pass});
+ const shieldEnd=await page.evaluate(()=>{const w=window.__game.world,c=w.companions;window.target.invulnerable=window.outside.invulnerable=window.below.invulnerable=true;while(c.joint&&c.joint.age<=3)window.step();const b=w.bullets.spawn(500,500,0,0);window.step();const endedBullet=b.dead;window.step(90);return{endedBullet,joint:!!c.joint,readyQ:c.slot('Q').ready,cast:c.stats.jointCasts['shield-dive']};});assert.equal(shieldEnd.endedBullet,false);assert.equal(shieldEnd.joint,false);assert.equal(shieldEnd.readyQ,true);assert.equal(shieldEnd.cast,1);checks.push({id:'shield-three-seconds-and-return',...shieldEnd});
+ // 铁网：80px网带、普通机先快后慢上推160、Boss和部件只受冲刺伤害。
+ await page.evaluate(()=>{window.setup(['laodun','moyuan']);const w=window.__game.world,c=w.companions;c.charge=100;c.team[0].x=0;c.team[0].y=600;window.target=window.enemy(300,610);window.target.vx=60;window.outside=window.enemy(450,650);window.boss=w.spawn({sprite:'e_hornet',hp:1000,boss:{name:'校验',phases:1},noCollide:true},600,600);window.part=w.attach(window.boss,{sprite:'e_hornet',hp:500,noCollide:true},[150,0]);window.hard=w.bullets.spawn(700,600,0,0,{hard:true});window.outBullet=w.bullets.spawn(700,660,0,0);});await aim(450,600);await key('r');await frames('tiewang');const rushSpeed=await page.evaluate(()=>{const c=window.__game.world.companions,s=c.team[0],x=s.x;window.step();return s.x-x;});close(rushSpeed,25);checks.push({id:'iron-rush-1500px-per-second',distancePerFrame:rushSpeed});
+ const push=await page.evaluate(()=>{const c=window.__game.world.companions;while(c.joint.age<.4)window.step();return{y:window.target.y,x:window.target.x,stunned:window.target.stunned,outsideY:window.outside.y,bossY:window.boss.y,bossStun:window.boss.stunned,partY:window.part.y,partStun:window.part.stunned,hard:window.hard.dead,outsideBullet:window.outBullet.dead};});close(push.y,450);close(push.x,300);assert.ok(push.stunned>1.5);close(push.outsideY,650);close(push.bossY,600);close(push.partY,600);assert.equal(push.bossStun,0);assert.equal(push.partStun,0);assert.equal(push.hard,true);assert.equal(push.outsideBullet,false);checks.push({id:'iron-net-stun-push-boss-immunity',...push});
+ const rush=await page.evaluate(()=>{const w=window.__game.world,c=w.companions;while(c.joint.age<1)window.step();const b=w.bullets.spawn(800,600,0,0,{hard:true});window.step();return{bossDamage:window.boss.maxHp-window.boss.hp,partDamage:window.part.maxHp-window.part.hp,newBullet:b.dead,phase:c.joint.phase};});close(rush.bossDamage,60);close(rush.partDamage,60);assert.equal(rush.newBullet,true);checks.push({id:'iron-rush-1500-path-once-60-and-new-bullets',...rush});
+ const netEnd=await page.evaluate(()=>{const w=window.__game.world,c=w.companions;while(c.joint&&c.joint.age<2.05)window.step();const b=w.bullets.spawn(800,600,0,0,{hard:true});window.step(60);return{bullet:b.dead,stun:window.target.stunned,x:window.target.x,joint:!!c.joint};});assert.equal(netEnd.bullet,false);assert.equal(netEnd.stun,0);assert.ok(netEnd.x>300);assert.equal(netEnd.joint,false);checks.push({id:'iron-two-seconds-expiry-and-return',...netEnd});
+ // 照影：快照弱点5秒与屏内敌弹速度半减，到期恢复，无弹池污染。
+ await page.evaluate(()=>{window.setup(['moyuan','suanpan']);const w=window.__game.world,c=w.companions;c.charge=100;window.target=window.enemy(450,400);window.ordinary=w.bullets.spawn(300,500,Math.PI/2,120);window.hard=w.bullets.spawn(650,500,Math.PI/2,120,{hard:true});});await aim(450,500);await key('r');await frames('zhaoying');
+ const exposure=await page.evaluate(()=>{const w=window.__game.world,e=window.target,c=w.companions;const hp=e.hp;w.damage(e,10,e.x,e.y,true,'ink');const y=window.ordinary.y,hy=window.hard.y;window.step(60);return{damage:hp-e.hp,ordinary:window.ordinary.y-y,hard:window.hard.y-hy,storedSpeed:window.ordinary.speed,active:c.joint.age<5};});close(exposure.damage,15);close(exposure.ordinary,60);close(exposure.hard,60);close(exposure.storedSpeed,120);assert.equal(exposure.active,true);checks.push({id:'exposure-50-percent-and-half-speed',...exposure});
+ const restored=await page.evaluate(()=>{const w=window.__game.world,c=w.companions;while(c.joint&&c.joint.age<5.01)window.step();const b=w.bullets.spawn(300,400,Math.PI/2,120);const y=b.y;window.step(60);const hp=window.target.hp;w.damage(window.target,10,450,400,true,'ink');return{distance:b.y-y,damage:hp-window.target.hp,joint:!!c.joint};});close(restored.distance,120);close(restored.damage,11.5);assert.equal(restored.joint,false);checks.push({id:'exposure-five-seconds-restores-passive-mark-and-speed',...restored});
+ const unavailable=await page.evaluate(()=>{const c=window.__game.world.companions;c.setRoster(['chiyan']);c.charge=100;const single=c.slot('R');c.setRoster(['chiyan','suanpan']);return{single,unsupported:c.slot('R')};});assert.equal(unavailable.single.ready,false);assert.equal(unavailable.single.visible,true);assert.equal(unavailable.unsupported.ready,false);assert.equal(unavailable.unsupported.name,'暂无合击');assert.equal(unavailable.unsupported.charge,100);checks.push({id:'single-and-unsupported-R-grey',...unavailable});
+ const deathJoint=await page.evaluate(()=>{window.setup(['moyuan','suanpan']);const w=window.__game.world,c=w.companions;const e=window.enemy(450,400);c.charge=100;c.cast('R');const b=w.bullets.spawn(300,400,0,100);w.player.alive=false;c.update(1/60);return{joint:!!c.joint,bonus:c.weaknessBonus(e),scale:c.bulletSpeedScale(b)};});assert.equal(deathJoint.joint,false);close(deathJoint.bonus,1);close(deathJoint.scale,1);checks.push({id:'death-clears-joint-and-slow',...deathJoint});
+ await page.evaluate(()=>{const g=window.__game;g.toTitle();g.ui.screen('test');});await new Promise(r=>setTimeout(r,450));
+ const menuClick=async name=>{const point=await page.$$eval('.scr .mi',(els,name)=>{const e=els.find(e=>e.querySelector('.ml')?.textContent===name);if(!e)throw new Error(name);const r=e.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};},name);await page.mouse.click(point.x,point.y);};
+ await menuClick('伙伴 · 算盘');await menuClick('伙伴 · 老盾');await menuClick('伙伴 · 赤燕');
+ assert.ok(await page.$eval('.test-note',e=>e.textContent.includes('先取消')));await menuClick('进入测试');
+ const menuTeam=await page.evaluate(()=>window.__game.world.companions.team.map(s=>s.kind));assert.deepEqual(menuTeam,['suanpan','laodun']);checks.push({id:'real-test-menu-two-and-selection-order',menuTeam});
+ await page.screenshot({path:`${out}/test-menu-lineup.png`});shots.push(`${out}/test-menu-lineup.png`);
  assert.deepEqual(errors,[]);
- writeFileSync(`${out}/validation.json`,JSON.stringify({checks,shots,errors,naturalGodMode:true},null,2));
- console.log(JSON.stringify({checks:checks.length,shots:shots.length,errors}));
-}finally{await browser.close();}
+ const report={status:'PASS',checks,shots,errors,screenshotInterval:1/30,viewport:[1600,900]};
+ writeFileSync(`${out}/validation.json`,JSON.stringify(report,null,2));console.log(JSON.stringify({status:report.status,checks:checks.length,shots:shots.length,errors:report.errors}));
+} catch(e){writeFileSync(`${out}/failure.json`,JSON.stringify({error:String(e),errors,checks},null,2));throw e;}finally{await browser.close();}

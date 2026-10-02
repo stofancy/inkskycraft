@@ -581,7 +581,7 @@ export class Scene3D {
   constructor(gl: GL, readonly def: Bg3D, quality: Quality3D) {
     this.gl = gl;
     this.camS = def.camS ?? CAM_S;
-    this.scale = quality === 'ultra' ? 1 : 0.75;
+    this.scale = 1;
     this.fogSteps = quality === 'ultra' ? 24 : 14;
     const pre = SCENE_HEAD + SCENE_LIB + def.glsl;
     this.bake = new Program(gl, FS_TRI_VS, pre + BAKE_FS);
@@ -646,7 +646,7 @@ export class Scene3D {
   }
 
   setQuality(q: Quality3D): void {
-    this.scale = q === 'ultra' ? 1 : 0.75;
+    this.scale = 1;
     this.fogSteps = q === 'ultra' ? 24 : 14;
     this.w = 0; this.h = 0;   // 下次 resize 重建目标
   }

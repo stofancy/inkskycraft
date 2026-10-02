@@ -7,7 +7,7 @@ import type { G } from './api';
 import { oscillate, type BoneAnimation } from '../core/animation';
 import type { SpriteDeform } from '../gl/sprites';
 
-export type ItemKind = 'p' | 'weapon' | 'bomb' | 'missile' | 'medal' | 'ink' | '1up';
+export type ItemKind = 'p' | 'bomb' | 'medal' | 'ink';
 export type ExplosionSize = 's' | 'm' | 'l' | 'xl';
 
 export interface EnemyDef {
@@ -38,16 +38,28 @@ export interface EnemyDef {
   deform?: SpriteDeform;
   /** 自动朝向：'move' 朝移动方向，'player' 朝玩家。默认不自动旋转。 */
   face?: 'move' | 'player';
+  /** 贴图原始朝向是机头朝上（face 默认按机头朝下计算）。 */
+  faceUp?: boolean;
   /** 不可被伤害。 */
   invulnerable?: boolean;
   /** 不与玩家机体碰撞。 */
   noCollide?: boolean;
   /** Boss 信息：有此项时由 g.boss() 管理阶段血条。 */
-  boss?: { name: string; phases: number; music?: MusicId };
+  boss?: { name: string; phases: number; music?: MusicId; defeat?: 'disable' };
+  /** 装饰不参与选敌、武器或碰撞；仍随骨架渲染。 */
+  decorative?: boolean;
+  /** 重叠部件优先命中；默认0。 */
+  hitPriority?: number;
+  /** 同层分件前后顺序；默认0。 */
+  drawOrder?: number;
+  /** 首领专属松甲响应，World将子件事件转发到根首领。 */
+  onLoosenArmor?: (e: Enemy, g: G, seconds: number) => void;
   /** 渲染层（默认 ground → 'ground'，其余 'air'）。 */
   layer?: 'ground' | 'air';
   /** 行为协程。 */
   ai?: (e: Enemy, g: G) => Co;
+  /** 蓄力炮口等实体命中反馈，不改变伤害计算。 */
+  onHit?: (e:Enemy,g:G,x:number,y:number,source:import("../types").DamageSource)=>void;
   /** 死亡回调（被击破时，不含 silent 移除）。 */
   onDeath?: (e: Enemy, g: G) => void;
 }
@@ -81,6 +93,22 @@ export class Enemy {
   sealed = 0;
   /** 墨鸢减速倍率，到期由伙伴系统恢复。 */
   companionSpeed = 1;
+  /** 蓄力脚本公开此状态；interrupt 后须检查它再放出攻击。 */
+  charging = false;
+  stunned = 0;
+  armorLoose = 0;
+  onArmorLoosened?: (seconds:number)=>void;
+  onInterrupt?: (seconds:number)=>void;
+  interruptSerial = 0;
+  /** 普通敌人与首领共用入口；部件同步通知所属本体。 */
+  interrupt(seconds:number):void{
+    if(this.dead||!Number.isFinite(seconds)||seconds<=0)return;
+    this.charging=false;this.stunned=Math.max(this.stunned,seconds);this.interruptSerial++;
+    this.scope.paused=!this.def.boss&&!this.phaseLock;this.onInterrupt?.(seconds);
+    let owner:Enemy=this;while(owner.parent)owner=owner.parent;
+    owner=owner.data.bossOwner??owner;if(owner!==this)owner.interrupt(seconds);
+  }
+  tickControl(dt:number):void{this.stunned=Math.max(0,this.stunned-dt);this.armorLoose=Math.max(0,this.armorLoose-dt);}
   flash = 0;
   radius: number;
   readonly info: SpriteInfo;
@@ -193,10 +221,11 @@ export class Enemy {
 
   /** 从中心指向玩家的角度（需由世界注入玩家位置）。 */
   aim(): number {
-    return angleTo(this.x, this.y, Enemy.px, Enemy.py);
+    const target=Enemy.aimTarget?.(this.x,this.y)??{x:Enemy.px,y:Enemy.py};return angleTo(this.x,this.y,target.x,target.y);
   }
 
   /** 由世界每帧更新的玩家位置。 */
+  static aimTarget:((x:number,y:number)=>{x:number;y:number})|null=null;
   static px = 450;
   static py = 1000;
 

@@ -15,4 +15,4 @@ const sprites: [string,number,number,(c:C)=>void][] = [
  ['s2_node',68,68,c=>{plate(c,[[0,-29],[-26,-14],[-26,14],[0,29],[26,14],[26,-14]]);core(c);}],
  ['s2_rescueboat',90,120,c=>{plate(c,[[-33,-45],[-25,35],[0,52],[25,35],[33,-45]],true);plate(c,[[-6,-32],[6,-32],[6,21],[-6,21]]);core(c,0,26);}],
 ];
-export const stage2ExtraSprites: SpriteDef[] = sprites.map(([id,w,h,draw])=>({id,w,h,radius:id==='e_paperray'?25:18,draw,glow(c){orb(c,0,id==='e_belleel'?-39:0,8,'#69ded6',0.7);}}));
+export const stage2ExtraSprites: SpriteDef[] = sprites.map(([id,w,h,draw])=>id==='s2_rescueboat'?{id,w,h,radius:18,image:'art/enemies/ch2/story/rescue-boat.png'}:({id,w,h,radius:id==='e_paperray'?25:18,draw,glow(c){orb(c,0,id==='e_belleel'?-39:0,8,'#69ded6',0.7);}}));

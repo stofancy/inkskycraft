@@ -1,5 +1,5 @@
-// 道具：浮游反弹（P/武器/炸弹等）、下落（金印奖牌）、自动吸附（子弹化成的金）。
-import { PLAY_H, PLAY_W, type WeaponColor } from '../types';
+// 即拾即用道具：浮游火力/泼墨/墨锭、下落金印、自动吸附的清弹金。
+import { PLAY_H, PLAY_W } from '../types';
 import type { ItemKind } from './enemy';
 
 export type ItemType = ItemKind | 'gold';
@@ -7,20 +7,30 @@ export type ItemType = ItemKind | 'gold';
 export class Item {
   x = 0; y = 0; vx = 0; vy = 0;
   age = 0;
+  /** 出现后的真实战斗秒数；菜单停留不计入。 */
+  elapsed = 0;
   dead = false;
   homing = false;
+  /** 关卡固定教学掉落禁止被钱耗拿走。 */
+  tutorial=false;
+  scoreValue?:number;
+  spriteOverride?:string;
   constructor(readonly kind: ItemType) {}
 }
 
-const WEAPON_CYCLE: WeaponColor[] = ['red', 'blue', 'purple'];
+export const MAX_POWER = 4;
+export const MAX_BOMBS = 6;
+export const EXTEND_SCORES = [1_000_000, 1_800_000] as const;
+
+export function medalScore(seconds: number): number {
+  return seconds <= 1 + 1e-9 ? 2000 : seconds <= 2 + 1e-9 ? 1000 : seconds <= 3 + 1e-9 ? 500 : 200;
+}
 const SPRITE: Record<ItemType, string> = {
-  p: 'item_p', weapon: 'item_red', bomb: 'item_bomb', missile: 'item_missile', medal: 'item_medal', ink: 'item_ink', '1up': 'item_1up', gold: 'item_medal',
+  p: 'item_p', bomb: 'item_bomb', medal: 'item_medal', ink: 'item_ink', gold: 'item_gold',
 };
 
 export class Items {
   list: Item[] = [];
-  /** 奖牌漏接回调。 */
-  onMedalMissed: (() => void) | null = null;
 
   spawn(kind: ItemType, x: number, y: number): Item {
     const it = new Item(kind);
@@ -41,20 +51,17 @@ export class Items {
     return it;
   }
 
-  /** 武器水晶当前颜色。 */
-  static weaponColor(it: Item): WeaponColor {
-    return WEAPON_CYCLE[Math.floor(it.age / 1.6) % 3];
-  }
-
   static sprite(it: Item): string {
-    if (it.kind === 'weapon') return 'item_' + Items.weaponColor(it);
+    if(it.spriteOverride)return it.spriteOverride;
     return SPRITE[it.kind];
   }
 
   /** dt 为游戏时间。magnet=true 时所有道具被吸向玩家。 */
-  tick(dt: number, px: number, py: number, playerAlive: boolean, magnet: boolean, onPick: (it: Item) => void): void {
+  tick(dt: number, px: number, py: number, playerAlive: boolean, magnet: boolean, onPick: (it: Item) => void, realDt = dt): void {
     for (const it of this.list) {
+      if (it.dead) continue;
       it.age += dt;
+      it.elapsed += realDt;
       const dx = px - it.x, dy = py - it.y;
       const d = Math.hypot(dx, dy);
       if (playerAlive && (it.homing || magnet || d < 80 || (it.kind === 'gold' && it.age > 0.3))) it.homing = true;
@@ -85,7 +92,6 @@ export class Items {
         onPick(it);
       } else if (it.y > PLAY_H + 40 || it.x < -80 || it.x > PLAY_W + 80) {
         it.dead = true;
-        if (it.kind === 'medal') this.onMedalMissed?.();
       }
     }
     this.list = this.list.filter((i) => !i.dead);

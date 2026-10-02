@@ -36,7 +36,7 @@ addEventListener('resize', doLayout);
 doLayout();
 
 const hs: HudState = {
-  score: 0, hiScore: 1234567, lives: 3, bombs: 2, ink: 0.4, inkReady: false, power: 5, weapon: 'red', missile: 2,
+  score: 0, hiScore: 1234567, lives: 3, bombs: 2, ink: 0.4, inkReady: false, power: 4, weapon: 'red',
   multiplier: 1.0, graze: 0, medalValue: 3000, stage: 1, stageName: '墨山晓', boss: null, brushActive: false, fps: 144, difficulty: '普通',
 };
 const bossOn = q.get('boss') === '1';
@@ -77,7 +77,7 @@ function frame() {
   hs.graze = Math.floor(t * 23);
   hs.multiplier = 1 + Math.floor(t) % 6 * 0.75;
   hs.weapon = (['red', 'blue', 'purple'] as const)[Math.floor(t / 4) % 3];
-  hs.power = 1 + Math.floor(t / 1.5) % 8;
+  hs.power = 1 + Math.floor(t / 1.5) % 4;
   hs.boss = bossOn ? { name: '铜雀', hp: 0.75 - (t * 0.05) % 0.7, phasesLeft: 3, timer: 42 - t % 40 } : null;
   ui.hud(hs, screen !== 'title' && screen !== 'loading' && screen !== 'ending');
   ui.menuInput(input);

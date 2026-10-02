@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "assetVersion": "v1",
+  "assetVersion": "ART-12-v1",
   "image": "art/enemies/ch2/story/battery-ship/sheet.png",
   "columns": 4,
   "rows": 4,
@@ -35,6 +35,14 @@
     "cargo": [
       0,
       0
+    ],
+    "gunL": [
+      -80,
+      -60
+    ],
+    "gunR": [
+      80,
+      -60
     ]
   },
   "segments": {
@@ -67,149 +75,149 @@
     {
       "index": 0,
       "contentBounds": [
-        22,
-        92,
-        538,
-        628
+        4,
+        79,
+        555,
+        544
       ]
     },
     {
       "index": 1,
       "contentBounds": [
-        23,
-        102,
-        530,
-        626
+        4,
+        79,
+        555,
+        544
       ]
     },
     {
       "index": 2,
       "contentBounds": [
-        74,
-        103,
-        537,
-        618
+        4,
+        79,
+        555,
+        544
       ]
     },
     {
       "index": 3,
       "contentBounds": [
-        25,
-        103,
-        457,
-        627
+        4,
+        79,
+        555,
+        544
       ]
     },
     {
       "index": 4,
       "contentBounds": [
-        105,
-        93,
-        499,
-        627
+        4,
+        79,
+        555,
+        544
       ]
     },
     {
       "index": 5,
       "contentBounds": [
-        24,
-        94,
-        537,
-        627
+        4,
+        79,
+        555,
+        544
       ]
     },
     {
       "index": 6,
       "contentBounds": [
-        25,
-        94,
-        516,
-        627
+        4,
+        79,
+        555,
+        544
       ]
     },
     {
       "index": 7,
       "contentBounds": [
-        71,
-        94,
-        460,
-        627
+        4,
+        79,
+        555,
+        544
       ]
     },
     {
       "index": 8,
       "contentBounds": [
-        65,
-        93,
-        537,
-        625
+        4,
+        79,
+        555,
+        544
       ]
     },
     {
       "index": 9,
       "contentBounds": [
-        24,
-        93,
-        537,
-        627
+        4,
+        79,
+        555,
+        544
       ]
     },
     {
       "index": 10,
       "contentBounds": [
-        77,
-        93,
-        537,
-        627
+        4,
+        79,
+        555,
+        544
       ]
     },
     {
       "index": 11,
       "contentBounds": [
-        22,
-        93,
-        504,
-        627
+        4,
+        79,
+        555,
+        544
       ]
     },
     {
       "index": 12,
       "contentBounds": [
-        22,
-        98,
-        538,
-        628
+        4,
+        79,
+        555,
+        544
       ]
     },
     {
       "index": 13,
       "contentBounds": [
-        23,
-        92,
-        537,
-        628
+        4,
+        79,
+        555,
+        544
       ]
     },
     {
       "index": 14,
       "contentBounds": [
-        23,
-        92,
-        537,
-        628
+        4,
+        79,
+        555,
+        544
       ]
     },
     {
       "index": 15,
       "contentBounds": [
-        22,
-        92,
-        433,
-        612
+        4,
+        79,
+        555,
+        544
       ]
     }
   ],
-  "source": "local-source/battery-ship.png",
-  "approval": "待审；未正式接入关卡",
-  "note": "尺寸含画布留白。按segments选段，空格不播放；anchors为相对pivot的游戏坐标，锚点与8fps为暂定接入初值。"
+  "source": "studio/art/ART-12/battery-source.png",
+  "approval": "待总导演及制作人审图",
+  "note": "民用云梭同机体加一座背部双管炮塔；单母帧派生16帧，帧格、运行尺寸、锚点名称/坐标、状态段及播放契约保留。gunL/gunR像素120,240及440,240落在炮塔两安装座；整座炮塔逐像素固定。smoke/leaking仅加烟，clamped减弱尾焰，机体保持完好。"
 }

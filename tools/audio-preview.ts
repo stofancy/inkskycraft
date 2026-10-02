@@ -5,7 +5,9 @@ import { createAudio, makeSongOut, scheduleSteps } from '../src/audio';
 import { buildGraph } from '../src/audio/engine';
 import { getSong, MUSIC_IDS } from '../src/audio/songs';
 import { playSfx, SFX_IDS } from '../src/audio/sfx';
-import { VOICE_EVENTS, SFX_FILES } from '../src/audio/materials';
+import { VOICE_EVENTS, SFX_FILES, P4_SFX, P4_SFX_IDS, isP4Sfx } from '../src/audio/materials';
+import { MUSIC_FILES } from '../src/audio/materials';
+import { MUSIC_CUES } from '../src/audio/music-cues';
 import type { MusicId, Sfx } from '../src/types';
 
 const audio = createAudio();
@@ -13,9 +15,11 @@ const audio = createAudio();
 const $ = (id: string) => document.getElementById(id)!;
 const btn = (host: string, label: string, fn: () => void) => { const b = document.createElement('button'); b.textContent = label; b.onclick = () => { void audio.init().then(fn); }; $(host).appendChild(b); };
 const musicNames: Partial<Record<MusicId,string>> = { title:'标题 · 群山初晴', stage1:'第一章道中 · 晨山飞行', boss:'铜雀战 · 铜翼封桥' };
-for (const id of MUSIC_IDS) btn('music', musicNames[id] ?? `${id}（未配置素材，静音）`, () => audio.music(id, 0.5));
+for (const id of Object.keys(MUSIC_FILES) as MusicId[]) btn('music', `${id} · ${MUSIC_CUES[id].name}`, () => audio.music(id, 0.5));
 btn('music', '■ stop', () => audio.music(null, 0.5));
-for (const id of [...new Set([...SFX_IDS, ...SFX_FILES])]) btn('sfx', id, () => audio.sfx(id, { pan: 0 }));
+const p4Trigger = (id: string) => id === 'mantra_start' ? '真言起手 t=0' : id === 'mantra_roll' ? '起手后 t=0.2；2秒结束' : id.startsWith('mantra_hit_') ? '对应序号的字落地' : id === 'mantra_finale' ? '最后一字落地 t=2.2' : id === 'mantra_slash' ? '九字刀光划过' : id === 'roll' ? '翻滚开始' : '武器换色完成';
+for (const id of P4_SFX_IDS) btn('p4', `${P4_SFX[id]} · ${id}（${p4Trigger(id)}）`, () => audio.sfx(id, { pan: 0 }));
+for (const id of [...new Set([...SFX_IDS, ...SFX_FILES])].filter(id => !isP4Sfx(id))) btn('sfx', id, () => audio.sfx(id as Sfx, { pan: 0 }));
 for (const event of Object.keys(VOICE_EVENTS)) btn('voice', `${event} · ${VOICE_EVENTS[event].join(' / ')}`, () => audio.sfx(event as Sfx));
 btn('ctl', 'slowmo 1', () => audio.setSlowmo(1)); btn('ctl', 'slowmo 0', () => audio.setSlowmo(0));
 setInterval(() => {

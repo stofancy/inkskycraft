@@ -30,6 +30,8 @@ export interface SpriteDef {
   sheet?: SpriteSheet;
   /** 图片每帧在矩形内的缩放，默认 1。 */
   imageScale?: number[];
+  /** 此精灵的最低烘焙密度（像素/逻辑单位），用于保留小机体原图细节。 */
+  textureScale?: number;
   /** 原点相对图片矩形中心的位置，逻辑单位。挂点坐标均相对这个原点。 */
   pivot?: [number, number];
   draw?(ctx: CanvasRenderingContext2D, frame: number): void;
@@ -41,4 +43,6 @@ export interface SpriteDef {
   anchors?: Record<string, [number, number]>;
   /** 碰撞半径建议值（单位）。 */
   radius?: number;
+  /** 换美术时保留原精灵的碰撞遮罩。 */
+  maskSource?: SpriteDef;
 }

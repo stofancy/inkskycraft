@@ -56,8 +56,10 @@ uniform float uBloomStr;
 uniform float uCA;
 uniform float uFlash;
 uniform vec3 uFlashCol;
+uniform float uMantraInk;
 uniform float uInkMode;    // 子弹时间水墨化 0..1
 uniform float uVignette;
+uniform float uBrushShade;
 uniform float uTime;
 uniform vec2 uShake;       // 单位
 uniform float uZoom;
@@ -102,10 +104,12 @@ void main() {
     vec3 keep = mix(inkTone, col, smoothstep(0.35, 0.8, redness));
     col = mix(col, keep, uInkMode * 0.88);
   }
+  if(uMantraInk>0.){float chroma=max(col.r,max(col.g,col.b))-min(col.r,min(col.g,col.b));col=mix(vec3(lum),col,smoothstep(.12,.55,chroma)*float((col.r>col.g*1.5&&col.r>col.b*1.3)||(col.b>col.g*1.4&&col.r>col.g*1.15)||(col.g>col.r*1.25&&col.b>col.r*1.4)));}
   col += uFlashCol * uFlash;
   // 暗角
   vec2 vq = vUv - 0.5;
   col *= 1.0 - uVignette * smoothstep(0.25, 0.85, length(vq * vec2(1.0, 0.9)) * 1.25);
+  col *= 1.0 - uBrushShade * smoothstep(0.25, 0.45, max(abs(vq.x), abs(vq.y)));
   vec3 outc = linearToSrgb(tonemapNeutral(max(col, vec3(0.0))));
   // 纸纹颗粒 + 抖动去色带
   float g = hash(floor(vUv * uRes) + fract(uTime) * 91.0) - 0.5;
@@ -128,7 +132,9 @@ export class Post {
   flash = 0;
   flashCol: [number, number, number] = [1, 0.95, 0.85];
   inkMode = 0;
+  mantraInk=0;
   vignette = 0.35;
+  brushShade=0;
   shake: [number, number] = [0, 0];
   zoom = 1;
   exposure = 1;
@@ -192,7 +198,7 @@ export class Post {
     this.pComp.use()
       .set('uWaves', this.waveBuf).set('uWaveW', this.waveW).set('uWaveN', n)
       .set('uBloomStr', this.bloomStr).set('uCA', this.ca).set('uFlash', this.flash).set('uFlashCol', this.flashCol)
-      .set('uInkMode', this.inkMode).set('uVignette', this.vignette).set('uTime', time)
+      .set('uMantraInk',this.mantraInk).set('uInkMode', this.inkMode).set('uVignette', this.vignette).set('uBrushShade', this.brushShade).set('uTime', time)
       .set('uShake', this.shake).set('uZoom', this.zoom).set('uExposure', this.exposure)
       .set('uLift', this.lift).set('uGain', this.gain).set('uSat', this.sat).set('uRes', vw, vh)
       .tex('uScene', scene.tex).tex('uBloom', bloom.tex);

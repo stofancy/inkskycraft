@@ -18,8 +18,9 @@ flat out float vTrail;
 void main() {
   vec2 corner = vec2(float(gl_VertexID & 1), float(gl_VertexID >> 1)) * 2.0 - 1.0;
   float spawn = clamp(aA.w > 0.0 ? aC.x / 0.14 : 1.0, 0.0, 1.0);
-  float grow = mix(2.2, 1.0, spawn * spawn);
-  float ext = 2.4 * grow;                 // 四边形半径 = size * ext，留出光晕
+  // 出生放大回弹：先胀到 1.8 倍，过冲收到 0.9 倍，再回到 1
+  float grow = 1.0 + 0.8 * exp(-aC.x * 16.0) * cos(aC.x * 26.0);
+  float ext = 3.0 * max(grow, 1.0);       // 四边形半径 = size * ext，留出光晕与符纹环
   vec2 local = corner * aA.w * ext;
   float c = cos(aA.z), s = sin(aA.z);
   vec2 p = aA.xy + vec2(local.x * c - local.y * s, local.x * s + local.y * c);
@@ -39,6 +40,8 @@ flat in float vTrail;
 uniform float uTime;
 uniform float uIntensity;
 out vec4 o;
+float hsh(vec2 p){vec3 p3=fract(vec3(p.xyx)*.1031);p3+=dot(p3,p3.yzx+33.33);return fract((p3.x+p3.y)*p3.z);}
+float noise(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.-2.*f);return mix(mix(hsh(i),hsh(i+vec2(1,0)),u.x),mix(hsh(i+vec2(0,1)),hsh(i+vec2(1,1)),u.x),u.y);}
 float sdRhombus(vec2 p, vec2 b) {
   p = abs(p);
   vec2 q = b * vec2(1.0, -1.0);
@@ -60,6 +63,8 @@ float sdStar(vec2 p, float r, float rf) {
 }
 void main() {
   int shape = int(vB.x + 0.5);
+  bool en = shape >= 16;
+  if (en) { shape -= 16; if (vTrail > 240.0 && shape != 4 && shape != 6 && shape != 3) shape = 2; }
   vec2 p = vP;
   float age = vC.x;
   float d;
@@ -74,6 +79,65 @@ void main() {
   else { vec2 q = p; q.x += 0.4; d = length(q * vec2(0.6, 1.0)) - 0.75 + 0.18 * sin(q.y * 6.0 + uTime * 20.0 + vC.z * 9.0) * clamp(-q.x, 0.0, 1.0); }
 
   float aa = fwidth(d) * 1.2;
+  if (en) {
+    // 敌弹：整颗是一个温度梯度（中心近白 → 亮黄 → 橙 → 饱和本色 → 深色墨边）；
+    // 泪滴尾巴是半透明抖动的火焰；弹下垫柔和墨影压暗浅色背景，亮芯靠明暗对比出冲击力。
+    p /= vC.w;
+    float AE = vC.y;
+    vec3 base = vB.yzw;
+    float lum = dot(base, vec3(0.3, 0.59, 0.11));
+    base = clamp(mix(vec3(lum), base, 1.9), 0.0, 1.4) * 0.9;
+    float warm = clamp(base.r - base.b * 0.6, 0.0, 1.0);
+    base.g *= mix(1.0, 0.72, warm * step(0.45, base.g));
+    vec3 cWhite = vec3(2.8, 2.6, 2.2);
+    vec3 cYel = mix(base * 1.5 + 0.25, vec3(1.35, 1.1, 0.4), warm * 0.85);
+    vec3 cOrg = mix(base * 1.25, vec3(1.2, 0.48, 0.05), warm * 0.6);
+    vec3 cEdge = base * 0.85;
+    bool tear = shape == 1 || shape == 2 || shape == 5 || shape == 7 || shape == 8;
+    float dE, rr, sT = 0.0, nT = 1.0;
+    if (tear) {
+      float Lt = mix(2.3, 3.2, smoothstep(160.0, 420.0, vTrail));
+      vec2 q = p - vec2(0.8, 0.0);
+      if (q.x >= 0.0) { dE = length(q) - 1.0; rr = length(q); }
+      else {
+        sT = clamp(-q.x / Lt, 0.0, 1.5);
+        float n = noise(vec2(sT * 5.0 - uTime * 16.0, vC.z * 40.0));
+        float w = pow(max(1.0 - sT, 0.0), 1.5) * (1.0 + 0.45 * (n - 0.5) * sT * 2.0);
+        dE = sT >= 1.0 ? length(vec2(-q.x - Lt, q.y)) : (abs(q.y) - w) * 0.9;
+        rr = mix(abs(q.y) / max(w, 0.06), 1.0, sT * 0.7);
+        nT = smoothstep(sT * 0.55, sT * 0.55 + 0.3, noise(vec2(q.y * 3.0 + vC.z * 20.0, q.x * 4.0 - uTime * 22.0)));
+      }
+    } else if (shape == 4) { float rg = abs(length(p) - 0.8) / 0.22; dE = (rg - 1.0) * 0.22; rr = rg; }
+    else { dE = length(p) - 1.0; rr = length(p); }
+    float ae = fwidth(dE) * 1.2;
+    float tailA = tear ? (1.0 - clamp(sT, 0.0, 1.0)) * 0.85 * nT + (sT <= 0.0 ? 0.15 : 0.0) : 1.0;
+    if (tear && sT <= 0.0) tailA = 1.0;
+    float bodyE = smoothstep(ae, -ae, dE) * tailA;
+    float inkE = (1.0 - smoothstep(0.27, 0.27 + ae * 2.0, dE)) * mix(1.0, 0.45, clamp(sT, 0.0, 1.0));
+    float shadowE = exp(-max(dE, 0.0) * 1.4) * 0.55 * mix(1.0, 0.5, clamp(sT, 0.0, 1.0));
+    vec3 f = cEdge;
+    f = mix(f, cOrg, smoothstep(0.95, 0.62, rr));
+    f = mix(f, cYel, smoothstep(0.72, 0.46, rr));
+    f = mix(f, cWhite, smoothstep(0.5, 0.3, rr));
+    f *= mix(1.0, 0.5, clamp(sT, 0.0, 1.0));
+    float haloE = exp(-max(dE, 0.0) * 3.0) * (1.0 - bodyE) * 0.45 * (tear ? (1.0 - clamp(sT, 0.0, 1.0)) : 1.0);
+    vec3 emit = vec3(0.0);
+    float ringA = 0.0;
+    if (shape == 6) {
+      float r0 = length(p), ang = atan(p.y, p.x) + uTime * 2.4;
+      float band = smoothstep(0.06, 0.0, abs(r0 - 1.5));
+      float seg = step(0.0, sin(ang * 5.0));
+      float tick = smoothstep(0.1, 0.0, abs(r0 - 1.72)) * step(0.88, sin(ang * 12.0 - uTime * 3.0) * 0.5 + 0.5);
+      ringA = clamp(band * (0.4 + 0.6 * seg) + tick, 0.0, 1.0);
+      emit += cYel * ringA * 1.4;
+    }
+    float fl = max(0.0, 1.0 - vC.x / 0.12);
+    emit += vec3(2.6, 2.3, 1.9) * fl * fl * exp(-dot(p, p) * 0.9);
+    float inkA = max(inkE, shadowE);
+    vec3 rgb = f * bodyE * AE + vec3(0.012, 0.006, 0.01) * max(inkA - bodyE, 0.0) * AE + emit * AE;
+    o = vec4(max(rgb, vec3(0.0)), clamp(max(inkA, ringA * 0.5) * AE, 0.0, 1.0));
+    return;
+  }
   float body = smoothstep(aa, -aa, d);
   float core = smoothstep(-0.28, -0.62, d);
   float outline = smoothstep(0.42, 0.14, d) * (1.0 - body);

@@ -1,3 +1,5 @@
+import { createDialogue } from './dialogue';
+import { battleLetter } from './battle-lettering';
 // 墨空 UI：纯 DOM + CSS。入口 createUI()。时序要求见 tools/ui-preview.ts 顶部与最终报告。
 import { DIFFS, DIFF_ORDER, type Difficulty } from '../core/difficulty';
 import { DEFAULT_SETTINGS } from '../types';
@@ -6,16 +8,18 @@ import type {
 } from '../types';
 import { Motion, CURVES, MOTION } from './motion';
 import { CSS } from './css';
+import { applyMenuLettering, loadMenuLettering } from './lettering';
+import { INK_COLORS,INK_NAMES,INK_GRADES,inkPreview,INK_SCORE_CSS } from './ink-score';
 import { passivePreview } from './passive-preview';
 import { TALENTS } from '../game/progression';
 import { TEST_CHECKPOINTS } from '../stages/checkpoints';
-import { defaultTestOptions, TEST_CAPABILITIES } from '../game/test-options';
-import { COMBO_MOVES } from '../game/combos';
+import { SKILL_IDS, SKILL_RULES,filterSkills } from '../game/skills';
+import { BRUSH_FORMS, filterBrushForms } from '../game/brush-shape';
+import { defaultTestOptions } from '../game/test-options';
 
 const CN = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
-const passiveImages=import.meta.glob('/public/art/icons/passives/*.png',{eager:true,query:'?url',import:'default'});
-const passiveIcon=(id:string,label:string)=>{const url=passiveImages[`/public/art/icons/passives/${id}.png`] as string|undefined;return url?`<img src="${esc(url)}" alt="${esc(label)}">`:esc(label);};
+const passiveIcon=(_id:string,url:string)=>`<img src="${esc(url.replace('.png','-32.png'))}" alt="天赋图标">`;
 const fmt = (n: number) => Math.round(n).toLocaleString('en-US');
 
 function h(tag: string, cls = '', html = '', parent?: Element): HTMLElement {
@@ -47,8 +51,8 @@ const DEFS = `<svg class="defs" xmlns="http://www.w3.org/2000/svg"><defs>
 </defs></svg>`;
 
 const ICON_LIFE = '<svg viewBox="0 0 24 24"><path d="M12 1.5 14 9l8.5 7-8-1.6L12 22.5 9.5 14.400 1.500 16 10 9z" fill="#d8382a" stroke="#dcb75e" stroke-width="1.2" stroke-linejoin="round"/><path d="M12 5v9" stroke="#0b0908" stroke-width="1.6"/></svg>';
-const ICON_BOMB = '<svg viewBox="0 0 24 24"><path d="M12 1.500C12 1.500 4.500 10.500 4.500 15.500a7.500 7.500 0 0 0 15 0C19.500 10.500 12 1.500 12 1.500Z" fill="#14100e" stroke="#dcb75e" stroke-width="1.300"/><path d="M8.500 15a3.500 3.500 0 0 0 2.500 3.400" stroke="#efe6d2" stroke-width="1.400" fill="none" stroke-linecap="round" opacity=".7"/></svg>';
-const ICON_COIN = '<svg viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="#c79a3a" stroke="#f2d27a" stroke-width="1.500"/><circle cx="17" cy="17" r="11.500" fill="none" stroke="#7a5a1c" stroke-width="1"/><rect x="12.500" y="12.500" width="9" height="9" fill="#0b0908" stroke="#f2d27a" stroke-width="1.200"/></svg>';
+const ICON_BOMB = '<img src="/art/icons/skills/ink-bomb.png" width="24" height="24" alt="泼墨">';
+const ICON_COIN = '<img src="/art/icons/items/gold-seal.png" width="34" height="34" alt="金印">';
 
 // 毛笔形墨槽（笔杆 + 金箍 + 笔肚 + 笔锋）
 const BRUSH_D = 'M35 4Q43 0 51 4L52 50Q66 70 70 112C73 160 58 222 43 296C28 222 13 160 16 112Q20 70 34 50Z';
@@ -70,12 +74,12 @@ const INK_SVG = `<svg viewBox="0 0 86 300"><defs>
 // 按键表：[动作, 键盘, 手柄]，图例、标题、暂停共用
 const KEYS: [string, string, string][] = [
   ['移动', 'WASD / 方向键', '左摇杆 / 十字键'],
-  ['射击', 'Z / J / 空格', 'A（南）'],
-  ['泼墨', 'X / K', 'B（东）'],
-  ['一笔', 'C / L', 'X（西） / RT'],
-  ['集中', 'Shift', 'LT / LB'],
-  ['换色', 'V / Tab', 'Y（北）'],
-  ['暂停', 'Esc / P', 'Start'],
+  ['射击', '鼠标左键', 'A（南）'],
+  ['泼墨', 'F', 'B（东）'],
+  ['执笔', '右键 / 左右键 / 空格', 'X（西） / RT'],
+  ['翻滚', 'Shift', '—'],
+  ['换色', '鼠标中键', 'Y（北）'],
+  ['暂停', 'Esc', 'Start'],
 ];
 const keyRows = (g: boolean) => KEYS.map(([a, k, p], i) => `<div class="kr${i === 3 ? ' kb' : ''}"><span class="ka">${a}</span><span class="kk">${g ? p : k}</span></div>`).join('');
 
@@ -118,8 +122,8 @@ export function createUI(): GameUI & PresentationUI {
   let play: HTMLElement;
   let hostL: HTMLElement, hostR: HTMLElement;
   let challengeEl: HTMLElement, comboEl: HTMLElement;
+  let overclockEl:HTMLElement;
   let dock: HTMLElement, noticeL: HTMLElement;
-  let movesDock: HTMLElement, movesEl: HTMLElement, moveFeedbackEl: HTMLElement;
   let fx: HTMLElement, cardL: HTMLElement, warnL: HTMLElement, capL: HTMLElement, bossEl: HTMLElement, scr: HTMLElement;
   let hint: HTMLElement | null = null;
   let settings: Settings = { ...DEFAULT_SETTINGS };
@@ -130,6 +134,13 @@ export function createUI(): GameUI & PresentationUI {
   let device: 'keyboard' | 'gamepad' = 'keyboard';
   let curDiff: Difficulty = 'normal';
   let keysEl: HTMLElement;
+  let missionEl:HTMLElement;
+  let shipLabel:HTMLElement;
+  let recordScroll:HTMLElement|null=null;
+  let story:ReturnType<typeof createDialogue>;
+  let communicationHistory:{id:string;speaker:string;identity?:string;text:string;memory:boolean}[]=[];
+  let openingHint:HTMLElement;
+  let openingTimer=0;
   let screenData: ScreenData = {};
   let baseData: ScreenData = {};
   let challengeState: HudState['challenge'] = null;
@@ -151,25 +162,21 @@ export function createUI(): GameUI & PresentationUI {
  <div class="row2 blk nl" style="gap:18px"><div class="blk"><div class="lbl">倍率</div><div class="mv" data-k="mult"></div></div>
   <div class="blk"><div class="lbl">擦弹</div><div class="gv" data-k="graze"></div></div></div>
  <div class="blk medal nl"><div>${ICON_COIN}</div><div class="mm"><div class="lbl">金印</div><div class="gv" data-k="medal"></div></div></div>
- <div class="fps" data-k="fps"></div></div>`;
+ <div class="fps" data-k="fps"></div><div class="combat-status"><div data-k="protection"></div><div data-k="armor"></div></div></div>`;
     hostR.innerHTML = `<div class="hud">
  <div class="stage"><div class="sn" data-k="stageNo"></div><div class="sm" data-k="stageName"></div><div class="dn" data-k="diff"></div></div>
  <div class="blk"><div class="lbl">剩余战机<i>LIFE</i></div><div class="icons" data-k="lives"></div></div>
  <div class="blk"><div class="lbl">泼墨<i>INK BOMB</i></div><div class="icons" data-k="bombs"></div></div>
  <div class="inkrow"><div class="ink" data-k="ink">${INK_SVG}</div>
-  <div class="wp"><div class="wseal w-red" data-k="wseal">朱</div><div class="lat" data-k="lat">${'<i></i>'.repeat(8)}</div>
-   <div class="mis" data-k="mis"><span>追踪弹</span><b data-k="missiles">0 / 4</b></div></div></div>
+  <div class="wp"><div class="wseal w-red" data-k="wseal">朱</div><div class="lat" data-k="lat">${'<i></i>'.repeat(4)}</div></div></div>
+ <div class="blk ship-durability" data-k="ship"></div>
  <div class="growth-mini" data-k="growth"></div>
- <div class="partners" data-k="partners"></div></div>`;
+ <div class="partners" data-k="partners"></div><div class="skillbar" data-k="skills"><div class="skill-row" data-row="1"></div><div class="skill-row" data-row="2"></div></div></div>`;
     for (const e of ik.querySelectorAll<HTMLElement>('[data-k]')) R[e.dataset.k!] = e;
     R.fill = ik.querySelector('#ik-fill') as HTMLElement;
     keysEl = h('div', 'keyhost off', '<div class="keys"><div class="kh">操作</div><div class="kl"></div></div>', ik);
     R.keyl = keysEl.querySelector('.kl') as HTMLElement;
     renderKeys();
-    movesDock = h('div', 'moves-dock off', '', ik);
-    movesEl = h('div', 'active-moves', '', movesDock);
-    moveFeedbackEl = h('div', 'move-feedback-card', '', movesDock);
-    moveFeedbackEl.setAttribute('aria-live', 'polite');
     scoreD = new Digits(R.score, 8);
     hiD = new Digits(R.hi, 8);
     // boss
@@ -187,8 +194,8 @@ export function createUI(): GameUI & PresentationUI {
     if (prev[k] !== v) { prev[k] = v; R[k].textContent = v; }
   }
   function iconRow(k: string, n: number, svg: string) {
-    if (prev[k] === n) return;
-    prev[k] = n;
+    if (prev[k] === n && prev[k+'svg'] === svg) return;
+    prev[k] = n;prev[k+'svg']=svg;
     const shown = Math.min(n, 8);
     R[k].innerHTML = svg.repeat(Math.max(0, shown)) + (n > 8 ? `<b>×${n}</b>` : '') + (n <= 0 ? '<b style="opacity:.4">—</b>' : '');
   }
@@ -203,11 +210,14 @@ export function createUI(): GameUI & PresentationUI {
       hostL.classList.toggle('off', !visible);
       hostR.classList.toggle('off', !visible);
       keysEl.classList.toggle('off', !visible);
-      movesDock.classList.toggle('off', !visible);
+
     }
-    if (!visible) { motion.clear(challengeEl); motion.clear(comboEl); motion.clear(bossEl); motion.clear(moveFeedbackEl); prev.moveFeedback = null; prev.challengeOn = false; prev.comboOn = false; ik.classList.remove('challenging'); challengeEl.classList.remove('on'); comboEl.classList.remove('on'); moveFeedbackEl.classList.remove('on'); bossEl.classList.remove('on'); ik.classList.remove('bs'); prev.boss = false; return; }
+    if (!visible) { motion.clear(R.armor); R.armor.textContent = ''; motion.clear(challengeEl); motion.clear(comboEl); motion.clear(bossEl); prev.challengeOn = false; prev.comboOn = false; ik.classList.remove('challenging'); challengeEl.classList.remove('on'); comboEl.classList.remove('on'); bossEl.classList.remove('on'); ik.classList.remove('bs'); prev.boss = false; return; }
 
     setText('diff', s.difficulty);
+    R.ship.hidden=!s.ship;setText('ship',s.ship?`云梭耐久 ${s.ship.durability}`:'');
+    shipLabel.hidden=!s.ship?.label;
+    if(s.ship){shipLabel.style.left=`${s.ship.x/9}%`;shipLabel.style.top=`${(s.ship.y+145)/12}%`;}
     if (prev.inkReady !== s.inkReady) {
       prev.inkReady = s.inkReady;
       R.keyl.querySelector('.kb')?.classList.toggle('rdy', s.inkReady);
@@ -228,8 +238,12 @@ export function createUI(): GameUI & PresentationUI {
     setText('stageNo', sn);
     setText('stageName', s.stageName);
     if (stageNoPrev !== sn) stageNoPrev = sn;
-    iconRow('lives', s.lives, ICON_LIFE);
+    iconRow('lives', s.lives, '<img src="/art/player/zhuque/life.png" width="24" height="24" alt="朱雀">');
     iconRow('bombs', s.bombs, ICON_BOMB);
+    R.bombs.style.setProperty('--bomb-color',{red:'#f06b43',blue:'#6ce2eb',purple:'#c79bef'}[s.weapon]);R.bombs.querySelectorAll('svg').forEach(svg=>svg.style.color=R.bombs.style.getPropertyValue('--bomb-color'));
+    let inkDots=R.bombs.parentElement!.querySelector<HTMLElement>('.ink-score-dots');if(!inkDots)inkDots=h('div','ink-score-dots','',R.bombs.parentElement!);const dots=INK_COLORS.map(c=>`<span class="${c}">${INK_NAMES[c]} ${'●'.repeat(s.inkScore?.[c]??0)}${'○'.repeat(3-(s.inkScore?.[c]??0))}</span>`).join('');if(inkDots.innerHTML!==dots)inkDots.innerHTML=dots;
+    const bombLabel=R.bombs?.previousElementSibling;
+    if(bombLabel)bombLabel.textContent='泼墨';
     // 墨槽
     const inkY = `translateY(${((1 - Math.min(1, Math.max(0, s.ink))) * 288 + 6).toFixed(1)}px)`;
     if (prev.ink !== inkY) { prev.ink = inkY; R.fill.style.transform = inkY; }
@@ -245,8 +259,13 @@ export function createUI(): GameUI & PresentationUI {
     if (prev.weapon !== s.weapon) {
       const first = prev.weapon === undefined;
       prev.weapon = s.weapon;
-      const w: Record<WeaponColor, string> = { red: '朱', blue: '青', purple: '雷' };
+      const w: Record<WeaponColor, string> = { red: '朱', blue: '青', purple: '紫' };
       R.wseal.textContent = w[s.weapon];
+      R.wseal.setAttribute('aria-label',w[s.weapon]);
+      if(s.weapon==='purple'){
+        const glyph=new Image();glyph.src='/art/lettering/weapon-purple-paper-v2.png';glyph.alt='紫';glyph.className='weapon-glyph';
+        glyph.onerror=()=>{R.wseal.textContent='紫';};R.wseal.replaceChildren(glyph);
+      }
       R.wseal.className = `wseal w-${s.weapon}`;
       R.lat.className = `lat w-${s.weapon}`;
       if (!first) motion.stamp(R.wseal);
@@ -254,15 +273,13 @@ export function createUI(): GameUI & PresentationUI {
     if (prev.power !== s.power) {
       prev.power = s.power;
       const dots = R.lat.children;
-      for (let i = 0; i < 8; i++) dots[i].classList.toggle('on', i < s.power);
-    }
-    if (prev.missile !== s.missile) {
-      prev.missile = s.missile;
-      R.missiles.textContent = `${s.missile} / 4`;
+      for (let i = 0; i < 4; i++) dots[i].classList.toggle('on', i < s.power);
     }
     setText('fps', settings.showFps && s.fps > 0 ? `${Math.round(s.fps)} FPS` : '');
     const growth = s.growth;
-    setText('growth', growth ? `一笔 Lv.${growth.brush} · 泼墨 Lv.${growth.bomb} · 天赋 ${growth.talents}` : '');
+    setText('growth', growth ? `笔力 ${growth.brush} · 天赋 ${growth.talents}\n已学笔法：${['斩', '封', ...filterBrushForms(s.brushMethods)].join('、')}` : '');
+    renderSkills(s);
+    setText('protection', s.brushActive ? '运笔中 · 世界减速' : '');
     const partners = s.companions ?? [];
     const partnerKey = partners.map(p => `${p.name}:${Math.ceil(p.active??0)}:${p.count??0}`).join('|');
     if (prev.partners !== partnerKey) {
@@ -278,27 +295,6 @@ export function createUI(): GameUI & PresentationUI {
       for(const el of passiveDock.querySelectorAll('.triggered'))motion.pulse(el);
     }
 
-    const active = s.activeMoves;
-    movesDock.hidden = !active;
-    const feedback = active?.feedback ?? '';
-    if (prev.moveFeedback !== feedback) {
-      prev.moveFeedback = feedback; motion.clear(moveFeedbackEl);
-      if (feedback) { moveFeedbackEl.textContent = feedback; moveFeedbackEl.classList.add('on'); motion.enter(moveFeedbackEl, 'sweep'); }
-      else if (moveFeedbackEl.classList.contains('on')) motion.exit(moveFeedbackEl, () => { moveFeedbackEl.classList.remove('on'); moveFeedbackEl.textContent = ''; });
-    }
-    const moveKey = JSON.stringify([active, device, Math.round(s.ink*100)]);
-    if (prev.activeMoves !== moveKey) {
-      prev.activeMoves = moveKey;
-      const key = device === 'gamepad' ? 'R3' : 'F / U';
-      const direction = (input: string) => Array.from(input).map(ch => {
-        const angles: Record<string, number> = { '↑': 0, '↗': 45, '→': 90, '↘': 135, '↓': 180, '↙': 225, '←': 270, '↖': 315 };
-        return ch in angles ? `<i class="direction" aria-hidden="true" style="--turn:${angles[ch]}deg"><svg viewBox="0 0 24 24"><path d="M12 20V4M5 11l7-7 7 7"/></svg></i>` : '';
-      }).join('');
-      movesEl.innerHTML = active ? `<div class="kh">出招</div>${active.moves.map(m=>{
-        const status = !m.available ? '暂不可用' : m.cooldown>0 ? `冷却 ${m.cooldown.toFixed(1)} 秒` : s.ink<m.cost ? '墨不足' : '可出招';
-        return `<div class="active-move ${status==='可出招'?'ready':''}" data-move="${esc(m.id)}"><strong>${esc(m.name)}</strong><span class="move-command" role="img" aria-label="${esc(m.input)} 加 ${key}">${direction(m.input)}<b>+ ${key}</b></span><small>${status==='可出招'?`墨 ${Math.round(m.cost*100)}%`:status}</small></div>`;
-      }).join('')}` : '';
-    }
     const comboOn = !!s.combo && !s.challenge;
     if (prev.combo !== s.combo || prev.comboOn !== comboOn) {
       prev.combo = s.combo; prev.comboOn = comboOn;
@@ -314,15 +310,17 @@ export function createUI(): GameUI & PresentationUI {
     // Boss
     const b = s.boss;
     if (b) {
+      bossEl.querySelector('.bomb-limit')?.remove();
       if (!prev.boss) { prev.boss = true; bossEl.classList.add('on'); ik.classList.add('bs'); motion.clear(bossEl); motion.enter(bossEl); }
-      setText('bname', b.name);
+      if(prev.bname!==b.name){setText('bname', b.name);delete R.bname.dataset.lettering;battleLetter(R.bname,b.name);}
       if (prev.btarget !== (b.hint ?? '')) { setText('btarget', b.hint ?? ''); if (b.hint) motion.enter(R.btarget, 'float'); }
-      if (prev.bph !== b.phasesLeft) { prev.bph = b.phasesLeft; R.bph.innerHTML = '<i></i>'.repeat(Math.max(1, Math.min(9, b.phasesLeft))); }
+      R.bph.innerHTML='';const bar=R.bhp.parentElement!;let ticks=bar.querySelector<HTMLElement>('.phase-ticks');if(b.name==='铜雀'){if(!ticks){ticks=h('span','phase-ticks','',bar);ticks.innerHTML='<i></i><i></i>';}}else ticks?.remove();
       setText('btm', b.timer === undefined ? '' : String(Math.max(0, Math.ceil(b.timer))));
       const hp = `scaleX(${Math.min(1, Math.max(0, b.hp)).toFixed(3)})`;
-      if (prev.bhp !== hp) { prev.bhp = hp; R.bhp.style.transform = hp; R.btr.style.transform = hp; }
+      if(prev.bhp!==hp){const old=Number(String(prev.bhp??'scaleX(1)').slice(7,-1)),next=Math.min(1,Math.max(0,b.hp));prev.bhp=hp;R.bhp.style.transform=hp;if(next<old)R.bhp.parentElement?.animate([{filter:'brightness(2.2)'},{filter:'brightness(1)'}],{duration:100});}
+      R.btr.style.transform=`scaleX(${b.trail??b.hp})`;
     } else if (prev.boss) {
-      prev.boss = false; motion.clear(bossEl); motion.exit(bossEl, () => bossEl.classList.remove('on')); ik.classList.remove('bs');
+      prev.boss = false; motion.clear(bossEl); motion.play(bossEl,[{opacity:1},{opacity:0}],{duration:300},false,()=>bossEl.classList.remove('on')); ik.classList.remove('bs');
     }
   }
 
@@ -337,7 +335,7 @@ export function createUI(): GameUI & PresentationUI {
     ik.classList.toggle('challenging', !!c && hudVis);
     if (!c) return;
     const g = device === 'gamepad';
-    const key = c.action === 'focus' ? (g ? 'LT' : 'Shift') : c.action === 'bomb' ? (g ? 'B（东）' : 'X') : (g ? 'X（西） / RT' : 'C');
+    const key = c.action === 'focus' ? (g ? 'LT' : '手柄 LT') : c.action === 'bomb' ? (g ? 'B（东）' : 'F') : (g ? 'X（西） / RT' : '右键 / 空格');
     const action = c.action === 'brush' ? `按住 ${key} 运笔，松开封阵` : `松开后新按 ${key} ${c.action === 'focus' ? '集中' : '反制'}`;
     const note = c.action === 'bomb' ? '本次不耗泼墨' : c.action === 'brush' ? '画成闭环并圈住目标才封阵' : '保持移动与射击';
     const markup = `${esc(c.title)}|${action}|${esc(c.hint)}|${note}`;
@@ -349,6 +347,33 @@ export function createUI(): GameUI & PresentationUI {
     challengeEl.querySelector('.qte-clock b')!.textContent = remaining.toFixed(1);
     (challengeEl.querySelector('.qte-ring') as SVGElement).style.strokeDashoffset = String(100 * (1 - Math.min(1, remaining / Math.max(.01, c.duration))));
     challengeEl.classList.toggle('urgent', remaining < .8);
+  }
+
+  function renderSkills(s:HudState){
+    const hot=s.overclock;overclockEl.hidden=!hot||!hudVis;
+    if(hot){overclockEl.style.left=`${hot.x/900*100}%`;overclockEl.style.top=`${hot.y/1200*100}%`;overclockEl.querySelector('b')!.textContent=`超频 ${hot.left.toFixed(1)}秒`; (overclockEl.querySelector('i') as HTMLElement).style.transform=`scaleX(${hot.left/5})`;}
+
+    const slots=(s.skillSlots??[]).filter(slot=>slot.visible);
+    const key=slots.map(slot=>slot.id).join('|');
+    if(prev.skillIds!==key){
+      prev.skillIds=key;
+      for(const row of R.skills.querySelectorAll('.skill-row'))row.replaceChildren();
+      for(const slot of slots){
+        const row=R.skills.querySelector(slot.key==='Shift'||/^[1-5]$/.test(slot.key??'')?'[data-row="1"]':'[data-row="2"]')!;
+        const el=h('div','skill-slot',`<span class="skill-key">${esc(slot.key??'')}</span><div class="skill-icon">${slot.icon?`<img src="${esc(slot.icon)}" alt="">`:""}<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" pathLength="100"/></svg><b class="skill-seconds"></b></div><span class="skill-name">${esc(slot.name)}</span><small class="skill-value"></small><i class="skill-fill"></i>`,row);
+        el.dataset.skill=slot.id;
+        if(slot.id==='zhongpao')el.querySelector('.skill-icon')!.appendChild(el.querySelector('.skill-value')!);
+      }
+    }
+    for(const slot of slots){
+      const el=R.skills.querySelector<HTMLElement>(`[data-skill="${slot.id}"]`)!;
+      if(slot.ready&&!el.classList.contains('ready')){el.classList.remove('ready-pulse');void el.offsetWidth;el.classList.add('ready-pulse');}el.classList.toggle('ready',slot.ready);el.classList.toggle('active',(slot.active??0)>0);el.classList.toggle('unlocking',!!slot.unlocking);
+      el.querySelector('circle')!.style.strokeDashoffset=String(100*(1-Math.min(1,slot.cooldown/Math.max(.001,slot.cooldownMax))));
+      el.querySelector('.skill-seconds')!.textContent=slot.cooldown>0?String(Math.ceil(slot.cooldown)):'';
+      el.querySelector('.skill-value')!.textContent=slot.value??((slot.active??0)>0?`${Math.ceil(slot.active!)}秒`:'');
+      (el.querySelector('.skill-fill') as HTMLElement).style.transform=`scaleX(${slot.fill??0})`;
+      el.title=`${slot.key} ${slot.name}${slot.cooldown>0?` · 冷却 ${Math.ceil(slot.cooldown)}秒`:slot.ready?' · 就绪':''}`;
+    }
   }
 
   // ------------------------------------------------ 布局
@@ -375,10 +400,8 @@ export function createUI(): GameUI & PresentationUI {
     if (compact) {
       const x = rect.x + 240 * u, width = rect.w - 368 * u;
       set(dock, x, rect.y + 6, width, 202);
-      set(movesDock, x, rect.y + 216, width, 82);
     } else {
       set(dock, colInset, viewport.h * .52, colWidth, 294);
-      set(movesDock, rect.x + rect.w + (sideR - colWidth) / 2, viewport.h - 196, colWidth, 180);
     }
     if (compact) {
       set(hostL, rect.x, rect.y, rect.w, rect.h);
@@ -387,6 +410,8 @@ export function createUI(): GameUI & PresentationUI {
       set(hostL, 0, 0, sideL, viewport.h);
       set(hostR, rect.x + rect.w, 0, sideR, viewport.h);
     }
+    const skillParent=compact?hostR:hostR.querySelector('.hud')!;
+    if(R.skills.parentElement!==skillParent)skillParent.appendChild(R.skills);
     // 按键图例：放在左侧栏底部；侧栏 < 200px、紧凑模式或与左侧 HUD 重叠时隐藏
     let showKeys = !compact && sideL >= 200;
     if (showKeys) {
@@ -400,6 +425,7 @@ export function createUI(): GameUI & PresentationUI {
     hostL.classList.toggle('c', compact);
     hostR.classList.toggle('c', compact);
     bossEl.classList.toggle('c2', compact);
+    story?.resize();
     document.getElementById('ik-dm')?.setAttribute('scale', String(Math.max(3, 5.5 * u)));
     document.getElementById('ik-dms')?.setAttribute('scale', String(Math.max(2, 4 * u)));
   }
@@ -410,20 +436,31 @@ export function createUI(): GameUI & PresentationUI {
   let poolI = 0;
   const mergedPopups = new Map<string,HTMLElement>();
   function popup(x: number, y: number, text: string, kind: PopupKind, mergeKey?:string) {
+    if (text === '外甲松动') {
+      motion.clear(R.armor); R.armor.textContent = text;
+      motion.life(R.armor, 1.5, 'float', () => { R.armor.textContent = ''; });
+      return;
+    }
     const current=mergeKey?mergedPopups.get(mergeKey):undefined;
-    if(current&&current.style.display!=='none'){current.textContent=text;return;}
+    if(current&&current.style.display!=='none'){current.textContent=text;if(kind.startsWith('damage-'))current.className='pop '+kind;return;}
     if (!pool.length) for (let i = 0; i < POOL; i++) { pool.push(h('div', 'pop', '', fx)); }
     const i = poolI; poolI = (poolI + 1) % POOL;
     const e = pool[i];
     for(const [key,value] of mergedPopups)if(value===e)mergedPopups.delete(key);
     if(mergeKey)mergedPopups.set(mergeKey,e);
     motion.clear(e);
-    e.className = 'pop ' + kind;
-    e.textContent = text;
+    e.className = 'pop ' + kind;e.style.opacity='';e.style.fontSize='';
+    delete e.dataset.lettering;e.removeAttribute('aria-label');e.classList.remove('battle-lettered','brush-letter-unlock');e.textContent = text;
+    const unlock=/^学会(.+)$/.exec(text);
+    let hasLetter=false;
+    if(unlock){e.classList.add('brush-letter-unlock');hasLetter=battleLetter(e,unlock[1],2.15);}else if(mergeKey==='ink:cast')hasLetter=battleLetter(e,text,1.15);
     e.style.display = 'block';
     e.style.left = Math.min(92, Math.max(8, x / 9)) + '%';
     e.style.top = Math.min(96, Math.max(3, y / 12)) + '%';
-    motion.popup(e, kind, () => { e.style.display = 'none';if(mergeKey&&mergedPopups.get(mergeKey)===e)mergedPopups.delete(mergeKey); });
+    if(unlock){e.style.left='50%';e.style.top='50%';e.style.setProperty('font-size',180*pr.w/675+'px','important');const descriptions:Record<string,string>={'横':'横 · 墨堤：画一横，立墙挡弹','竖':'竖 · 贯：画一竖，贯穿敌阵'};const note=h('span','brush-letter-description',descriptions[unlock[1]]??`${unlock[1]}：学会了新笔法`,e);note.style.fontSize=20*pr.w/675+'px';}
+    if(mergeKey==='ink:cast'){e.style.opacity='.9';e.style.fontSize=56*pr.w/675+'px';const image=e.querySelector('img')!,half=image.naturalWidth/image.naturalHeight*56*pr.w/675/2||100;const px=Math.max(half+20,Math.min(pr.w-half-20,x/900*pr.w));e.style.left=px/pr.w*100+'%';e.style.top=Math.max(56,Math.min(pr.h-56,y/1200*pr.h-105/1200*pr.h))/pr.h*100+'%';}
+    const hide=()=>{e.style.display='none';if(mergeKey&&mergedPopups.get(mergeKey)===e)mergedPopups.delete(mergeKey);};
+    if(hasLetter){e.style.transform='translate(-50%,-50%)';motion.hold(e,unlock?2.15:1.15,hide);}else if(mergeKey?.startsWith('passive:')){e.style.transform='translate(-50%,-50%)';e.style.opacity='1';motion.hold(e,1.5,hide);}else motion.popup(e,kind,hide);
   }
 
   // ------------------------------------------------ 演出
@@ -435,29 +472,53 @@ export function createUI(): GameUI & PresentationUI {
   }
   function dismiss(layer: HTMLElement, seconds: number, style: 'panel' | 'sweep' | 'float' = 'panel') {
     const d = layer.firstElementChild!;
-    motion.life(d, seconds, style, () => { motion.remove(d); refreshPresentation(); });
+    motion.hold(d,seconds,()=>{motion.remove(d);refreshPresentation();});
     refreshPresentation();
   }
+  function clearHero(){for(const e of fx.querySelectorAll('.hero-letter'))motion.remove(e);}
+  function heroLetter(text:string,seal:string|null,height:number,sealHeight:number,seconds:number,done:()=>void,top='50%',flash=false){
+    const scale=pr.w/675,d=h('div','hero-letter','',fx);d.style.top=top;d.style.gap=24*scale+'px';
+    if(seal){const mark=h('span','hero-seal',seal,d);mark.style.fontSize=sealHeight*scale+'px';mark.style.width=sealHeight*scale+'px';mark.style.height=sealHeight*scale+'px';battleLetter(mark,seal,undefined,'cinnabar');}
+    const word=h('span','',esc(text),d);word.style.fontSize=height*scale+'px';battleLetter(word,text,undefined,text==='强敌接近'?'cinnabar':'paper');
+    if(flash)d.animate([{opacity:1,offset:0},{opacity:.12,offset:.2},{opacity:1,offset:.3},{opacity:.12,offset:.55},{opacity:1,offset:.65},{opacity:1,offset:1}],{duration:seconds*1000});
+    motion.hold(d,seconds,done);return d;
+  }
+  function heroFinish(hero:HTMLElement,target:HTMLElement,done:()=>void){
+    const wide=vp.w>vp.h,a=hero.getBoundingClientRect(),b=target.getBoundingClientRect(),dx=b.x+b.width/2-a.x-a.width/2,dy=b.y+b.height/2-a.y-a.height/2;
+    hero.animate([{transform:'translate(-50%,-50%)',opacity:1},{transform:wide?`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.22)`:'translate(-50%,-50%)',opacity:0}],{duration:450,easing:'cubic-bezier(.16,1,.3,1)',fill:'forwards'});
+    motion.hold(hero,.45,()=>{motion.remove(hero);done();});
+  }
   function stageCard(stage: number, title: string, subtitle: string, duration = 4.2) {
-    clearLayer(cardL); clearLayer(warnL);
+    clearHero();clearLayer(cardL); clearLayer(warnL);
     let no = `第${CN[stage] ?? stage}幕`;
     const m = title.split(/\s*[·・]\s*/);
     if (m.length === 2) { no = m[0]; title = m[1]; }
     const d = h('div', 'card', `<i class="ink-brush" aria-hidden="true"></i><span class="chapter-seal">${esc(CN[stage] ?? String(stage))}</span><div class="chapter-copy"><div class="c-no">${esc(no)}</div><div class="c-t">${esc(title)}</div><div class="c-s">${esc(subtitle)}</div></div>`, cardL);
     motion.brush(d.querySelector('.ink-brush')!);
-    motion.letters(d.querySelector('.c-t')!, title);
-    motion.stamp(d.querySelector('.chapter-seal')!);
-    dismiss(cardL, Math.max(2, duration));
+    if(!battleLetter(d.querySelector('.c-t')!,title))motion.letters(d.querySelector('.c-t')!, title);
+    battleLetter(d.querySelector('.chapter-seal')!,CN[stage]??String(stage),undefined,'cinnabar');
+
+    d.style.visibility='hidden';
+    const hero=heroLetter(title,CN[stage]??String(stage),110,140,2.45,()=>heroFinish(hero,d,()=>{if(vp.w>vp.h){d.style.visibility='visible';dismiss(cardL,Math.max(2,duration));}else{motion.remove(d);refreshPresentation();}}));
+
   }
+  let warningHero:HTMLElement|null=null;
+  function warningEnd(){if(warningHero)motion.remove(warningHero);warningHero=null;clearLayer(warnL);refreshPresentation();}
   function warning(name: string, sub: string) {
-    clearLayer(warnL);
+    clearHero();clearLayer(warnL);
     // 章节与 Boss 登场共用边签位，后来的事件优先。
     clearLayer(cardL);
     const d = h('div', 'warn', `<i class="ink-brush" aria-hidden="true"></i><span class="warning-seal">警</span><div class="warning-copy"><div class="w-en">强敌接近</div><div class="w-name">${esc(name)}</div><div class="w-sub">${esc(sub)}</div></div>`, warnL);
     motion.brush(d.querySelector('.ink-brush')!);
-    motion.stamp(d.querySelector('.warning-seal')!);
-    motion.letters(d.querySelector('.w-name')!, name);
-    dismiss(warnL, 2.4, 'sweep');
+
+    if(!battleLetter(d.querySelector('.w-name')!,name))motion.letters(d.querySelector('.w-name')!, name);
+    battleLetter(d.querySelector('.w-en')!,'强敌接近',2.4,'cinnabar');
+    battleLetter(d.querySelector('.warning-seal')!,'警',2.4,'cinnabar');
+    d.style.visibility='hidden';
+    warningHero=heroLetter('强敌接近','警',120,140,3,warningEnd,'50%',true);warningHero.classList.add('hero-warning-paper');
+    const warningName=h('span','warning-boss-name',esc(name),warningHero);
+    warningName.style.fontSize=32*pr.w/675+'px';battleLetter(warningName,name,undefined,'ink');
+
   }
   function notice(text: string, duration = 2.5) {
     const old = noticeL.querySelector('.battle-notice'); if (old) motion.remove(old);
@@ -466,7 +527,8 @@ export function createUI(): GameUI & PresentationUI {
     refreshPresentation();
   }
   const actorIds: Record<string, string> = {
-    '小满': 'xiaoman', '赤燕': 'chiyan', '老盾': 'laodun', '墨鸢': 'moyuan', '算盘': 'suanpan', '掌门': 'zhangmen', '铜雀': 'tongque',
+    '小满': 'xiaoman', '赤燕': 'chiyan', '老盾': 'laodun', '墨鸢': 'moyuan', '算盘': 'suanpan', '总镖头': 'zhangmen', '铜雀': 'tongque',
+    '纸龙':'zhilong','屿长':'gongtou','蜃':'mirage','雷公':'leigong',
   };
   const expressions: Record<string, string> = { '平静': 'calm', '坚定': 'calm', '得意': 'smug', '着急': 'alarmed', '急切': 'alarmed' };
   const silhouette = '<svg viewBox="0 0 96 128" aria-hidden="true"><path d="M22 126c-2-23 9-34 19-39v-9c-10-7-16-19-15-31 0-18 8-30 23-30s23 12 23 30c1 12-5 24-15 31v9c10 5 21 16 19 39Z" fill="currentColor"/><path d="M28 43c-3-20 5-35 22-35 14 0 23 11 22 31l-14-9-10 9-10-7Z" fill="#211c18"/></svg>';
@@ -475,6 +537,7 @@ export function createUI(): GameUI & PresentationUI {
   function say(actor: string | DialogueActor, expression: string, text: string, duration = 4) {
     clearTimeout(capTimer); clearInterval(typeTimer);
     const a = typeof actor === 'string' ? { name: actor } : actor;
+    communicationHistory.push({id:'',speaker:a.name,identity:a.identity,text,memory:false});
     const actorId = actorIds[a.name];
     const portrait = a.expressions?.[expression] ?? a.portrait ?? (actorId ? `/art/portraits/${actorId}/${expressions[expression] ?? 'calm'}.png` : undefined);
     const signal = h('i', 'speech-signal', '', ik); motion.life(signal, .9, 'float', () => motion.remove(signal));
@@ -488,7 +551,7 @@ export function createUI(): GameUI & PresentationUI {
     if (portrait) {
       const current = face.querySelector('img');
       if (!current || current.getAttribute('src') !== portrait) {
-        const img = document.createElement('img'); img.alt = `${a.name} · ${expression}`;
+        const img = document.createElement('img'); img.alt = a.name;
         const refreshSilhouette = () => {
           const svg = face!.querySelector<SVGElement>('svg');
           if (svg) svg.style.display = [...face!.querySelectorAll('img')].some(i => i.complete && i.naturalWidth > 0) ? 'none' : '';
@@ -504,7 +567,7 @@ export function createUI(): GameUI & PresentationUI {
     } else { face.innerHTML = silhouette; if (!sameActor) motion.enter(face, 'sweep'); }
     let copy = d!.querySelector<HTMLElement>('.communication-copy');
     if (!copy) copy = h('div', 'communication-copy', '', d!);
-    copy.innerHTML = `<div class="speaker"><b>${esc(a.name || '通讯')}</b><span>${esc(expression)}</span></div>`;
+    copy.innerHTML = `<div class="speaker"><b>${esc(a.name || '通讯')}</b>${a.identity?`<span>${esc(a.identity)}</span>`:''}</div>`;
     if (!sameActor) motion.enter(d!);
     else motion.enter(copy, 'float');
     const tx = h('div', 'dialogue-text', '', copy);
@@ -562,6 +625,35 @@ export function createUI(): GameUI & PresentationUI {
     if (!speaker || ['晓山', '灯河', '云垣'].includes(speaker)) { notice(text, duration); return; }
     const name = speaker === '朱雀' ? '小满' : speaker === '曜雀' ? '赤燕' : speaker;
     say(name, '平静', text, duration);
+  }
+
+  function resetCommunications(){story.reset();communicationHistory=[];missionEl.hidden=true;clearTimeout(capTimer);clearInterval(typeTimer);clearLayer(capL);clearLayer(noticeL);clearHero();}
+  function chapterSay(actor:DialogueActor,expression:string,text:string,id:string,memory:boolean,options?:{pause:boolean;onDone:()=>void;onSkip:()=>void}){
+    clearTimeout(capTimer);clearInterval(typeTimer);clearLayer(capL);
+    if(!text){refreshPresentation();return;}
+    communicationHistory.push({id,speaker:actor.name,identity:actor.identity,text,memory});
+    if(options?.pause){story.show(actor,expression,text,id,memory,options.onDone,options.onSkip);refreshPresentation();return;}
+    const portrait=actor.expressions?.[expression]??actor.portrait;
+    const d=h('div',`communication${memory?' memory':''}`,'',capL);d.dataset.id=id;d.dataset.actor=actor.name;
+    const face=h('div','portrait','',d);if(portrait){const img=document.createElement('img');img.src=portrait;img.alt=actor.name;img.onerror=()=>{img.src=actor.portrait??'';img.onerror=null;};face.appendChild(img);}
+    h('div','communication-copy',`<div class="speaker"><b>${esc(actor.name)}</b>${actor.identity?`<span>${esc(actor.identity)}</span>`:''}${memory?'<span>回忆</span>':''}</div><div class="dialogue-text">${esc(text)}</div>` ,d);
+    ik.classList.add('presenting');
+  }
+  function missionBrief(id:number){
+    const titles=['护送云梭','闯过查封','截下雷石','冲过铜雀关'];
+    const targets=['青石屿的三架云梭','纸龙（风筝帮的查封机）','空中堡垒','铜雀（守关机）'];
+    const purposes=['护送云梭队前往高天','它扣下了浮石林里所有经过的飞船','风筝帮运走的雷石能让青石屿多浮些日子','让三架云梭通过铜雀关'];
+    missionEl.hidden=false;missionEl.dataset.mission=String(id);missionEl.innerHTML=`<div class="brief-title"><small>任务${CN[id]}</small><b>${titles[id-1]}</b></div><div>目标：${targets[id-1]}</div><p>${purposes[id-1]}</p>`;
+    missionEl.style.animation='none';void missionEl.offsetWidth;missionEl.style.animation='mission-air 3.65s both';
+    missionEl.onanimationend=()=>{missionEl.hidden=true;};
+    window.setTimeout(()=>{if(missionEl.dataset.mission===String(id))missionEl.hidden=true;},3700);
+  }
+  function buildCommunications(){
+    scr.classList.add('dim');const p=h('div','panel communications','<div class="ph1">通讯记录</div><div class="pline"></div>',scr);
+    recordScroll=h('div','communication-history','',p);
+    for(const line of communicationHistory)h('div','record-line',`<b>${esc(line.speaker)}</b>${line.identity?` <small>${esc(line.identity)}</small>`:''}${line.memory?' <small>回忆</small>':''}<p>${esc(line.text)}</p>`,recordScroll);
+    if(!communicationHistory.length)h('p','','本章暂无通讯记录',recordScroll);
+    const close=()=>{show('pause');lockUntil=performance.now()+150;};const button=h('div','pfoot','点击关闭 · Esc 返回',p);button.addEventListener('click',close);onBack=close;onConfirm=close;setMenu([]);
   }
 
   // ------------------------------------------------ 菜单与画面
@@ -630,20 +722,26 @@ export function createUI(): GameUI & PresentationUI {
     const g = device === 'gamepad';
     const k = hint.dataset.kind!;
     const move = g ? '<b>↑↓</b> 选择' : '<b>↑↓</b> 选择';
-    const ok = g ? '<b>A（南）</b> 确认' : '<b>Z / Enter</b> 确认';
-    const bk = g ? '<b>B（东）</b> 返回' : '<b>X / Esc</b> 返回';
+    const ok = g ? '<b>A（南）</b> 确认' : '<b>Enter</b> 确认';
+    const bk = g ? '<b>B（东）</b> 返回' : '<b>Esc</b> 返回';
     hint.innerHTML = k.startsWith('menu') ? `${move}　${ok}${k === 'menuB' ? '　' + bk : ''}` : k === 'skip' ? ok : ok;
     if (k === 'menuX') hint.innerHTML = `<b>↑↓</b> 选择　<b>←→</b> 调整　${ok}　${bk}`;
     if (k === 'menuS') hint.innerHTML = `<b>↑↓</b> 选择　<b>←→</b> 调整　${bk}`;
     if (k === 'menuT') hint.innerHTML = `<b>↑↓</b> 选择　<b>←→</b> 难度　${ok}`;
     const tk = scr.querySelector('.tkeys');
-    if (tk) tk.innerHTML = KEYS.map(([a, kb, gp]) => `<span>${a} <b>${g ? gp : a === '射击' ? 'Z / 空格' : kb.split(' / ')[0]}</b></span>`).join('');
+    if (tk) tk.innerHTML = KEYS.map(([a, kb, gp]) => `<span>${a} <b>${g ? gp : kb.split(' / ')[0]}</b></span>`).join('');
     const pk = scr.querySelector('.pkeys');
     if (pk) pk.innerHTML = keyRows(g);
     if (k === 'menuH') hint.innerHTML = `<b>←→</b> 选择　${ok}`;
   }
 
+  function controlsHint(text:string,duration:number):void {
+    window.clearTimeout(openingTimer);openingHint.textContent=text;openingHint.hidden=false;
+    openingTimer=window.setTimeout(()=>openingHint.hidden=true,duration*1000);
+  }
+
   function screen(name: ScreenName, data?: ScreenData) {
+    if(name!=='none')clearHero();
     if (data?.settings) settings = { ...data.settings };
     if (data?.difficulty) curDiff = data.difficulty;
     if (name === cur && name !== 'none' && name !== 'growth') { updateScreen(name, data); return; }
@@ -667,6 +765,7 @@ export function createUI(): GameUI & PresentationUI {
       case 'title': buildTitle(noAnim); break;
       case 'test': buildTest(); break;
       case 'pause': buildPause(); break;
+      case 'communications': buildCommunications(); break;
       case 'growth': buildGrowth(); break;
       case 'settings': buildSettings(); break;
       case 'howto': buildHowto(); break;
@@ -676,9 +775,10 @@ export function createUI(): GameUI & PresentationUI {
       case 'ending': buildEnding(data); break;
       case 'loading': buildLoading(data); break;
     }
+    applyMenuLettering(scr);
     if (!noAnim) {
       scr.querySelectorAll<HTMLElement>('.panel,.big,.ld,.sub1,.hint').forEach(el => motion.enter(el));
-      scr.querySelectorAll<HTMLElement>('.ttl .ch').forEach((el, i) => motion.enter(el, 'float', i * 100));
+      scr.querySelectorAll<HTMLElement>('.ttl .ch,.ttl.lettered').forEach((el, i) => motion.enter(el, 'float', i * 100));
       const titleSeal = scr.querySelector('.tseal'); if (titleSeal) motion.stamp(titleSeal);
       scr.querySelectorAll<HTMLElement>('.tsub,.title-menu').forEach((el, i) => motion.enter(el, 'panel', 220 + i * 80));
     }
@@ -713,6 +813,7 @@ export function createUI(): GameUI & PresentationUI {
       item('测 试', () => show('test')),
       { el: dEl, activate: () => { if (!dStep(1)) { curDiff = DIFF_ORDER[0]; dPaint(); ev.onDifficultyChange(curDiff); } }, adjust: (d) => { if (dStep(d)) ev.onMenuSound('move'); } },
       item('设 置', () => { base = 'title'; show('settings'); cur = 'settings'; lockUntil = performance.now() + 150; }),
+      item('墨 谱',()=>buildInkScore()),
       item('操作说明', () => { base = 'title'; show('howto'); cur = 'howto'; lockUntil = performance.now() + 150; }),
     ];
     rs.forEach((r) => menu.appendChild(r.el));
@@ -726,8 +827,10 @@ export function createUI(): GameUI & PresentationUI {
 
   // 测试入口复用现有panel/mi/键盘与手柄导航；选项保留在本次页面内。
   const testOptions=defaultTestOptions();
-  function buildTest(passives=false) {
+  function buildTest(passives=false, growth: 'methods'|'skills'|null=null) {
     scr.classList.add('dim');
+    testOptions.brushMethods=filterBrushForms(testOptions.brushMethods);
+    testOptions.skills=filterSkills(testOptions.skills);
     const p=h('div','panel test-panel','<div class="ph1">测 试</div><div class="pline"></div>',scr);
     const menu=h('div','menu','',p);
     const rs:Row[]=[];
@@ -740,8 +843,13 @@ export function createUI(): GameUI & PresentationUI {
       return row;
     };
     const returnTest=()=>{show('test');lockUntil=performance.now()+150;};
-    if(passives){
-      h('div','test-note','测试可直接选择任意技能，包含互斥组合。',p);
+    const sub=(kind:'methods'|'skills')=>{clearScreen();scr.classList.add('on');buildTest(false,kind);lockUntil=performance.now()+150;};
+    if(growth){
+      if(growth==='methods')for(const method of BRUSH_FORMS)add(toggle(`笔法 · ${method}`,()=>testOptions.brushMethods.includes(method),v=>{testOptions.brushMethods=testOptions.brushMethods.filter(m=>m!==method);if(v)testOptions.brushMethods.push(method);}));
+      if(growth==='skills')for(const id of SKILL_IDS)add(toggle(`${SKILL_RULES[id].key} · ${SKILL_RULES[id].name}`,()=>testOptions.skills.includes(id),v=>{testOptions.skills=testOptions.skills.filter(s=>s!==id);if(v)testOptions.skills.push(id);}));
+      add(item('返回测试设置',returnTest));onBack=returnTest;
+    }else if(passives){
+      h('div','test-note','测试可选任意技能；笔力以测试设置为准。',p);
       for(const t of TALENTS)add(toggle(t.name,()=>testOptions.passives.includes(t.id),v=>{
         testOptions.passives=testOptions.passives.filter(id=>id!==t.id);if(v)testOptions.passives.push(t.id);
       }));
@@ -749,7 +857,7 @@ export function createUI(): GameUI & PresentationUI {
     }else{
       const checkpoints=()=>TEST_CHECKPOINTS[testOptions.chapter];
       const entry=()=>checkpoints().find(c=>c.id===testOptions.checkpoint)!;
-      const chapterNames=['第一章 · 晓山','第二章 · 灯河','第三章 · 云海','第四章 · 现有鲲鹏终战'];
+      const chapterNames=['第一章 · 出镖','第二章 · 蜃海','第三章 · 雷场','第四章 · 现有鲲鹏终战'];
       const chapter=item('章节',undefined,chapterNames[testOptions.chapter-1]);
       const point=item('起点',undefined,entry().label);
       const phase=item('Boss阶段',undefined,'选择Boss后可调');
@@ -769,14 +877,19 @@ export function createUI(): GameUI & PresentationUI {
       const changePhase=(d:number)=>{if(!entry().phases)return;testOptions.bossPhase=(testOptions.bossPhase-1+d+entry().phases!)%entry().phases!+1;updatePhase();};
       phase.activate=()=>changePhase(1);phase.adjust=changePhase;updatePhase();add(phase);
       add(toggle('无敌',()=>testOptions.god,v=>testOptions.god=v));
+      add(toggle('全技能 · 无限资源 · 冷却¼',()=>!!testOptions.allSkills,v=>testOptions.allSkills=v));
       add(toggle('满墨',()=>testOptions.fullInk,v=>testOptions.fullInk=v));
       add(toggle('满泼墨',()=>testOptions.fullBombs,v=>testOptions.fullBombs=v));
-      for(const [label,available] of [['执笔笔力',TEST_CAPABILITIES.brushPower],['已解锁笔法',TEST_CAPABILITIES.brushMethods],['泼墨成长',TEST_CAPABILITIES.bombGrowth]] as const){
-        const row=item(label,undefined,available?'待接入':'尚未实装');row.disabled=true;row.el.classList.add('test-disabled');add(row);
-      }
+      const bombColor=item('泼墨颜色',undefined,INK_NAMES[testOptions.bombColor]);const changeColor=(d:number)=>{testOptions.bombColor=INK_COLORS[(INK_COLORS.indexOf(testOptions.bombColor)+d+3)%3];repaint(bombColor,INK_NAMES[testOptions.bombColor]);};bombColor.activate=()=>changeColor(1);bombColor.adjust=changeColor;add(bombColor);
+      for(const color of INK_COLORS){const grade=item(`墨谱 · ${INK_NAMES[color]}`,undefined,`${testOptions.inkScore[color]} 级`);const change=(d:number)=>{testOptions.inkScore[color]=(testOptions.inkScore[color]+d+4)%4;repaint(grade,`${testOptions.inkScore[color]} 级`);};grade.activate=()=>change(1);grade.adjust=change;add(grade);}
+      const power=item('执笔笔力',undefined,`${testOptions.brushPower} 级`);
+      const changePower=(d:number)=>{testOptions.brushPower=((testOptions.brushPower-1+d+3)%3+1) as 1|2|3;repaint(power,`${testOptions.brushPower} 级`);};
+      power.activate=()=>changePower(1);power.adjust=changePower;add(power);
+      add(item('已解锁笔法',()=>sub('methods'),`${testOptions.brushMethods.length} 项已选`));
+      add(item('已解锁技能',()=>sub('skills'),`${testOptions.skills.length} 项已选`));
       const kinds=['chiyan','laodun','moyuan','suanpan'] as const;
       const names=['赤燕','老盾','墨鸢','算盘'];
-      const note=h('div','test-note','伙伴最多2名；第一章E编号暂映射旧段，剧情重做后沿用。',p);
+      const note=h('div','test-note','伙伴最多2名；第一章可直入剧情事件与首领阶段。',p);
       kinds.forEach((kind,i)=>add(toggle(`伙伴 · ${names[i]}`,()=>testOptions.companions.includes(kind),v=>{
         if(v&&!testOptions.companions.includes(kind)&&testOptions.companions.length>=2){note.textContent='伙伴最多2名，请先取消一名。';return;}
         testOptions.companions=testOptions.companions.filter(k=>k!==kind);if(v)testOptions.companions.push(kind);
@@ -785,7 +898,7 @@ export function createUI(): GameUI & PresentationUI {
       const start=item('进入测试',()=>ev.onTestStart?.(structuredClone(testOptions)));start.el.dataset.testAction='start';add(start);
       const back=()=>show('title',undefined,true);add(item('返回标题',back));onBack=back;
     }
-    setMenu(rs);setHint('menu','X');
+    setMenu(rs);setHint('menu','X');applyMenuLettering(scr);
   }
 
   function backToBase() {
@@ -803,7 +916,8 @@ export function createUI(): GameUI & PresentationUI {
     const rs = [
       item('继 续', () => ev.onResume()),
       item('设 置', () => { base = 'pause'; baseData = screenData; show('settings'); cur = 'settings'; lockUntil = performance.now() + 150; }),
-      moveToggle(p),
+      item('通讯记录',()=>{show('communications');lockUntil=performance.now()+150;}),
+      item('墨 谱',()=>buildInkScore()),
       item('操作说明', () => { base = 'pause'; baseData = screenData; show('howto'); cur = 'howto'; lockUntil = performance.now() + 150; }),
       (quit = item('回到标题', () => {
         const now = performance.now();
@@ -819,6 +933,8 @@ export function createUI(): GameUI & PresentationUI {
     onBack = () => ev.onResume();
     const f = h('div', 'pfoot', '', p); f.dataset.kind = 'menuB'; hint = f; f.className = 'pfoot'; renderHint();
   }
+
+  function buildInkScore(){const levels=screenData.inkScore??{red:0,blue:0,purple:0};clearScreen();scr.classList.add('on','dim');const p=h('div','panel ink-score-page','<div class="ph1">墨 谱</div><div class="pline"></div>',scr);const columns=h('div','ink-score-columns','',p);for(const color of INK_COLORS){const column=h('div','',`<h3>${INK_NAMES[color]} · ${levels[color]}/3</h3>`,columns);INK_GRADES[color].forEach(([name,effect],i)=>h('p',i<levels[color]?'learned':'unlearned',`${i<levels[color]?'● 已获得':'○ 未获得'} · ${name}<br>${effect}；字灵多留半秒`,column));}const back=item('返回暂停',()=>show('pause',screenData,true));p.appendChild(back.el);setMenu([back]);onBack=()=>show('pause',screenData,true);}
 
   // --- 设置
   function buildSettings() {
@@ -852,7 +968,7 @@ export function createUI(): GameUI & PresentationUI {
       return { el, activate: flip, adjust: (d) => { if ((d > 0) !== get()) { flip(); ev.onMenuSound('move'); } } };
     };
     const rs: Row[] = [
-      slider('渲染精度', 'renderScale', 0.5, 1.5, 0.05, (v) => `×${v.toFixed(2)}`),
+      slider('渲染精度', 'renderScale', 1, 1.5, 0.05, (v) => `×${v.toFixed(2)}`),
       tog('特效品质', () => settings.quality === 'ultra', (v) => { settings.quality = v ? 'ultra' : 'high'; }, '极致', '高'),
       tog('屏幕震动', () => settings.screenShake, (v) => { settings.screenShake = v; }, '开', '关'),
       slider('主音量', 'masterVol', 0, 1, 0.05, (v) => Math.round(v * 100) + '%'),
@@ -873,42 +989,18 @@ export function createUI(): GameUI & PresentationUI {
     const p = h('div', 'panel wide', '<div class="ph1">操作说明</div><div class="pline"></div>', scr);
     const T = KEYS.map(([a, k, g]) => [a === '一笔' ? '一笔（按住运笔）' : a === '射击' ? '射击（按住）' : a, k, g]);
     p.insertAdjacentHTML('beforeend', `<div class="how"><div class="hh">动作</div><div class="hh">键盘</div><div class="hh">手柄 · Xbox式</div>${T.map(([a, k, g]) => `<div class="a">${esc(a)}</div><div class="k">${esc(k)}</div><div class="g">${esc(g)}</div>`).join('')}</div>
-<div class="hnote"><b>一笔</b>：墨就绪时按住运笔，松开斩击；画成闭环并圈住目标才能封印。<b>反制输入通过</b>后仍需完成目标圈封。<br><b>三色弱点</b>：朱·刀口破甲，青·双波导流，雷·方印封阵。墨金方印对应雷武器；对色更快，任意色都能推进。<br><b>伙伴自动协同</b>，有效行动持续成长，无需切换。连招里的「命中」要求主武器实际击中；按键顺序请看出招表。</div>`);
+<div class="hnote"><b>一笔</b>：墨就绪时按住运笔，松开斩击；画成闭环并圈住目标才能封印。<b>反制输入通过</b>后仍需完成目标圈封。<br><b>三色弱点</b>：朱·刀口破甲，青·双波导流，紫·方印封阵。墨金方印对应紫色武器；对色更快，任意色都能推进。<br><b>伙伴自动协同</b>，有效行动持续成长，无需切换。鼠标右键画线，松手按起笔位置与笔形生效。Shift 翻滚穿弹回墨。</div>`);
     const menu = h('div', 'menu', '', p);
     const r = item('返 回', () => backToBase());
     menu.appendChild(r.el);
-    const moves = moveToggle(p);
-    menu.insertBefore(moves.el, r.el);
     const gallery = galleryToggle(p); menu.insertBefore(gallery.el, r.el);
-    setMenu([moves, gallery, r]);
+    setMenu([gallery, r]);
     onBack = backToBase;
   }
 
-  function moveToggle(parent: HTMLElement): Row {
-    const r = item('出招表 · 全部招式', () => {
-      const open = !table.hidden;
-      table.hidden = open;
-      parent.classList.toggle('book-open', !open);
-      if (!open) { const gallery = parent.querySelector<HTMLElement>('.art-gallery'); if (gallery) gallery.hidden = true; parent.classList.remove('gallery-open'); for (const row of parent.querySelectorAll('.mi')) if (row.querySelector('.ml')?.textContent === '三垣图鉴') { row.querySelector('.ms')!.textContent = '展开'; } }
-      r.el.setAttribute('aria-expanded', String(!open));
-      r.el.querySelector('.ms')!.textContent = open ? '展开' : '收起';
-    }, '展开');
-    r.el.setAttribute('aria-expanded', 'false');
-    const table = h('div', 'move-book', '', parent);
-    table.hidden = true;
-    const moves = screenData.moves ?? COMBO_MOVES.map(m => ({ name: m.name + (m.talent ? ' · 天赋' : ''), input: m.description.split('：')[0], effect: m.description.split('：')[1] ?? m.description, window: m.window, cost: m.cost }));
-    h('div', 'move-legend', '主动：方向 + F / U（手柄 R3），前为屏幕上方；重复方向须松开再按。被动：命中须打中目标，同招间隔 3.5 秒，天赋标记需解锁。', table);
-    const grid = h('div', 'move-grid', '', table);
-    for (const m of moves) {
-      const condition = m.window === undefined || m.cost === undefined ? '' : `${m.window} 秒内 · 额外耗墨 ${Math.round(m.cost * 100)}%`;
-      h('div', 'move-entry', `<strong>${esc(m.name)}</strong><span>${esc(m.input.replaceAll('换武', '换色').replaceAll('聚焦', '集中'))}</span>${condition ? `<small class="move-conditions">${esc(condition)}</small>` : ''}<small>${esc(m.effect)}</small>`, grid);
-    }
-    return r;
-  }
-
   function galleryToggle(parent: HTMLElement): Row {
-    const r = item('三垣图鉴', () => { gallery.hidden = !gallery.hidden; parent.classList.toggle('gallery-open', !gallery.hidden); if (!gallery.hidden) { const book = parent.querySelector<HTMLElement>('.move-book'); if (book) book.hidden = true; parent.classList.remove('book-open'); for (const row of parent.querySelectorAll('.mi')) if (row.querySelector('.ml')?.textContent === '出招表 · 全部招式') { row.querySelector('.ms')!.textContent = '展开'; row.setAttribute('aria-expanded', 'false'); } } r.el.querySelector('.ms')!.textContent = gallery.hidden ? '展开' : '收起'; }, '展开');
-    const gallery = h('div', 'art-gallery', '<figure><img src="/art/direction/three-enclosures-world.png" alt="晓山、灯河、云垣的未来武侠三垣场景"><figcaption>晓山返笔 · 灯河还名 · 云垣断律</figcaption></figure><figure><img src="/art/direction/boss-transformations.png" alt="铜雀、蜃与鲲鹏的部件解构和变形分镜"><figcaption>破甲、开壳、鲲化鹏 · 看轮廓预告再寻弱点</figcaption></figure>', parent);
+    const r = item('美术图鉴', () => { gallery.hidden = !gallery.hidden; parent.classList.toggle('gallery-open', !gallery.hidden); r.el.querySelector('.ms')!.textContent = gallery.hidden ? '展开' : '收起'; }, '展开');
+    const gallery = h('div', 'art-gallery', '<figure><img src="/art/direction/three-enclosures-world.png" alt="浮石林、蜃海与雷场"><figcaption>出镖 · 蜃海 · 雷场</figcaption></figure><figure><img src="/art/direction/boss-transformations.png" alt="铜雀、蜃与鲲鹏的部件解构和变形分镜"><figcaption>破甲、开壳、鲲化鹏 · 看轮廓预告再寻弱点</figcaption></figure>', parent);
     gallery.hidden = true;
     return r;
   }
@@ -916,21 +1008,19 @@ export function createUI(): GameUI & PresentationUI {
   function buildGrowth() {
     scr.classList.add('dim', 'rest-screen');
     const d = screenData;
-    const shop = (d.choices ?? []).some(c => c.cost !== undefined || c.id === 'skip');
-    const p = h('div', 'panel rest-panel', `<div class="rest-topline">${shop ? '行囊补给 / SUPPLY' : '章间休整 / GROWTH'}<span>墨骨 · 铜金</span></div><div class="ph1">${esc(d.choiceTitle ?? '章间休整')}</div><div class="rest-sub">${esc(d.choiceHint ?? '选择一项，继续前行')}</div><div class="pline"></div>`, scr);
+    const p = h('div', 'panel rest-panel', `<div class="rest-topline">${d.choiceTitle==='墨谱'?'墨谱 / INK SCORE':'天赋 / TALENT'}<span>墨骨 · 铜金</span></div><div class="ph1">${esc(d.choiceTitle ?? '章间休整')}</div><div class="rest-sub">${esc(d.choiceHint ?? '选择一项，继续前行')}</div><div class="pline"></div>`, scr);
     const cards = h('div', 'choice-grid', '', p);
     const rs: Row[] = [];
     for (const [i, c] of (d.choices ?? []).entries()) {
-      const el = h('div', `choice-card${c.disabled ? ' unavailable' : ''}${c.id === 'skip' ? ' skip-card' : ''}`, `<div class="choice-head"><span class="choice-no">${c.id === 'skip' ? '行' : CN[i + 1] ?? i + 1}</span><span class="choice-route">${esc(c.detail ?? (shop ? '章间补给' : '天赋成长'))}</span>${c.cost === undefined ? '' : `<span class="choice-cost">${c.cost} 券</span>`}</div><strong>${esc(c.name)}</strong>${c.preview?passivePreview(c.preview,c.icon??'技'):''}<p>${esc(c.description)}</p><div class="choice-state">${c.disabled ? `补给不足 · 需 ${c.cost ?? 0} 券` : c.id === 'skip' ? '保留补给券，进入下一段' : shop ? `采购此项 · ${c.cost ?? 0} 券` : '选择后按条件自动生效'}</div>`, cards);
+      const el = h('div', `choice-card${c.disabled ? ' unavailable' : ''}`, `<div class="choice-head"><span class="choice-no">${CN[i + 1] ?? i + 1}</span><span class="choice-route">${esc(c.detail ?? '天赋成长')}</span></div><strong>${esc(c.name)}</strong>${c.preview?.startsWith('inkScore-')?inkPreview(c.id as WeaponColor):c.preview?passivePreview(c.preview,c.icon??'技'):''}<p>${esc(c.description)}</p><div class="choice-state">${c.disabled ? (d.choiceTitle==='墨谱'?'此色墨谱已满级':'暂不可选') : d.choiceTitle==='墨谱'?'这一色泼墨升一级':'选择后按条件自动生效'}</div>`, cards);
       el.setAttribute('role', 'button');
       el.setAttribute('aria-disabled', String(!!c.disabled));
       rs.push({ el, disabled: c.disabled, activate: () => ev.onChoice?.(c.id) });
     }
     const menu = h('div', 'menu rest-menu', '', p);
-    const moves = moveToggle(p); menu.appendChild(moves.el); rs.push(moves);
     setMenu(rs);
-    onBack = shop ? () => ev.onChoice?.('skip') : null;
-    const f = h('div', 'pfoot', '', p); f.dataset.kind = shop ? 'menuB' : 'menu'; hint = f; renderHint();
+    onBack = null;
+    const f = h('div', 'pfoot', '', p); f.dataset.kind = 'menu'; hint = f; renderHint();
   }
 
   // --- 续关
@@ -951,6 +1041,7 @@ export function createUI(): GameUI & PresentationUI {
     w.style.cssText = 'display:flex;flex-direction:column;align-items:center';
     w.innerHTML = `<div class="big">续 战？</div><div class="sub1">墨未尽，笔仍在</div>
 <div class="cnt"><svg viewBox="0 0 260 260"><circle class="rb" cx="130" cy="130" r="118"/><circle class="rg" cx="130" cy="130" r="118" stroke-dasharray="${RING}" stroke-dashoffset="0"/></svg><div class="cn">9</div></div>`;
+    battleLetter(w.querySelector('.big')!,'续战？');(w.querySelector('.big') as HTMLElement).style.fontSize=160*pr.w/675+'px';
     const menu = h('div', 'menu h', '', w);
     const rs = [item('续 关', () => ev.onContinue(true)), item('放 弃', () => ev.onContinue(false))];
     rs.forEach((r) => menu.appendChild(r.el));
@@ -968,10 +1059,11 @@ export function createUI(): GameUI & PresentationUI {
     w.style.cssText = 'display:flex;flex-direction:column;align-items:center';
     w.innerHTML = `<div class="big red">墨 尽</div><div class="sub1">GAME OVER</div>
 <div class="scoreb"><div class="lbl">最终得分</div><div class="digits" id="ik-fs"></div><div class="hi">最高纪录　<b>${fmt(hi)}</b></div></div>`;
+    battleLetter(w.querySelector('.big')!,'墨尽',undefined,'cinnabar');(w.querySelector('.big') as HTMLElement).style.fontSize=160*pr.w/675+'px';
     new Digits(w.querySelector('#ik-fs') as HTMLElement, 8).set(fs);
     if (fs > 0 && fs >= hi) {
       const s = h('div', 'inkseal rec', '<span>新</span><span>纪</span><span>录</span>', w);
-      motion.stamp(s);
+      battleLetter(s,'新纪录',undefined,'cinnabar');
     }
     const menu = h('div', 'menu', '', w);
     const r = item('返回标题', () => ev.onQuitToTitle());
@@ -987,8 +1079,9 @@ export function createUI(): GameUI & PresentationUI {
     const r: StageResult = d?.results ?? { stage: 1, stageName: '', score: 0, kills: 0, graze: 0, sealed: 0, maxChain: 0, noMiss: false, bonus: 0 };
     const p = h('div', 'panel res', '', scr);
     p.innerHTML = `<div class="rh"><span class="t">第${CN[r.stage] ?? r.stage}幕</span><span class="n">${esc(r.stageName)}</span><span class="t">完</span></div><div class="pline"></div>`;
+    battleLetter(p.querySelector('.rh .n')!,r.stageName);battleLetter(p.querySelector('.rh .t:last-child')!,'完');const finishTitle=heroLetter('完',null,160,0,1.15,()=>motion.remove(finishTitle));
     type L = [string, number | null, string?];
-    const lines: L[] = [['击破', r.kills], ['擦弹', r.graze], ['封印', r.sealed], ['最大连锁', r.maxChain], ['无失误', null], ['关卡得分', r.score], ['结算加分', r.bonus, '+']];
+    const lines: L[] = [['击破', r.kills], ['擦弹', r.graze], ['封印', r.sealed], ['最大连锁', r.maxChain], ['无失误', null], ['关卡得分', r.score], ...(r.shipBonus!==undefined&&r.stage===1?([['云梭耐久',r.shipBonus,'+'],['其余加分',r.bonus-r.shipBonus,'+']] as L[]):([['结算加分',r.bonus,'+']] as L[]))];
     const els: { row: HTMLElement; v: HTMLElement; val: number | null; pre: string }[] = [];
     for (const [l, val, pre = ''] of lines) {
       const row = h('div', 'rr', `<span class="rl">${l}</span><span class="rv"></span>`, p);
@@ -1039,14 +1132,12 @@ export function createUI(): GameUI & PresentationUI {
     const L = (c: string, t: string) => `<div class="ln ${c}">${t}</div>`;
     const fs = d?.finalScore;
     box.innerHTML = `<div class="roll">
-${L('s', '终　章')}${L('', '最后一笔落下，<br>裂纹在天幕上逐一愈合。')}
-${L('', '三垣共同供墨，<br>浮城向晨光缓缓落下。')}
-${L('', '师父的名字回到原契，<br>灯河把姓名归还给每个人。')}
-${L('', '朱雀撤回旧律，三曜仍在身旁。<br>山河的下一笔，<br>由众人共同写下。')}
+${L('s', '终　章')}
 ${L('s', '监　制')}${L('', '墨空 INKSKY')}
 ${L('s', '水墨与霓虹')}${L('', '原画　·　程序美术　·　音乐　·　音效')}
 ${L('r', '一笔封天')}${L('b', '完')}${fs !== undefined ? L('s', '最终得分') + L('', fmt(fs)) : ''}</div>
-<div class="go">${device === 'gamepad' ? 'A' : 'Z / Enter'}　返回标题</div>`;
+<div class="go">${device === 'gamepad' ? 'A' : 'Enter'}　返回标题</div>`;
+    battleLetter(box.querySelector('.ln.b')!,'完');(box.querySelector('.ln.b') as HTMLElement).style.fontSize=160*pr.w/675+'px';
     const roll = box.querySelector<HTMLElement>('.roll')!;
     motion.credits(roll, pr.h * .5 - roll.offsetHeight + 70 * u);
     motion.enter(box.querySelector('.go')!, 'panel', 600);
@@ -1084,6 +1175,7 @@ ${L('r', '一笔封天')}${L('b', '完')}${fs !== undefined ? L('s', '最终得�
     const conf = inp.pressed('confirm'), back = inp.pressed('back');
     const up = rep(inp, 'up', now), dn = rep(inp, 'down', now), lf = rep(inp, 'left', now), rt = rep(inp, 'right', now);
     if (now < lockUntil) return;
+    if(cur==='communications'){if(up||dn)recordScroll?.scrollBy({top:up?-90:90});if(back||conf)onBack?.();return;}
     const n = rows.length;
     if (n) {
       const prevK = horizontal ? lf : cur === 'growth' ? up || lf : up, nextK = horizontal ? rt : cur === 'growth' ? dn || rt : dn;
@@ -1099,11 +1191,12 @@ ${L('r', '一笔封天')}${L('b', '完')}${fs !== undefined ? L('s', '最终得�
   function mount(root: HTMLElement, events: UIEvents) {
     ev = events;
     const st = document.createElement('style');
-    st.textContent = CSS;
+    st.textContent = CSS+INK_SCORE_CSS;
     root.appendChild(st);
     ik = h('div', 'ik', DEFS, root);
     play = h('div', 'play', '', ik);
     fx = h('div', 'fx', '', play);
+    overclockEl=h('div','overclock-clock','<b></b><i></i>',play);
     bossEl = h('div', 'boss', '', play);
     challengeEl = h('div', 'qte', '', play);
     dock = h('div', 'presentation-dock', '', ik);
@@ -1112,15 +1205,22 @@ ${L('r', '一笔封天')}${L('b', '完')}${fs !== undefined ? L('s', '最终得�
     capL = h('div', 'capl', '', dock);
     noticeL = h('div', 'noticel', '', dock);
     comboEl = h('div', 'combo-banner', '', noticeL);
+    missionEl=h('div','mission-brief','',play);missionEl.hidden=true;
+    shipLabel=h('div','ship-label','云梭',play);shipLabel.hidden=true;
+    openingHint=h('div','opening-controls','',play);openingHint.hidden=true;
+    story=createDialogue(play,()=>ev.onDialogueSound?.());
     scr = h('div', 'scr', '', play);
     buildHud();
+    loadMenuLettering().then(() => applyMenuLettering(scr)).catch(error => console.warn(error.message));
     hostL.classList.add('off'); hostR.classList.add('off');
     hudVis = false;
     layout(pr, vp);
   }
 
   return {
-    mount, layout, hud, screen, menuInput, popup, caption,
-    stageCard, warning, say, notice,
+    dialogueState:()=>story.state(),dialogueTick:(dt,input)=>story.tick(dt,input),dialogueAdvance:()=>story.advance(),dialogueSkip:()=>story.skip(),
+    recordCommunication:(actor,expression,text,id,memory)=>{communicationHistory.push({id,speaker:actor.name,identity:actor.identity,text,memory});},
+    resetCommunications,chapterSay,missionBrief,mount, layout, hud, screen, menuInput, popup, caption, controlsHint,
+    stageCardActive:()=>cardL.childElementCount>0,stageCard, warning, warningEnd, say, notice,
   };
 }

@@ -3,7 +3,7 @@ import type { SpriteDef } from './types';
 import { spriteFrames } from './images';
 
 interface SheetMeta { columns: number; rows: number; count: number; fps: number; mode: 'loop' | 'once' | 'pingpong'; frameSize: number[]; anchorPixel: number[] }
-const metas = import.meta.glob('/public/art/{player/xiaoman,enemies/ch1/*}/sheet.json', { eager: true, import: 'default' }) as Record<string, SheetMeta>;
+const metas = import.meta.glob('/public/art/{player/xiaoman,player/zhuque/*,enemies/ch1/*}/sheet.json', { eager: true, import: 'default' }) as Record<string, SheetMeta>;
 
 // 现有第一章敌人 -> 新敌机家族（按外形就近）。
 export const ENEMY_ART: Record<string, string> = {
@@ -38,7 +38,11 @@ const RUNTIME: Record<string, [number, number]> = { // 家族 -> [整格逻辑�
 
 export function applyCh1Art(all: SpriteDef[]): void {
   for (const def of all) {
-    if (def.id === 'player') { apply(def, 'player/xiaoman', 145.134); continue; }
+    if (def.id === 'player' || def.id.startsWith('player_body_')) {
+      const color=def.id==='player'?'zhu':({red:'zhu',blue:'qing',purple:'zi'} as Record<string,string>)[def.id.slice(12)],dir=`player/zhuque/${color}`;
+      if(apply(def,dir,81.10))def.textureScale=metas[`/public/art/${dir}/sheet.json`].frameSize[0]/def.w;
+      continue;
+    }
     const family = ENEMY_ART[def.id];
     if (!family) continue;
     const [frame, body] = RUNTIME[family];

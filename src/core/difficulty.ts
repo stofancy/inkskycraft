@@ -22,12 +22,19 @@ export interface DiffCfg {
   bombs: number;
   /** 激光预警时间倍率。 */
   warn: number;
+  /** 普通敌单次发射量倍率（敌机变多时单只少发，总弹量只小幅上升）。 */
+  fire: number;
+  /** 同屏普通敌弹上限。 */
+  bulletCap: number;
 }
 
+/** 刷怪表基数：旧刷怪表数量 × 1.8 = 新的 1 倍（旧简单档实际出怪量的 2 倍）。三档倍数 1 / 1.5 / 2.2。 */
+export const COUNT_BASE = 1.8;
+
 export const DIFFS: Record<Difficulty, DiffCfg> = {
-  easy: { name: '简单', speed: 0.7, count: 0.5, enemyCount: 0.65, quantity: 0.65, aggression: 0.65, intelligence: 0, hp: 0.75, rank: 0, lives: 5, bombs: 4, warn: 1.3 },
-  normal: { name: '普通', speed: 0.82, count: 0.7, enemyCount: 1, quantity: 1, aggression: 1, intelligence: 0.5, hp: 0.85, rank: 0.5, lives: 3, bombs: 3, warn: 1.15 },
-  hard: { name: '困难', speed: 1, count: 1, enemyCount: 1.25, quantity: 1.25, aggression: 1.3, intelligence: 1, hp: 1, rank: 1, lives: 3, bombs: 3, warn: 1 },
+  easy: { name: '简单', speed: 0.7, count: 0.5, enemyCount: COUNT_BASE * 1, quantity: COUNT_BASE * 1, aggression: 0.65, intelligence: 0, hp: 0.7, rank: 0, lives: 5, bombs: 4, warn: 1.3, fire: 0.7, bulletCap: 60 },
+  normal: { name: '普通', speed: 0.82, count: 0.7, enemyCount: COUNT_BASE * 1.5, quantity: COUNT_BASE * 1.5, aggression: 1, intelligence: 0.5, hp: 0.8, rank: 0.5, lives: 3, bombs: 3, warn: 1.15, fire: 0.6, bulletCap: 90 },
+  hard: { name: '困难', speed: 1, count: 1, enemyCount: COUNT_BASE * 2.2, quantity: COUNT_BASE * 2.2, aggression: 1.3, intelligence: 1, hp: 0.9, rank: 1, lives: 3, bombs: 3, warn: 1, fire: 0.5, bulletCap: 120 },
 };
 
 export const DIFF_ORDER: Difficulty[] = ['easy', 'normal', 'hard'];

@@ -18,6 +18,8 @@ export class Scope {
   dead = false;
   /** 暂停时本作用域及子作用域都不推进（封印定身）。 */
   paused = false;
+  /** 只播放脚本演出时，允许本作用域中的表现协程继续。 */
+  presentation = false;
 
   constructor(readonly parent?: Scope) {
     if (parent) parent.children.push(this);
@@ -44,17 +46,17 @@ export class Scope {
     this.children = [];
   }
 
-  tick(): void {
+  tick(presentationOnly=false): void {
     if (this.dead || this.paused) return;
     const prev = Scope.current;
     Scope.current = this;
-    for (let i = 0; i < this.tasks.length; i++) {
+    for (let i = 0; i < this.tasks.length && (!presentationOnly || this.presentation); i++) {
       const t = this.tasks[i];
       let done = true;
       try {
         done = !!t.next().done;
       } catch (e) {
-        console.error('协程异常', e);
+        console.error('协程异常', e, (e as Error)?.stack);
       }
       if (this.dead) break;
       if (done) {
@@ -66,7 +68,7 @@ export class Scope {
     if (this.dead) return;
     for (let i = 0; i < this.children.length; i++) {
       const c = this.children[i];
-      c.tick();
+      c.tick(presentationOnly);
       if (c.dead) {
         this.children.splice(i, 1);
         i--;

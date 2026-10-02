@@ -26,7 +26,7 @@ interface Def {
 }
 
 // ---------------------------------------------------------------- 曲目定义
-const DEFS: Record<MusicId, Def> = {
+const DEFS: Partial<Record<MusicId, Def>> = {
   // 慢、空灵：羽调 A，古筝散板 + 二胡长句，尾段加太鼓心跳
   title: {
     bpm: 72, root: 57, mode: 'yu',
@@ -241,6 +241,7 @@ const DRUM_KEYS: Record<string, string> = { k: 'kick', s: 'snare', h: 'hat', o: 
 
 export function compile(id: MusicId): Song {
   const def = DEFS[id];
+  if (!def) throw new Error(`仅采样曲目没有离线合成谱：${id}`);
   const mode = MODES[def.mode];
   const total = def.secs.reduce((a, s) => a + s.n, 0) * 16;
   const ev: Ev[][] = Array.from({ length: total }, () => []);

@@ -3,12 +3,8 @@ import { CompanionSystem } from './companion';
 export type ComboEvent='shoot'|'weaponChange'|'brushRelease'|'seal'|'bomb'|'focus';
 interface Event {kind:ComboEvent;source?:DamageSource;time:number;serial:number}
 export interface ComboMove {id:string;name:string;sequence:ComboEvent[];window:number;cost:number;description:string;talent?:string}
-export const COMBO_MOVES:ComboMove[]=[
- {id:'drawcut',name:'跟笔追击',sequence:['shoot','brushRelease'],window:2.2,cost:.08,description:'命中 → 收笔：赤燕沿预示线追击',talent:'W1'},
- {id:'jade',name:'收笔护航',sequence:['focus','brushRelease'],window:3.5,cost:.06,description:'集中 → 收笔：老盾展开有限护盾',talent:'Q2'},
- {id:'prison',name:'圈封标记',sequence:['brushRelease','seal'],window:1,cost:.12,description:'收笔成封：墨鸢标记有效敌人',talent:'W2'},
- {id:'lance',name:'标记追雷',sequence:['focus','weaponChange','shoot'],window:2.5,cost:.08,description:'集中 → 换色 → 命中：墨鸢指向目标',talent:'T1'},
-];
+// A 批已删除出招输入；P4-12 移除旧伙伴出招定义。
+export const COMBO_MOVES:ComboMove[]=[];
 export class ComboSystem {
  readonly moves=COMBO_MOVES;lastName='';lastTimer=0;total=0;
  private events:Event[]=[];private time=0;private serial=0;private lastShoot=-10;private cooldown=new Map<string,number>();
@@ -52,13 +48,5 @@ export class ComboSystem {
   if(idx>=0||matched[matched.length-1]?.serial!==this.serial)return null;
   return matched;
  }
- private execute(move:ComboMove):boolean{
-  const power=1;
-  switch(move.id){
-   case 'drawcut':return this.companions.burst('chiyan',power);
-   case 'jade':return this.companions.burst('laodun',power);
-   case 'prison':case 'lance':return this.companions.burst('moyuan',power);
-  }
-  return false;
- }
+ private execute(_move:ComboMove):boolean{return false;}
 }

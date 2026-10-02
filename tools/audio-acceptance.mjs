@@ -1,0 +1,56 @@
+// P4-17 音乐采样验收：真实 Web Audio 的短乐段结束、循环播放和静音检测负对照。
+// node tools/audio-acceptance.mjs [服务URL] [绝对报告目录]
+import puppeteer from 'puppeteer-core';
+import {writeFileSync,mkdirSync} from 'node:fs';
+import {installMusicTrace,summarizeMusic} from './music-timeline.mjs';
+const [url='http://127.0.0.1:5179/',out='local-source/P4-17b']=process.argv.slice(2);
+mkdirSync(out,{recursive:true});
+const browser=await puppeteer.launch({executablePath:'/usr/bin/google-chrome',args:['--use-angle=vulkan','--enable-features=Vulkan','--ignore-gpu-blocklist','--autoplay-policy=no-user-gesture-required','--no-first-run']});
+try{
+ const page=await browser.newPage();await page.setViewport({width:1600,height:900});await page.goto('about:blank');await new Promise(r=>setTimeout(r,1500));await page.goto(url);await page.waitForFunction('window.__game?.state === "title"');await installMusicTrace(page);
+ await page.evaluate(()=>{window.requestAnimationFrame=()=>0;window.__game.state='paused';});await new Promise(r=>setTimeout(r,100));
+ const startup=await page.evaluate(()=>window.__game.audio.diagnostics().decodedMusic);
+ const initial=await page.evaluate(()=>{const a=window.__game.audio;a.music('warning',0);const d=a.diagnostics();return{ready:Object.values(d.status).filter(v=>v==='ready').length,failed:Object.entries(d.status).filter(([,v])=>v==='failed'),warningLoop:d.playing.source.loop};});
+ await new Promise(r=>setTimeout(r,7300));const ended=await page.evaluate(()=>window.__game.audio.diagnostics().playing?.id!=='warning');
+ await page.evaluate(()=>window.__game.audio.music('gameover',0));await new Promise(r=>setTimeout(r,200));
+ const loop=await page.evaluate(()=>window.__game.audio.diagnostics().playing.source.loop);
+ const negative=await summarizeMusic(page,[{id:'stage1',at:0,fade:0,ready:false}],2);
+ if(initial.failed.length||initial.warningLoop||!ended||!loop||negative.silentSeconds<1.95)throw Error('音频实际播放验收失败 '+JSON.stringify({initial,ended,loop,negative}));
+ const boss=await page.evaluate(async()=>{const g=window.__game;g.toTitle();const {defaultTestOptions}=await import('/src/game/test-options.ts');g.onTestStart({...defaultTestOptions(),chapter:1,checkpoint:'SPARROW',bossPhase:3,god:true,fullInk:true});while(g.state==='loading')await new Promise(r=>setTimeout(r,10));await g.audio.diagnostics().musicReady();for(let i=0;i<2400;i++){g.input.poll();g.update(1/60);if(i%128===0)await new Promise(r=>setTimeout(r,0));if(g.world.bossE?.data.phase===3)break;}g.render();return{checkpoint:g.world.currentCheckpoint,phase:g.world.bossE?.data.phase,music:g.audio.diagnostics().playing?.id,loop:g.audio.diagnostics().playing?.source.loop};});
+ await new Promise(r=>setTimeout(r,6500));await page.screenshot({path:out+'/copper-t3.png'});
+ if(boss.phase!==3||boss.music!=='boss-tongque-2')throw Error('铜雀T3音乐不匹配 '+JSON.stringify(boss));
+ const chapters=[await page.evaluate(()=>window.__game.audio.diagnostics().decodedMusic)];
+ const delayed = new Map();
+ await page.setRequestInterception(true);
+ const intercept=r=>{const name=new URL(r.url()).pathname.split('/').pop();if(['boss-shen.ogg','boss-shen-2.ogg','boss-leigong.ogg'].includes(name))delayed.set(name,r);else void r.continue();};page.on('request',intercept);
+ await page.evaluate(async()=>{const g=window.__game;g.state='paused';await g.audio.prepareMusic(2);g.audio.music('stage2',0);g.audio.music('boss-shen',1.2);});
+ while(!delayed.has('boss-shen.ogg'))await new Promise(r=>setTimeout(r,10));
+ const fallback=await page.evaluate(()=>window.__game.audio.diagnostics().playing?.id);
+ if(fallback!=='stage2')throw Error('Boss加载期间未保持道中曲 '+fallback);
+ await delayed.get('boss-shen.ogg').continue();
+ await page.waitForFunction('window.__game.audio.diagnostics().playing?.id === "boss-shen"',{polling:50});
+ const readyFade=await page.evaluate(()=>window.__musicTrace.at(-1));
+ if(readyFade.fade!==1.2)throw Error('异步Boss曲未交叉淡入');
+ await page.evaluate(()=>{const a=window.__game.audio;a.music('boss-shen-2',1.2);a.music('stage2',0);});
+ while(!delayed.has('boss-shen-2.ogg'))await new Promise(r=>setTimeout(r,10));
+ await delayed.get('boss-shen-2.ogg').continue();
+ await page.evaluate(()=>window.__game.audio.diagnostics().musicReady());
+ const cancelled=await page.evaluate(()=>window.__game.audio.diagnostics().playing?.id);
+ if(cancelled!=='stage2')throw Error('旧请求覆盖后续道中选择 '+cancelled);
+ await new Promise(r=>setTimeout(r,1500));chapters.push(await page.evaluate(()=>window.__game.audio.diagnostics().decodedMusic));
+ await page.evaluate(async()=>{const a=window.__game.audio;await a.prepareMusic(3);a.music('stage3',0);a.music('boss-leigong',1.2);});
+ while(!delayed.has('boss-leigong.ogg'))await new Promise(r=>setTimeout(r,10));
+ await page.evaluate(async()=>{const a=window.__game.audio;await a.prepareMusic(4);a.music('stage4',0);});
+ await delayed.get('boss-leigong.ogg').continue();await page.evaluate(()=>window.__game.audio.diagnostics().musicReady());
+ await new Promise(r=>setTimeout(r,1500));
+ const discarded=await page.evaluate(()=>({playing:window.__game.audio.diagnostics().playing?.id,decoded:window.__game.audio.diagnostics().decodedMusic}));
+ if(discarded.playing!=='stage4'||discarded.decoded.ids.some(id=>['stage2','boss-shen','boss-shen-2','stage3','boss-leigong','boss-leigong-2'].includes(id)))throw Error('跨章旧音乐仍保留或重新播放 '+JSON.stringify(discarded));
+ page.off('request',intercept);await page.setRequestInterception(false);
+ await page.evaluate(async()=>{const a=window.__game.audio;await a.prepareMusic(3,true);a.music('stage3',0);});
+ await new Promise(r=>setTimeout(r,1500));chapters.push(await page.evaluate(()=>window.__game.audio.diagnostics().decodedMusic));
+ await page.evaluate(async()=>{const a=window.__game.audio;await a.prepareMusic(4,true);a.music('stage4',0);});
+ await new Promise(r=>setTimeout(r,1500));chapters.push(await page.evaluate(()=>window.__game.audio.diagnostics().decodedMusic));
+ await page.evaluate(()=>window.__game.audio.music('ending',0));await page.evaluate(()=>window.__game.audio.diagnostics().musicReady());
+ await new Promise(r=>setTimeout(r,1500));const ending=await page.evaluate(()=>window.__game.audio.diagnostics().decodedMusic);
+ const report={initial,startup,chapters,ending,shortEnded:ended,loop,negative,boss,fallback,readyFade,cancelled,discarded,complete:true};writeFileSync(out+'/audio-acceptance.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
+}finally{await browser.close();}

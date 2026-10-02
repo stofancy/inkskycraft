@@ -1,5 +1,5 @@
 // 入口：创建渲染器、音频、UI、输入，烘焙精灵后进入主循环。
-// 调试参数：?stage=0|1|2|3 直接开始某关（0 为引擎测试关）  god=1 无敌  power=1..8
+// 调试参数：?stage=0|1|2|3 直接开始某关（0 为引擎测试关）  god=1 无敌  power=1..4
 //   weapon=red|blue|purple  autofire=1 自动射击  bot=1 自动移动  skip=秒 快进关卡脚本
 //   diff=easy|normal|hard 覆盖难度（默认读 localStorage，缺省为普通）
 import { createAudio } from './audio/index';
@@ -47,6 +47,7 @@ async function boot(): Promise<void> {
     onChoice: (id: string) => game?.onChoice(id),
     onDifficultyChange: (d: 'easy' | 'normal' | 'hard') => game?.onDifficultyChange(d),
     onSettingsChange: (s: typeof settings) => game?.onSettingsChange(s),
+    onDialogueSound: () => game?.onDialogueSound(),
     onMenuSound: (k: 'move' | 'ok' | 'back') => game?.onMenuSound(k),
   };
   ui.mount(uiRoot, events);
@@ -63,15 +64,19 @@ async function boot(): Promise<void> {
   console.info('GPU:', r.gpuName());
 
   game = new Game(r, audio, ui, input, settings, loadHiScore(), debug);
+  input.bindCanvas(canvas, () => r.playCss, () => game?.state === 'playing');
   (window as unknown as { __game: Game }).__game = game;
 
   if (debug.stage !== undefined) {
     game.world.newGame();
-    game.startStage(Math.max(0, debug.stage - 1));
+    await game.startStage(Math.max(0, debug.stage - 1));
     if (debug.skip) {
       const w = game.world;
       w.player.invuln = debug.skip + 3;
-      for (let i = 0; i < debug.skip * 60; i++) w.tick(1 / 60);
+      for (let i = 0; i < debug.skip * 60; i++) {
+        w.tick(1 / 60);
+        if (i % 128 === 0) await new Promise<void>(resolve => setTimeout(resolve, 0));
+      }
     }
   } else {
     game.toTitle();

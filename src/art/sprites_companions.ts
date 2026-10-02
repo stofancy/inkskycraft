@@ -1,6 +1,6 @@
 import type { SpriteDef } from './types';
 function sprite(kind:'chiyan'|'laodun'|'moyuan'|'suanpan',color:string):SpriteDef {
- return {id:`companion_${kind}`,w:96,h:96,frames:3,image:`art/companions/${({chiyan:"yaoque",laodun:"qingli",moyuan:"moyuan",suanpan:"qingli"})[kind]}.png`,imageScale:[76/96,80/96,84/96],radius:10,anchors:{core:[0,0]},draw(ctx,frame){
+ return {id:`companion_${kind}`,w:96,h:96,frames:3,image:`art/companions/${({chiyan:"yaoque",laodun:"qingli",moyuan:"moyuan",suanpan:"qingli"})[kind]}.png`,imageScale:[76/96,80/96,84/96],radius:10,anchors:{core:[0,0],muzzle:[0,-30]},draw(ctx,frame){
   ctx.save();ctx.strokeStyle='#ba9a55';ctx.lineWidth=1.4;
   for(const side of [-1,1])for(let i=0;i<3+frame;i++){
    ctx.beginPath();ctx.moveTo(side*4,-6+i*3);ctx.lineTo(side*(24+frame*6-i*3),-20+i*11);ctx.lineTo(side*(19+frame*4-i*2),17+i*3);ctx.lineTo(side*5,14);ctx.closePath();ctx.fillStyle=i%2?color:'#1d272d';ctx.fill();ctx.stroke();

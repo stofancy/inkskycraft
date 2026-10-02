@@ -1,9 +1,14 @@
 // 素材音频入口；程序化声部仅供离线工具及音效回退使用。
 import type { BeatInfo, GameAudio, MusicId, Sfx } from '../types';
 import { buildGraph, mtof, kick, taiko, tom, snare, clap, hat, wood, cymb, gong, bass, pad, lead, pluck, koto, type Graph, type Out, type LeadKind } from './engine';
-import { getSong, type Ev, type Song } from './songs';
+import { type Ev, type Song } from './songs';
 import { playSfx, SFX_LIMITS } from './sfx';
 import { SampleAudio } from './samples';
+import { MUSIC_CUES } from './music-cues';
+import { isP4Sfx, isNewSfx, MUSIC_CONTEXT } from './materials';
+
+// 共享音效合同与素材播放诊断。
+export type MaterialAudio = GameAudio & { diagnostics(): SampleAudio | null };
 
 // ---------------------------------------------------------------- 事件播放
 export function playEv(G: Graph, o: Out, e: Ev, t: number, sd: number) {
@@ -51,10 +56,9 @@ export function makeSongOut(G: Graph): { out: Out; gain: GainNode; dispose: () =
 }
 
 // ---------------------------------------------------------------- 实时引擎
-export function createAudio(): GameAudio & { diagnostics(): SampleAudio | null } {
+export function createAudio(): MaterialAudio {
   let G: Graph | null = null;
   let samples: SampleAudio | null = null;
-  let wanted: MusicId | null = null;
   let ctx: AudioContext | null = null;
   let vols = { master: 0.8, music: 0.7, sfx: 0.9 };
   let slow = 0;
@@ -71,14 +75,13 @@ export function createAudio(): GameAudio & { diagnostics(): SampleAudio | null }
     G.sfxIn.gain.setTargetAtTime(0.85 * vols.sfx, t, 0.03);
     samples?.volumes(vols.music, vols.sfx);
   };
-  // 制作人听感禁区：无素材或加载失败时保持静音，运行时不调度合成鼓组。
+  // 未就绪的采样由 SampleAudio 延续道中曲，不调度合成鼓组。
   const startMusic = (id: MusicId | null, fade: number) => {
     if (!G || !ctx) return;
-    samples?.stopMusic(fade);
-    if (id && !samples?.music(id, fade)) samples?.silence(`music:${id}`);
+    samples?.music(id, fade);
   };
 
-  const api: GameAudio & { diagnostics(): SampleAudio | null } = {
+  const api: MaterialAudio = {
     diagnostics: () => samples,
     init() {
       if (initP) { ctx?.resume(); return initP; }
@@ -90,17 +93,24 @@ export function createAudio(): GameAudio & { diagnostics(): SampleAudio | null }
         applyVols();
         if (ctx.state === 'suspended') { try { await ctx.resume(); } catch { /* 需要手势 */ } }
         document.addEventListener('visibilitychange', () => { if (!document.hidden && ctx?.state === 'suspended') void ctx.resume(); });
-        if (pending) { startMusic(pending.id, pending.fade); pending = null; }
+        window.addEventListener('blur',()=>samples?.stopSfx('brush_loop'));
+        document.addEventListener('visibilitychange',()=>{if(document.hidden)samples?.stopSfx('brush_loop');});
+        window.addEventListener('pointerup',e=>{if(e.button===2)samples?.stopSfx('brush_loop');});
         await samples.load();
-        if (wanted && samples.status[`music:${wanted}`] === 'ready') startMusic(wanted, .6);
+        if (pending) { const p = pending; pending = null; api.music(p.id, p.fade); }
       })();
       return initP;
+    },
+    async prepareMusic(chapter, bossesReady = false) {
+      await api.init();
+      await samples?.prepareChapter(chapter);
+      if (bossesReady) await samples?.musicReady();
     },
     sfx(id: Sfx, opts) {
       if (!G || !ctx) return;
       if (ctx.state === 'suspended') void ctx.resume();
       const now = ctx.currentTime;
-      const lim = SFX_LIMITS[id];
+      const lim = isP4Sfx(id) ? undefined : SFX_LIMITS[id];
       if (lim) {
         if (now - (last[id] ?? -9) < lim.gap) return;
         const l = (live[id] ??= []).filter((e) => e > now);
@@ -110,15 +120,17 @@ export function createAudio(): GameAudio & { diagnostics(): SampleAudio | null }
       }
       try {
         if (samples?.sfx(id, opts)) return;
+        if (isP4Sfx(id) || isNewSfx(id)) { samples?.silence(id); return; }
         const fallback = id.startsWith('move:') ? (id === 'move:guard' ? 'seal' : 'slash') : id.startsWith('companion:') ? 'item' : id.startsWith('boss:') ? 'warning' : id.startsWith('hit_') && id !== 'hit_armor' ? 'hit' : id;
         samples?.fallback(id, fallback);
         playSfx(G, fallback as Sfx, now + 0.005, opts);
       } catch { /* 忽略 */ }
     },
+    stopSfx(id){samples?.stopSfx(id);},
     music(id, fadeSec = 1) {
-      wanted = id;
       if (!G) { pending = { id, fade: fadeSec }; return; }
-      if (id && samples?.playing?.id === id) return;
+      const chapter = id ? MUSIC_CONTEXT[id] : undefined;
+      if (chapter !== undefined) void samples?.prepareChapter(chapter);
       startMusic(id, fadeSec);
     },
     setSlowmo(a) {
@@ -133,7 +145,7 @@ export function createAudio(): GameAudio & { diagnostics(): SampleAudio | null }
     setVolumes(m, mu, s) { vols = { master: m, music: mu, sfx: s }; applyVols(); },
     beat(): BeatInfo {
       if (G && ctx && samples?.playing) {
-        const track = samples.playing, bpm = getSong(track.id).bpm;
+        const track = samples.playing, bpm = MUSIC_CUES[track.id].bpm;
         const beat = (ctx.currentTime - track.started) * bpm / 60 % 4;
         return { beat, phase: beat % 1, bpm };
       }

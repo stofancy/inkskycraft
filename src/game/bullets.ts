@@ -27,6 +27,11 @@ const HIT_FACTOR: Record<BulletShape, number> = {
 };
 
 export interface BulletStyle {
+  /** 显式标记追踪弹；算盘干扰只移除追踪回调。 */
+  homing?: boolean;
+  /** 诊断用发射函数名，不改变弹体外观与运动。 */
+  attack?: string;
+  tracking?:boolean;
   shape?: BulletShape;
   color?: BulletColor | readonly [number, number, number];
   /** 视觉尺寸（半径，单位），默认按形状。 */
@@ -50,6 +55,7 @@ export interface BulletStyle {
 
 export class Bullet {
   x = 0; y = 0;
+  prevX=0;prevY=0;
   speed = 0;
   angle = 0;
   accel = 0;
@@ -66,6 +72,8 @@ export class Bullet {
   grazed = false;
   dead = false;
   hard = false;
+  tracking=false;
+  homing = false;
   seed = 0;
   update: BulletStyle['update'] = undefined;
   /** 脚本可用的临时数据。 */
@@ -77,12 +85,14 @@ export class Bullet {
 
 export class BulletPool {
   list: Bullet[] = [];
+  suppress=false;
+  aimTarget:((x:number,y:number)=>{x:number;y:number})|null=null;
   private free: Bullet[] = [];
 
   spawn(x: number, y: number, angle: number, speed: number, st: BulletStyle = {}): Bullet {
     const b = this.free.pop() ?? new Bullet();
     const shape = st.shape ?? 'orb';
-    b.x = x; b.y = y; b.angle = angle; b.speed = speed;
+    b.x = b.prevX = x; b.y = b.prevY = y; b.angle = angle; b.speed = speed;
     b.accel = st.accel ?? 0; b.minSpeed = st.minSpeed ?? 0; b.maxSpeed = st.maxSpeed ?? 1e9;
     b.angVel = st.angVel ?? 0; b.delay = st.delay ?? 0; b.life = st.life ?? (st.angVel ? 14 : Infinity); // 旋转弹可能永远绕圈不出界，默认 14 秒寿命
     b.age = 0; b.size = st.size ?? DEFAULT_SIZE[shape]; b.radius = b.size * HIT_FACTOR[shape];
@@ -91,24 +101,28 @@ export class BulletPool {
     b.r = c[0]; b.g = c[1]; b.b = c[2];
     b.grazed = false; b.dead = false; b.hard = !!st.hard;
     b.seed = Math.random();
-    b.update = st.update;
+    b.update = st.update;b.tracking=!!st.tracking;
+    b.homing = !!st.homing;
     b.data = {};
-    this.list.push(b);
+    if(this.suppress)b.dead=true;else this.list.push(b);
     return b;
   }
 
-  tick(dt: number): void {
+  tick(dt: number, speedScale: (b:Bullet)=>number = ()=>1): void {
     const L = this.list;
     let w = 0;
     for (let i = 0; i < L.length; i++) {
       const b = L[i];
       if (!b.dead) {
+        b.prevX=b.x;b.prevY=b.y;
         b.age += dt;
         if (b.age > b.delay) {
+          if(b.tracking&&this.aimTarget){const target=this.aimTarget(b.x,b.y);b.angle=Math.atan2(target.y-b.y,target.x-b.x);}
           if (b.accel) b.speed = Math.min(b.maxSpeed, Math.max(b.minSpeed, b.speed + b.accel * dt));
           if (b.angVel) b.angle += b.angVel * dt;
-          b.x += Math.cos(b.angle) * b.speed * dt;
-          b.y += Math.sin(b.angle) * b.speed * dt;
+          const scale=speedScale(b);
+          b.x += Math.cos(b.angle) * b.speed * dt * scale;
+          b.y += Math.sin(b.angle) * b.speed * dt * scale;
         }
         if (b.update && b.update(b, dt) === false) b.dead = true;
         if (b.age > b.life) b.dead = true;

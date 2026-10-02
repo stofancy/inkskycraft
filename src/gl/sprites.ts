@@ -1,6 +1,7 @@
 // 实例化精灵批渲染。所有层共享一个程序和 GPU 缓冲，CPU 端各层独立累积。
 import { PLAY_H, PLAY_W } from '../types';
 import type { Atlas, SpriteInfo } from './atlas';
+import { ATLAS_PAGE_LAYERS } from './atlas';
 import { Program, type GL } from './util';
 import type { SpritePlayback } from '../art/playback';
 
@@ -20,6 +21,8 @@ uniform float uGrid;
 out vec3 vUV;
 out vec4 vTint;
 out vec2 vFG;
+out vec4 vEdge;
+out vec2 vReveal;
 void main() {
   int cell = gl_VertexID / 6, vertex = gl_VertexID % 6;
   int k = vertex == 3 ? 2 : (vertex == 4 ? 1 : (vertex == 5 ? 3 : vertex));
@@ -39,6 +42,8 @@ void main() {
   vUV = vec3(mix(aUV.xy, aUV.zw, corner), aA.w);
   vTint = aTint;
   vFG = aB.zw;
+  vReveal=vec2(corner.x,aWeight.w>0.0?1.0:aDeform.w);
+  vEdge = vec4((corner - 0.5) * 2.0, aPivot.zw);
 }`;
 
 const FS = `#version 300 es
@@ -53,6 +58,8 @@ uniform float uShadowAlpha;
 in vec3 vUV;
 in vec4 vTint;
 in vec2 vFG;
+in vec4 vEdge;
+in vec2 vReveal;
 out vec4 o;
 void main() {
   if (uMode == 1.0) {
@@ -63,6 +70,8 @@ void main() {
   vec4 al = texture(uAlb, vUV);
   vec3 gl = texture(uGlow, vUV).rgb;
   float a = vTint.a;
+  if(vReveal.y<1.0) a*=1.0-smoothstep(vReveal.y-.025,vReveal.y,vReveal.x);
+  if(vEdge.z > 0.0) a *= 1.0-smoothstep(max(0.0,1.05-vEdge.z-.12),1.05-vEdge.z,mix(length(vEdge.xy),max(abs(vEdge.x),abs(vEdge.y)),vEdge.w));
   vec3 col = al.rgb * vTint.rgb + vFG.x * al.a * vec3(1.6, 1.45, 1.3);
   vec3 emit = gl * vFG.y * uGlowMul * (1.0 + vFG.x * 2.0);
   if (uMode == 2.0) o = vec4((col + emit) * a, 0.0);
@@ -97,6 +106,12 @@ export interface SpriteDraw {
   b?: number;
   alpha?: number;
   deform?: SpriteDeform;
+  /** 0 保持原图，1 径向由外向内消退。 */
+  edgeFade?: number;
+  /** 平贴方印沿四条边褪去。 */
+  edgeFadeSquare?: boolean;
+  /** 字图从左至右擦出，默认完整显示。 */
+  reveal?: number;
 }
 
 export class SpriteLayer {
@@ -117,11 +132,11 @@ export class SpriteLayer {
     const fr = info.frames[(d.animation?.frame ?? d.frame ?? 0) % info.frames.length] ?? info.frames[0];
     this.raw(d.x, d.y, d.rot ?? 0, info.w * (d.sx ?? 1), info.h * (d.sy ?? 1), fr.layer, fr.u0, fr.v0, fr.u1, fr.v1,
       d.flash ?? 0, d.glow ?? 1, d.r ?? 1, d.g ?? 1, d.b ?? 1, d.alpha ?? 1, d.deform,
-      info.pivot[0] * (d.sx ?? 1), info.pivot[1] * (d.sy ?? 1));
+      info.pivot[0] * (d.sx ?? 1), info.pivot[1] * (d.sy ?? 1), d.edgeFade ?? 0, d.edgeFadeSquare ?? false, d.reveal ?? 1);
   }
   raw(x: number, y: number, rot: number, w: number, h: number, layer: number,
     u0: number, v0: number, u1: number, v1: number, flash: number, glow: number,
-    r: number, g: number, b: number, a: number, deform?: SpriteDeform, pivotX = 0, pivotY = 0): void {
+    r: number, g: number, b: number, a: number, deform?: SpriteDeform, pivotX = 0, pivotY = 0, edgeFade = 0, edgeFadeSquare = false, reveal = 1): void {
     if ((this.count + 1) * FLOATS > this.data.length) this.grow();
     const o = this.count * FLOATS;
     const D = this.data;
@@ -129,10 +144,10 @@ export class SpriteLayer {
     D[o + 4] = w; D[o + 5] = h; D[o + 6] = flash; D[o + 7] = glow;
     D[o + 8] = u0; D[o + 9] = v0; D[o + 10] = u1; D[o + 11] = v1;
     D[o + 12] = r; D[o + 13] = g; D[o + 14] = b; D[o + 15] = a;
-    D[o + 16] = deform?.bend ?? 0; D[o + 17] = deform?.sway ?? 0; D[o + 18] = deform?.breath ?? 0; D[o + 19] = deform?.phase ?? 0;
+    D[o + 16] = deform?.bend ?? 0; D[o + 17] = deform?.sway ?? 0; D[o + 18] = deform?.breath ?? 0; D[o + 19] = deform?.phase ?? (deform ? 0 : reveal);
     D[o + 20] = deform?.weight?.[0] ?? 0; D[o + 21] = deform?.weight?.[1] ?? 1;
     D[o + 22] = deform?.speed ?? 3; D[o + 23] = deform ? 1 : 0;
-    D[o + 24] = pivotX; D[o + 25] = pivotY; D[o + 26] = 0; D[o + 27] = 0;
+    D[o + 24] = pivotX; D[o + 25] = pivotY; D[o + 26] = edgeFade; D[o + 27] = edgeFadeSquare ? 1 : 0;
     if (deform) this.deformed = true;
     this.count++;
   }
@@ -147,6 +162,7 @@ export class SpriteRenderer {
   private vao: WebGLVertexArrayObject;
   private vbo: WebGLBuffer;
   private cap = 0;
+  private upload = new Float32Array(0);
   glowMul = 2.6;
   time = 0;
 
@@ -178,8 +194,18 @@ export class SpriteRenderer {
       this.cap = Math.max(bytes, this.cap * 2);
       gl.bufferData(gl.ARRAY_BUFFER, this.cap, gl.DYNAMIC_DRAW);
     }
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, layer.data, 0, layer.count * FLOATS);
-    this.prog.use()
+    const floats=layer.count*FLOATS;
+    if(this.upload.length<floats)this.upload=new Float32Array(floats);
+    this.upload.set(layer.data.subarray(0,floats));
+    for(let i=3;i<floats;i+=FLOATS)this.upload[i]%=ATLAS_PAGE_LAYERS;
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.upload, 0, floats);
+    gl.bindVertexArray(this.vao);
+    // 只拆连续同页的实例，维持透明精灵、Boss部件和阴影的原始覆盖顺序。
+    for(let first=0;first<layer.count;){
+      const index=Math.floor(layer.data[first*FLOATS+3]/ATLAS_PAGE_LAYERS),page=this.atlas.pages[index];
+      let end=first+1;while(end<layer.count&&Math.floor(layer.data[end*FLOATS+3]/ATLAS_PAGE_LAYERS)===index)end++;
+      for(let i=0;i<7;i++)gl.vertexAttribPointer(i,4,gl.FLOAT,false,FLOATS*4,first*FLOATS*4+i*16);
+      this.prog.use()
       .set('uView', PLAY_W, PLAY_H)
       .set('uOffset', offset[0], offset[1])
       .set('uShadowScale', shadowScale)
@@ -189,10 +215,11 @@ export class SpriteRenderer {
       .set('uGlowMul', this.glowMul)
       .set('uShadowLod', 3.5)
       .set('uShadowAlpha', 0.42)
-      .tex('uAlb', this.atlas.albedo, gl.TEXTURE_2D_ARRAY)
-      .tex('uGlow', this.atlas.glow, gl.TEXTURE_2D_ARRAY);
-    gl.bindVertexArray(this.vao);
-    gl.drawArraysInstanced(layer.deformed ? gl.TRIANGLES : gl.TRIANGLE_STRIP, 0, layer.deformed ? 12 * 6 : 4, layer.count);
+      .tex('uAlb', page.albedo, gl.TEXTURE_2D_ARRAY)
+      .tex('uGlow', page.glow, gl.TEXTURE_2D_ARRAY);
+      gl.drawArraysInstanced(layer.deformed ? gl.TRIANGLES : gl.TRIANGLE_STRIP, 0, layer.deformed ? 12 * 6 : 4, end-first);
+      first=end;
+    }
     gl.bindVertexArray(null);
   }
 }

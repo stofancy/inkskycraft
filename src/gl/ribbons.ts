@@ -3,6 +3,15 @@ import { PLAY_H, PLAY_W } from '../types';
 import { Program, type GL } from './util';
 
 export enum RS {
+  TearBullet = 22, // 朱弹：正圆头 + 收尖的尾，中心白黄向边缘橙红降温（混合）
+  ArcBullet = 23,  // 紫弹：短折线电弧，白芯紫晕，头部亮电球（混合）
+  WaterBody = 21,   // 水龙身：流动的青色水体，焦散纹、白色浪沫边（混合）
+  FlameBullet = 19, // 朱弹：泪滴火舌，尖端跳动，白黄芯、橙红身，深红边（混合）
+  SparkBolt = 20,   // 紫弹：短电光，亮芯线加锯齿电丝，垫暗紫底（混合）
+  MantraLightning = 18, // 泼墨雷：宽辉光、紫色雷腹与局部亮芯
+  FireShot = 15, // 火弹：白金芯、淡橙红晕与流动火星
+  WaterShot = 16, // 风水针：清亮细芯与薄雾
+  ElectricShot = 17, // 电弹：短芯与跳动锯齿
   Beam = 0,      // 激光（加色）
   Lightning = 1, // 雷弧（加色）
   Brush = 2,     // 墨迹（混合 + 朱砂边光）
@@ -12,6 +21,11 @@ export enum RS {
   Bolt = 6,      // 雷主干：飞白干笔断续（加色）
   Glow = 7,      // 纯软辉光（加色）
   Calligraphy = 8, // 朱墨笔锋：沿程飞白，实色混合
+  InkArrow = 14, // 墨矢实色箭芯，保留独立箭形的黑色轮廓
+  AuraFire = 11, // 有暗红轮廓的三层火焰
+  AuraArc = 12, // 实色紫边和近白芯
+  Sword = 13, // 剑身的青边、亮芯与暗轮廓
+  Fire = 10,    // 翻卷火带：饱和外焰、白色亮芯和流动噪声
   InkHalo = 9,   // 湿墨环：纤维边与向外渗化
 }
 
@@ -49,7 +63,103 @@ void main() {
   int s = int(vStyle + 0.5);
   vec3 c = vCol.rgb;
   float A = vCol.a;
-  if (s == 0) {
+  if(s == 21){
+    float av = abs(v);
+    float flow = noise(vec2(u * .035 - uTime * 6., v * 2.5 + uTime * .7)) * .6 + noise(vec2(u * .1 - uTime * 11., v * 5.)) * .4;
+    float edge = .84 + .1 * flow;
+    float al = (1.0 - smoothstep(edge - .1, edge, av)) * A;
+    vec3 w = mix(vec3(.01,.12,.2), vec3(.06,.7,1.0), smoothstep(.15, .7, flow + (1.0 - av) * .35));
+    w += vec3(.5,1.4,1.6) * pow(smoothstep(.55, .9, flow), 2.0) * .9;
+    float foam = smoothstep(edge - .28, edge - .04, av) * (.4 + .6 * flow);
+    w = mix(w, vec3(1.8,2.4,2.5), foam * .8);
+    w += vec3(.9,1.8,2.0) * exp(-v * v * 28.) * .45;
+    o = vec4(w * al, al);
+  } else if(s == 22){
+    float R = vLen / 3.3;
+    vec2 q = vec2(u - (vLen - R), v * R) / R;   // 以头部半径为单位，头心在原点
+    float Lt = 2.3, d, rr, sT = 0.0;
+    if (q.x >= 0.0) { d = length(q) - 1.0; rr = length(q); }
+    else {
+      sT = clamp(-q.x / Lt, 0.0, 1.0);
+      float w = pow(1.0 - sT, 1.7);
+      d = (abs(q.y) - w) * 0.9; rr = abs(q.y) / max(w, 0.06);
+    }
+    float aa = fwidth(d) * 1.2 + 1e-4;
+    float body = smoothstep(aa, -aa, d);
+    float heat = smoothstep(1.15, 0.0, rr) * (1.0 - 0.5 * sT);
+    vec3 f = mix(vec3(.55,.05,.02), vec3(1.7,.32,.05), smoothstep(.0, .55, heat));
+    f = mix(f, vec3(2.4,1.5,.35), smoothstep(.45, .8, heat));
+    f = mix(f, vec3(3.0,2.7,1.8), smoothstep(.8, 1.0, heat));
+    float al = body * A * mix(1.0, .55, sT);
+    o = vec4(f * al * mix(1.0, .75, sT), al);
+  } else if(s == 23){
+    // 短折线电弧：沿程 4 段折线，锐利拐角，每 2.5 帧换形；中段一根小分叉；头部亮电球
+    float Rh = vLen / 3.3;
+    float t = clamp(u / vLen, 0.0, 1.0);
+    float sd = vCol.r, fq = floor(uTime * 24.0) + sd * 37.0;
+    float k = t * 4.0; float ki = floor(k), kf = fract(k);
+    float z0 = (hash(vec2(ki, fq)) - .5) * 1.5, z1 = (hash(vec2(ki + 1.0, fq)) - .5) * 1.5;
+    float env = smoothstep(0.0, .18, t) * .9 + .1;
+    float zc = mix(z0, z1, kf) * env * .62;
+    float dm = abs(v - zc);
+    float zk = (hash(vec2(2.0, fq)) - .5) * 1.5 * .62 * env;
+    float side = hash(vec2(fq, 5.0)) > .5 ? 1.0 : -1.0;
+    float zb = zk + side * max(0.0, .72 - t) * 1.05;
+    float db = abs(v - zb) * step(.5, t) ;
+    db = t > .5 ? db : 9.0;
+    float core = exp(-dm * dm * 32.0), halo = exp(-dm * dm * 5.0);
+    float bcore = exp(-db * db * 130.0) * .8, bhalo = exp(-db * db * 18.0) * .5;
+    vec2 pb = vec2(u - (vLen - Rh * .9), v * Rh) / Rh;
+    float orb = exp(-dot(pb, pb) * 4.5) * (1.0 - v * v);
+    vec3 emit = vec3(3.0,2.8,3.4) * (core + bcore) + vec3(1.2,.35,2.4) * (halo * .8 + bhalo) + vec3(2.2,1.2,3.2) * orb * 1.2 + vec3(3.2,3.0,3.4) * orb * orb;
+    float al = clamp(max(halo * .5, orb * .8) * A * (1.0 - v * v * .5), 0.0, 1.0);
+    o = vec4(emit * A + vec3(.05,.01,.1) * al, al);
+  } else if(s == 19){
+    float t = clamp(u / max(vLen, 1.0), 0.0, 1.0);
+    float x = 1.0 - t;
+    float n = noise(vec2(uTime * 45.0, u * .05 + 3.7));
+    x = clamp(x + (n - .5) * .22 * (1.0 - x), 0.0, 1.0);
+    float w = x < .5 ? pow(x / .5, .75) : sqrt(max(0.0, 1.0 - pow((x - .5) / .5, 2.0)));
+    float av = abs(v);
+    float a = (1.0 - smoothstep(w - .14, w, av)) * step(.001, w) * A;
+    float q = av / max(w, .06);
+    vec3 f = mix(vec3(.5,.035,.012), vec3(1.9,.36,.04), 1.0 - smoothstep(.5, .95, q));
+    f = mix(f, vec3(2.5,1.7,.4), 1.0 - smoothstep(.15, .6, q * (1.0 + x * .6)));
+    f = mix(f, vec3(3.0,2.7,1.5), (1.0 - smoothstep(.0, .3, q)) * smoothstep(.1, .5, x));
+    o = vec4(f * a, a);
+  } else if(s == 20){
+    float t = clamp(u / max(vLen, 1.0), 0.0, 1.0);
+    float fq = floor(uTime * 32.0);
+    float env = sin(3.14159 * clamp(t, 0.0, 1.0));
+    float z1 = (noise(vec2(u * .32 + fq * 5.1, fq)) - .5) * 1.7 * env;
+    float z2 = (noise(vec2(u * .3 + fq * 3.7 + 9.0, fq * 1.3)) - .5) * 1.7 * env;
+    float core = exp(-v * v * 110.0);
+    float f1 = exp(-pow((v - z1) * 9.0, 2.0)), f2 = exp(-pow((v - z2) * 9.0, 2.0));
+    float dk = exp(-v * v * 2.2) * .5 * A * (.3 + .7 * env);
+    vec3 emit = (vec3(3.1,2.8,3.5) * core + vec3(1.4,.45,2.6) * (f1 + f2) * .95) * A * (.4 + .6 * env);
+    o = vec4(vec3(.06,.015,.12) * dk + emit, dk);
+  } else if(s == 18){
+    float n=noise(vec2(u*.05-uTime*8.,v*4.));
+    float glow=exp(-v*v*3.5),body=exp(-v*v*9.0),core=exp(-v*v*100.0);
+    vec3 light=c*(glow*.18+body*(.28+n*.35))+vec3(3.0,2.9,3.2)*core*1.3;
+    o=vec4(light*A,glow*A*.18);
+  } else if (s >= 15 && s <= 17) {
+    float t = clamp(u / max(1.0, vLen), 0.0, 1.0);
+    float head = exp(-pow((t - .8) * 6.0, 2.0));
+    float core = exp(-v*v*38.0);
+    float halo = exp(-v*v*4.5) * head;
+    float tail = pow(t, 1.6) * (1.0-head*.4);
+    float flick = .8+.2*sin(u*.8-uTime*80.0);
+    vec3 light = vec3(0.0);
+    if (s == 15) light = vec3(2.0,1.7,.9)*core*head + c*(halo*.23 + tail*core*.4*flick);
+    else if (s == 16) light = vec3(1.5,2.2,2.4)*core*head + c*(halo*.5 + exp(-v*v*6.0)*tail*.28*flick);
+    else {
+      float zig = abs(v) - (.3+.22*sin(floor(t*9.0)*9.0+floor(uTime*40.0)));
+      float tip=exp(-pow((t-.74)*4.3,2.0));
+      light = vec3(3.1,2.95,3.3)*exp(-v*v*12.0)*tip + c*(exp(-zig*zig*100.0)*tip*.65+exp(-v*v*3.5)*tip*.8+tail*core*.4*flick);
+    }
+    o = vec4(light*A,s == 15 ? 0.0 : head*exp(-v*v*10.0)*A*.65);
+  } else if (s == 0) {
     float n = noise(vec2(u * 0.03 - uTime * 14.0, v * 2.0)) * 0.5 + noise(vec2(u * 0.08 - uTime * 25.0, v * 5.0)) * 0.5;
     float core = exp(-v * v * 14.0);
     float body = exp(-v * v * 3.0) * (0.6 + 0.6 * n);
@@ -70,6 +180,9 @@ void main() {
     vec3 inkCol = vec3(0.012, 0.010, 0.010);
     vec3 glow = c * (rim * 2.2 + exp(-av * av * 1.5) * 0.25);
     o = vec4(inkCol * ink * A + glow * A, ink * A * 0.95);
+  } else if (s == 14) {
+    float a = (1.0 - smoothstep(0.72, 1.0, abs(v))) * A;
+    o = vec4(c * a, a);
   } else if (s == 8 || s == 9) {
     float along = u / max(vLen, 1.0);
     float av = abs(v);
@@ -109,6 +222,26 @@ void main() {
     float m = smoothstep(0.34, 0.58, fib * 0.65 + gap * 0.45 + (1.0 - av) * 0.32);
     float edge = smoothstep(1.0, 0.55, av + 0.25 * noise(vec2(u * 0.2, fq)));
     o = vec4(c * m * edge * 2.0 * A, 0.0);
+  } else if (s == 11) {
+    float n = noise(vec2(u*.08-uTime*13.,v*5.));
+    float av=abs(v),edge=.80+.12*n;
+    float alpha=(1.-smoothstep(edge,edge+.08,av))*A;
+    vec3 flame=mix(vec3(.25,.014,.003),vec3(.85,.165,.039),1.-smoothstep(.55,.82,av));
+    flame=mix(flame,vec3(1.,.54,.10),1.-smoothstep(.20,.57,av));
+    flame=mix(flame,vec3(1.8,1.72,1.35),1.-smoothstep(.03,.23+n*.1,av));
+    o=vec4(flame*alpha,alpha);
+  } else if (s == 12 || s == 13) {
+    float av=abs(v),alpha=(1.-smoothstep(.82,1.,av))*A;
+    vec3 pigment=mix(c*.09,c,1.-smoothstep(.58,.85,av));
+    pigment=mix(pigment,vec3(1.6,1.6,1.5),1.-smoothstep(.12,.38,av));
+    o=vec4(pigment*alpha,alpha);
+  } else if (s == 10) {
+    float n = noise(vec2(u * .075 - uTime * 14., v * 4.)) * .65 + noise(vec2(u * .18 - uTime * 22., v * 8.)) * .35;
+    float body = exp(-v * v * 2.3) * (.45 + .75 * n);
+    float core = exp(-v * v * 23.) * smoothstep(.18, .7, n);
+    float coverage = exp(-v * v * 2.) * .35 * A;
+    vec3 flame = c * body * 2. + vec3(3.) * core;
+    o = vec4(flame * A, coverage);
   } else if (s == 7) {
     float glow = exp(-v * v * 2.2);
     o = vec4(c * glow * A, 0.0);

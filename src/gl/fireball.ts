@@ -180,7 +180,7 @@ in vec2 vUv;
 out vec4 o;
 void main() { o = texture(uTex, vUv); }`;
 
-interface Ball { x: number; y: number; R: number; t0: number; dur: number; seed: number; ink: number; power: number; steps: number; palette: number }
+interface Ball { x: number; y: number; R: number; t0: number; dur: number; seed: number; ink: number; power: number; steps: number; palette: number; realClock:boolean }
 
 /** 生成 64³ 可平铺 3D 噪声（3 个倍频的值噪声，已拉伸到 0..1）。 */
 function makeNoise(gl: GL): WebGLTexture {
@@ -228,6 +228,8 @@ function makeNoise(gl: GL): WebGLTexture {
 }
 
 export class FireballSystem {
+  /** 泼墨按真实时间播放；其他火球继续使用世界时钟，同批绘制。 */
+  realTime=0;
   private prog: Program;
   private comp: Program;
   private vao: WebGLVertexArrayObject;
@@ -273,10 +275,10 @@ export class FireballSystem {
    * 生成火球。R 为最大半径（游戏单位），dur 为寿命（秒），ink=1 为墨黑翻卷（朱红余烬），power 为发光强度倍率。
    * 同时存在超过 MAX_FIREBALLS 时挤掉最旧的；体积采样维持厚边与热缝的连续性。
    */
-  spawn(time: number, x: number, y: number, R: number, dur: number, seed: number, ink = 0, power = 1, palette: ExplosionPalette = 'fire'): void {
+  spawn(time: number, x: number, y: number, R: number, dur: number, seed: number, ink = 0, power = 1, palette: ExplosionPalette = 'fire', realClock=false): void {
     if (this.balls.length >= MAX_FIREBALLS) this.balls.shift();
     const steps = Math.max(128, Math.min(192, Math.round((144 + Math.min(R, 140) * 0.30) * this.quality)));
-    this.balls.push({ x, y, R, t0: time, dur, seed, ink, power, steps, palette: palette === 'cyan' ? 1 : palette === 'violet' ? 2 : 0 });
+    this.balls.push({ x, y, R, t0: time, dur, seed, ink, power, steps, realClock, palette: palette === 'cyan' ? 1 : palette === 'violet' ? 2 : 0 });
   }
 
   clear(): void { this.balls.length = 0; }
@@ -284,7 +286,7 @@ export class FireballSystem {
   /** 遍历当前存活火球的发光状态（供弹光缓冲取光斑）：u 为生命进度。 */
   forEachGlow(time: number, fn: (x: number, y: number, radius: number, r: number, g: number, b: number) => void): void {
     for (const b of this.balls) {
-      const u = (time - b.t0) / b.dur;
+      const u = ((b.realClock?this.realTime:time) - b.t0) / b.dur;
       if (u < 0 || u >= 1) continue;
       const h = Math.exp(-u * 3.2) * b.power;
       const rad = b.R * (0.9 + 0.8 * Math.min(1, u * 3));
@@ -299,14 +301,14 @@ export class FireballSystem {
   draw(time: number, scene: Target): void {
     const gl = this.gl;
     // 清理过期（时间被重置时一并丢弃）
-    this.balls = this.balls.filter((b) => time - b.t0 < b.dur && time - b.t0 > -0.5);
+    this.balls = this.balls.filter((b) => {const now=b.realClock?this.realTime:time;return now-b.t0<b.dur&&now-b.t0>-.5;});
     if (!this.balls.length) return;
     const D = this.data;
     let n = 0;
     for (const b of this.balls) {
-      if (time < b.t0) continue;
+      const now=b.realClock?this.realTime:time;if (now < b.t0) continue;
       const o = n++ * 12;
-      D[o] = b.x; D[o + 1] = b.y; D[o + 2] = b.R; D[o + 3] = b.t0;
+      D[o] = b.x; D[o + 1] = b.y; D[o + 2] = b.R; D[o + 3] = time-(now-b.t0);
       D[o + 4] = b.dur; D[o + 5] = b.seed; D[o + 6] = b.ink; D[o + 7] = b.power;
       D[o + 8] = b.steps; D[o + 9] = 3; D[o + 10] = b.palette; D[o + 11] = 0;
     }

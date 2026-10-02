@@ -1,4 +1,8 @@
+import type { Scenery } from './scenery';
 // 关卡脚本与敌人 AI 使用的游戏接口。关卡子代理只需读这个文件和 enemy.ts / bullets.ts 的类型。
+import type { CompanionKind } from './companion';
+import type { BrushForm } from './brush';
+import type { SkillId } from './skills';
 import type { Rng } from '../core/math';
 import type { Co } from '../core/tasks';
 import type { DialogueActor, MusicId, Sfx } from '../types';
@@ -30,6 +34,8 @@ export interface LaserOpts {
   anchor?: string;
   /** 跟随时角度是否随敌人旋转（加到 angle 上），默认 false。 */
   followAngle?: boolean;
+  /** 未缩放游戏时间；首领关键预警与动作共用截止。默认战斗时间。 */
+  clock?: 'real' | 'game';
 }
 
 export interface Laser {
@@ -68,9 +74,17 @@ export interface PhaseOpts {
   time?: number;
   /** 阶段名（显示为字幕，可选，如「符·朱雀焚天」风格的招式名）。 */
   name?: string;
+  /** 默认沿用缩放战斗时间。 */
+  clock?: 'real' | 'game' | 'boss';
+  /** 此段的结束判据，可在HP归零后保留圈封操作；仍受time截止。 */
+  complete?: () => boolean;
+  /** 非末段转换秒数，默认1.2。 */
+  transitionTime?: number;
 }
 
 export interface BossOpts {
+  /** 击破短乐段后恢复的道中曲。 */
+  resumeMusic?: MusicId;
   /** 1起算；Boss脚本从此阶段开始，省略为1。 */
   startPhase?: number;
   /** 是否显示警告演出，默认 true。中 Boss 可设 false。 */
@@ -88,7 +102,16 @@ export interface BossOpts {
  * 坐标：游戏区 900×1200，y 向下；角度为弧度，0 = 向右，PI/2 = 向下（朝玩家方向）。
  * 时间：秒，受「一笔」子弹时间缩放影响（协程里的 wait 自动适配）。
  */
+
+
 export interface G {
+  /** 累计未缩放游戏时间，菜单暂停不推进。 */
+  readonly real: number;
+  /** 剧情暂停期间继续推进的演出时钟。 */
+  readonly presentationTime:number;
+  present(co:Co):Co;
+  /** 最近一笔贯的实际命中目标。 */
+  readonly lastPierce: {readonly serial:number;readonly hitEnemyIds:readonly number[]};
   /** 关卡已进行时间（秒）。 */
   readonly t: number;
   /** 本帧时长（秒，已缩放）。 */
@@ -98,7 +121,7 @@ export interface G {
   /** ink 为墨量 0..1，可写（如终幕自动补满）。 */
   readonly player: { readonly x: number; readonly y: number; readonly alive: boolean; ink: number };
   /** 一笔状态：active 为正在落笔（子弹时间中）；pts 为本笔点列 [x0,y0,x1,y1,…]，末两项是笔尖。 */
-  readonly brush: { readonly active: boolean; readonly pts: readonly number[] };
+  readonly brush: { readonly active: boolean; readonly pts: readonly number[]; readonly lastStroke: {id:number; form:string; pts:readonly number[]} | null };
   readonly rng: Rng;
   /** 难度等级 0..1，随关卡推进与玩家火力略升，可用于调节弹量/弹速。 */
   readonly rank: number;
@@ -131,8 +154,12 @@ export interface G {
   waitClear(timeout?: number): Co;
   damage(e: Enemy, amount: number, x?: number, y?: number, quiet?: boolean, source?: DamageSource): void;
   remove(e: Enemy): void;
+  /** 向首领本体转发松甲事件；普通敌响应由系统模块提供。 */
+  loosenArmor(e: Enemy, seconds: number): void;
 
   // ---------- 子弹 ----------
+  /** 记录首领自身预算检查跳过的完整攻击。 */
+  recordAttackRejection(attack:string,size:number,existing:number,cap:number):void;
   shoot(x: number, y: number, angle: number, speed: number, style?: BulletStyle): Bullet;
   /** 扇形：以 angle 为中心，count 发，总张角 spread。 */
   fan(x: number, y: number, angle: number, count: number, spread: number, speed: number, style?: BulletStyle): Bullet[];
@@ -140,6 +167,8 @@ export interface G {
   ring(x: number, y: number, count: number, speed: number, style?: BulletStyle, offset?: number): Bullet[];
   /** (x,y) 指向玩家的角度。 */
   aim(x: number, y: number): number;
+  aimTarget(x:number,y:number,tracking?:boolean):{x:number;y:number};
+  unlockSkill(id:SkillId):void;
   /** 敌方激光（预警 → 发射）。 */
   laser(x: number, y: number, angle: number, opts?: LaserOpts): Laser;
   /** 清除全部敌弹；toGold=true 时化为金（加分）。 */
@@ -150,6 +179,8 @@ export interface G {
   // ---------- 道具 ----------
   drop(kind: ItemKind, x: number, y: number): void;
 
+  /** 场景与友方绘制对象：独立于敌人、碰撞、选敌和击杀。 */
+  scene(sprite:string,x:number,y:number):Scenery;
   // ---------- 关卡控制 ----------
   /** 命名段落入口。返回false时脚本跳过本段；普通游戏始终true。 */
   checkpoint(id: string): boolean;
@@ -166,10 +197,15 @@ export interface G {
   music(id: MusicId | null, fade?: number): void;
   sfx(id: Sfx, opts?: { pan?: number; vol?: number; pitch?: number }): void;
   /** 关卡标题卡（开场用）。 */
+  readonly cardActive:boolean;
   card(title: string, subtitle: string): void;
   /** 剧情字幕。 */
-  caption(speaker: string, text: string, duration?: number): void;
+  caption(speaker: string, text: string, duration?: number, pause?:boolean): void;
   /** 角色通讯；表情立绘缺失时回退到默认立绘，时长默认 4 秒。 */
+  joinCompanion(id:CompanionKind):boolean;
+  leaveCompanion(id:CompanionKind):boolean;
+  unlockBrush(form:BrushForm):void;
+  loosenArmor(enemy:Enemy,seconds:number):void;
   say(actor: string | DialogueActor, expression: string, text: string, duration?: number): void;
   /** 章节补给休整，采购或跳过后继续；成长用 growthChoice。 */
   milestone(label: string): Co;

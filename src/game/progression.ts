@@ -1,125 +1,166 @@
 import type { Renderer } from '../gl/renderer';
 import { RS } from '../gl/ribbons';
+import { burnDraw, burnEmit } from './burn-fx';
 import type { World } from './world';
 import type { Enemy } from './enemy';
-import { segDist2, pointInPoly } from '../core/math';
-export type DamageSource = 'red'|'blue'|'purple'|'ink'|'companion'|'neutral';
-export type CombatWorld = Omit<World,'damage'> & { damage(e:Enemy,amount:number,x?:number,y?:number,quiet?:boolean,source?:DamageSource):void };
-export interface Talent { id:string; name:string; route:string; description:string; requires?:string; requiresAny?:string[]; exclusive?:string; preview:string; icon:string; max:number }
+import { segDist2 } from '../core/math';
+import { PK } from '../gl/particles';
+import { auraLine, auraRing } from './aura';
+import { PLAY_W } from '../types';
+import type { DamageSource } from '../types';
+export type { DamageSource };
+export type CombatWorld = Omit<World,'damage'> & { damage(e:Enemy,amount:number,x?:number,y?:number,quiet?:boolean,source?:DamageSource,ink?:{tag?:'burn'}):void };
+export interface Talent { id:string; name:string; route:string; description:string; preview:string; icon:string; max:number }
 export interface ProgressionAction { kind:'hit'|'kill'|'graze'|'brushRelease'|'seal'|'bomb'|'focus'|'weaponChange'; source?:DamageSource; amount?:number; enemy?:Enemy; pts?:number[]; erased?:number; hits?:number }
+const talent=(id:string,name:string,route:string,description:string,asset=id):Talent=>({id,name,route,description,preview:id,icon:`/art/icons/talents/${asset}.png`,max:1});
 export const TALENTS: Talent[] = [
- {id:'R1',name:'双路火羽',route:'朱 · 行为',description:'朱弹分成左右两路，中间留缝；横移对准单敌。',preview:'split',icon:'羽',max:1},
- {id:'B1',name:'偏转光束',route:'青 · 行为',description:'集中射击时，左右移动让光束偏向侧敌；松开集中回正。',preview:'beam',icon:'光',max:1},
- {id:'T1',name:'定点落雷',route:'雷 · 行为',description:'雷击优先墨鸢标记的目标；标记结束恢复普通选敌。',preview:'mark',icon:'雷',max:1},
- {id:'W1',name:'回笔再斩',route:'执笔 · 行为',description:'开放笔画收笔后，沿原线返回斩一次；与留圈封敌互斥。',preview:'echo',icon:'笔',exclusive:'W2',max:1},
- {id:'W2',name:'留圈封敌',route:'执笔 · 行为',description:'闭环留下圈界，普通敌首次进圈短封印；与回笔再斩互斥。',preview:'seal',icon:'圈',exclusive:'W1',max:1},
- {id:'I1',name:'随行墨池',route:'泼墨 · 行为',description:'泼墨后墨池跟随玩家移动；与定点墨池互斥。',preview:'poolMoving',icon:'池',exclusive:'I2',max:1},
- {id:'I2',name:'定点墨池',route:'泼墨 · 行为',description:'泼墨后墨池留在施放处，引敌进入；与随行墨池互斥。',preview:'poolFixed',icon:'池',exclusive:'I1',max:1},
- {id:'Q1',name:'前锋阵',route:'伙伴 · 行为',description:'赤燕、墨鸢站到前方，跟笔追击；与两翼阵互斥。',preview:'front',icon:'阵',exclusive:'Q2',max:1},
- {id:'Q2',name:'两翼阵',route:'伙伴 · 行为',description:'老盾、算盘分列两翼，横移护航；与前锋阵互斥。',preview:'wings',icon:'阵',exclusive:'Q1',max:1},
- {id:'R4',name:'火羽增伤',route:'朱 · 数值',description:'朱色主射伤害增加 15%。',preview:'damage',icon:'羽',requires:'R1',max:1},
- {id:'B4',name:'光束增伤',route:'青 · 数值',description:'青色光束伤害增加 15%。',preview:'damage',icon:'光',requires:'B1',max:1},
- {id:'T4',name:'雷击增伤',route:'雷 · 数值',description:'雷色主射伤害增加 15%。',preview:'damage',icon:'雷',requires:'T1',max:1},
- {id:'W4',name:'执笔省墨',route:'执笔 · 数值',description:'运笔耗墨减少 15%。',preview:'ink',icon:'笔',requiresAny:['W1','W2'],max:1},
- {id:'I4',name:'泼墨增伤',route:'泼墨 · 数值',description:'泼墨和墨池伤害增加 15%。',preview:'damage',icon:'池',requiresAny:['I1','I2'],max:1},
- {id:'Q4',name:'伙伴增伤',route:'伙伴 · 数值',description:'赤燕追击伤害增加 15%。',preview:'damage',icon:'阵',requiresAny:['Q1','Q2'],max:1},
+ talent('huoyu','火羽','朱','散射弹让目标燃烧 2 秒，再次命中刷新燃烧。'),
+ talent('liaoyuan','燎原','朱','朱色时击坠普通敌机爆开火圈，火圈可以连爆。'),
+ talent('niepan','涅槃','护身','每章一次：死亡爆出火环，清普通敌弹并保住火力。','yuhuo'),
+ talent('fenguang','分光','青','光束命中第一架大型机，向左右分出两道斜光。'),
+ talent('hujian','护剑','青','四把飞剑每 3 秒挡下一颗碰到你的普通敌弹。','yujian'),
+ talent('guanri','贯日','青','光束宽度增加一半，贯穿敌机时伤害不衰减。'),
+ talent('liansuo','连锁','紫','电弧多跳 2 个目标。'),
+ talent('tianlei','天雷','紫','持续电击 3 秒引来天雷，落点周围的敌机也受伤。','leiji'),
+ talent('dianci','电磁','紫','每次放电，电弧沿途最多消掉 2 颗普通敌弹。'),
+ talent('jifeng','疾风','翻滚','翻滚充能上限从 2 次增加到 3 次。'),
+ talent('monang','墨囊','泼墨','泼墨上限加 1，立即补 1 颗；之后每章再补 1 颗。'),
+ talent('bili','笔力','执笔','执笔升一级，笔迹更长，运笔时敌弹更慢；最高三级。'),
 ];
-interface Field {x:number;y:number;r:number;t:number;damage:number;clear:boolean;source:DamageSource; follow?:boolean}
-interface Echo { pts:number[];t:number;damage:number;seen:Set<Enemy> }
+interface Field {x:number;y:number;r:number;t:number;damage:number;clear:boolean;source:DamageSource}
+interface TalentFX {id:string;x:number;y:number;left:number;duration:number}
+interface SplitBeam {x:number;y:number;ex:number;ey:number;width:number;left:number}
+/** 天赋结算只接收实际武器/碰撞事件；光环与伙伴伤害不会计入主电弧时间。 */
 export class Progression {
  level=1; xp=0; brushLevel=1; bombLevel=1; brushXP=0; bombXP=0;
  pendingChoices=0; offers:Talent[]=[]; readonly talents=new Map<string,number>();
- private fields:Field[]=[]; private echoes:Echo[]=[];
+ private fields:Field[]=[];
  private choicesClaimed=new Set<string>();
  private signals=new Map<string,{timer:number;triggers:number}>();
- private circles:{pts:number[];t:number;seen:Set<Enemy>}[]=[];
+ private burns=new Map<Enemy,{left:number;dps:number;ember:number;age:number}>();
+ private fireQueue:Enemy[]=[]; private exploding=false; private exploded=new WeakSet<Enemy>();
+ private visuals:TalentFX[]=[]; private splits:SplitBeam[]=[];
  private time=0; private hitBudget=0;
+ private rebornUsed=false; private swordCooldown=0;
+ swordFlash=0; swordIndex=0; thunderTime=0;
  constructor(readonly w:CombatWorld){}
  rank(id:string):number{return this.talents.get(id)??0;}
  has(id:string):boolean{return this.rank(id)>0;}
- get brushMods(){return {minInk:Math.max(.15,.25-this.brushLevel*.012),costScale:Math.max(.62,1-this.brushLevel*.045)*(this.has('W4')?.85:1),maxTime:3.2+(this.brushLevel-1)*.2,width:18+(this.brushLevel-1)*2,sealDuration:2.8,damageScale:1+(this.brushLevel-1)*.12};}
- get bombMods(){return {duration:2.6,inkReturn:0,damageScale:(1+(this.bombLevel-1)*.1)*(this.has('I4')?1.15:1)};}
+ get bombMax(){return 6+Number(this.has('monang'));}
+ get brushMods(){return {minInk:.25,costScale:1,width:18,sealDuration:2.8,damageScale:1};}
+ get bombMods(){return {duration:2.6,inkReturn:0,damageScale:(1+(this.bombLevel-1)*.1)};}
  resetRun():void{this.level=1;this.xp=0;this.brushLevel=this.bombLevel=1;this.brushXP=this.bombXP=0;this.pendingChoices=0;this.offers=[];this.talents.clear();this.choicesClaimed.clear();this.signals.clear();this.resetStage();}
- resetStage():void{this.circles=[];for(const s of this.signals.values())s.timer=0;this.fields=[];this.echoes=[];this.hitBudget=0;}
+ resetStage():void{for(const s of this.signals.values())s.timer=0;this.fields=[];this.burns.clear();this.fireQueue=[];this.exploded=new WeakSet();this.exploding=false;this.visuals=[];this.splits=[];this.hitBudget=0;this.rebornUsed=false;this.swordCooldown=this.swordFlash=this.thunderTime=0;}
+ /** 由章节入口在玩家复位之后调用一次；重生不补发。 */
+ beginChapter():void{if(this.has('monang'))this.supplyInk();}
+ private supplyInk():void{const p=this.w.player,old=p.bombs;p.bombs=Math.min(this.bombMax,p.bombs+1);if(p.bombs>old)this.trigger('monang',p.x,p.y);}
  grant(kind:'combat'|'brush'|'bomb'|'companion',amount=1):void {
   if(!Number.isFinite(amount)||amount<=0)return;
-  this.xp+=amount;
-  if(kind==='brush'){this.brushXP+=amount;while(this.brushLevel<5&&this.brushXP>=this.brushLevel*24){this.brushXP-=this.brushLevel*24;this.brushLevel++;}}
+  this.xp+=amount;if(kind==='brush')this.brushXP+=amount;
   if(kind==='bomb'){this.bombXP+=amount;while(this.bombLevel<5&&this.bombXP>=this.bombLevel*12){this.bombXP-=this.bombLevel*12;this.bombLevel++;}}
   while(this.xp>=24+this.level*12){this.xp-=24+this.level*12;this.level++;}
   if(this.pendingChoices&&!this.offers.length)this.offerTalents();
  }
- claimChoice(chapter:number,slot:number):boolean {
-  const key=`${chapter}:${slot}`;if(this.choicesClaimed.has(key))return false;
-  this.choicesClaimed.add(key);this.pendingChoices++;return true;
- }
+ claimChoice(chapter:number,slot:number):boolean {const key=`${chapter}:${slot}`;if(this.choicesClaimed.has(key))return false;this.choicesClaimed.add(key);this.pendingChoices++;return true;}
  offerTalents():Talent[]{
-  const eligible=TALENTS.filter(t=>!this.has(t.id)&&(!t.requires||this.has(t.requires))&&(!t.requiresAny||t.requiresAny.some(id=>this.has(id)))&&(!t.exclusive||!this.has(t.exclusive)));
-  const color=this.w.player.weapon==='red'?'R1':this.w.player.weapon==='blue'?'B1':'T1';
-  const priority=this.talents.size===0?[color,'W1','Q1']:this.talents.size===1?['W2','I1','Q2','T1','B1','R1']:['I2','W1','Q2','T1','B1','R1','Q1'];
-  eligible.sort((a,b)=>(priority.indexOf(a.id)<0?99:priority.indexOf(a.id))-(priority.indexOf(b.id)<0?99:priority.indexOf(b.id)));
+  // 沿用已有的笔力三级封顶条件，满级时不提供无收益的升级卡。
+  const eligible=TALENTS.filter(t=>!this.has(t.id)&&(t.id!=='bili'||this.w.brushPower<3));
+  for(let i=eligible.length-1;i>0;i--){const j=this.w.rng.int(0,i);[eligible[i],eligible[j]]=[eligible[j],eligible[i]];}
   this.offers=eligible.slice(0,3);return this.offers;
  }
  choose(id:string):boolean {
-  if(!this.pendingChoices||!this.offers.some(t=>t.id===id))return false;
-  this.talents.set(id,1);this.pendingChoices--;this.offers=[];this.signals.set(id,{timer:0,triggers:0});
+  if(!this.pendingChoices||this.has(id)||!this.offers.some(t=>t.id===id))return false;
+  this.talents.set(id,1);this.signals.set(id,{timer:0,triggers:0});
+  if(id==='bili')this.w.brushPower=Math.min(3,this.w.brushPower+1);
+  if(id==='jifeng')this.w.roll.charges=Math.min(3,this.w.roll.charges+1);
+  if(id==='monang')this.supplyInk();
+  this.pendingChoices--;this.offers=[];
   const t=TALENTS.find(t=>t.id===id)!;this.w.say('算盘','得意',`选好${t.name}了，按说明行动就会生效。`,3);return true;
  }
- trigger(id:string):void {
+ /** 首次实际生效仅提示一次，跨章也不重复。战斗特效由各机制持续显示。 */
+ trigger(id:string,x=this.w.player.x,y=this.w.player.y):void {
   if(!this.has(id))return;const s=this.signals.get(id)??{timer:0,triggers:0};
-  if(s.timer>0)return;s.timer=1.5;s.triggers++;this.signals.set(id,s);
-  const t=TALENTS.find(t=>t.id===id)!;this.w.ui.popup(this.w.player.x,this.w.player.y-42,t.name,'chain',`passive:${id}`);
+  s.timer=1.5;this.signals.set(id,s);if(s.triggers)return;s.triggers=1;
+  const t=TALENTS.find(t=>t.id===id);if(!t)return;
+  this.w.ui.popup(x,y-28,t.name,'chain',`passive:${id}`);this.visual(id,x,y,.8);
  }
- passiveHud(){return [...this.talents.keys()].map(id=>{const t=TALENTS.find(t=>t.id===id)!;const s=this.signals.get(id);return{id,name:t.name,icon:t.icon,timer:s?.timer??0,triggers:s?.triggers??0};});}
- primaryScale(source:DamageSource):number {const id=source==='red'?'R4':source==='blue'?'B4':source==='purple'?'T4':'';if(id&&this.has(id)){this.trigger(id);return 1.15;}return 1;}
+ passiveHud(){return [...this.talents.keys()].flatMap(id=>{const t=TALENTS.find(t=>t.id===id);if(!t)return[];const s=this.signals.get(id);return[{id,name:t.name,icon:t.icon,timer:s?.timer??0,triggers:s?.triggers??0}];});}
  recordAction(a:ProgressionAction):void {
   if(a.kind==='hit'&&a.source!=='companion'&&a.source!=='neutral'){const gain=Math.min(Math.max(0,a.amount??1)*.012,Math.max(0,2-this.hitBudget));this.hitBudget+=gain;this.grant('combat',gain);}
-  if(a.kind==='kill')this.grant('combat',a.amount??3);
+  if(a.kind==='kill'){this.grant('combat',a.amount??3);if(a.enemy)this.fireDeath(a.enemy);}
   if(a.kind==='graze')this.grant('combat',.15);
  }
- onBrushRelease(pts:number[],hits=0,erased=0,sealed=0):void{
-  const effective=hits+sealed+Math.min(8,erased*.15);if(effective>0)this.grant('brush',effective*2);
-  if(pts.length<4)return;
-  const x=pts[pts.length-2],y=pts[pts.length-1];
-  const closed=pts.length>24&&Math.hypot(pts[0]-x,pts[1]-y)<55;
-  if(this.has('W1')&&!closed){this.echoes.push({pts:pts.slice(),t:.95,damage:24,seen:new Set()});this.trigger('W1');}
-  if(this.has('W2')&&closed){this.circles.push({pts:pts.slice(),t:3,seen:new Set()});this.trigger('W2');}
-  if(this.has('W4'))this.trigger('W4');
+ onBrushRelease(pts:number[],hits=0,erased=0,sealed=0):void{const effective=hits+sealed+Math.min(8,erased*.15);if(effective>0)this.grant('brush',effective*2);}
+ onBomb():void {const targets=this.w.enemies.filter(e=>this.w.targetable(e)).length,threats=this.w.bullets.list.filter(b=>!b.dead&&!b.hard).length;if(targets||threats)this.grant('bomb',Math.min(8,targets*2+threats*.08));}
+ onRedHit(e:Enemy,damage:number):void{if(!this.has('huoyu')||e.dead||e.invulnerable)return;this.burns.set(e,{left:2,dps:damage,ember:0,age:this.burns.get(e)?.age??0});this.trigger('huoyu',e.x,e.y);}
+ isBossPart(e:Enemy):boolean{for(let p:Enemy|null=e;p;p=p.parent)if(p.def.boss||p.data.bossOwner)return true;return false;}
+ isLarge(e:Enemy):boolean{return e.maxHp>=300||this.isBossPart(e);}
+ private fireDeath(e:Enemy):void {
+  if(!this.has('liaoyuan')||this.w.player.weapon!=='red'||this.isBossPart(e)||this.exploded.has(e))return;
+  this.exploded.add(e);this.fireQueue.push(e);if(this.exploding)return;this.exploding=true;
+  try{while(this.fireQueue.length){const dead=this.fireQueue.shift()!;this.trigger('liaoyuan',dead.x,dead.y);this.visual('liaoyuan',dead.x,dead.y,.5);
+   for(const target of this.w.enemies)if(this.w.targetable(target)&&Math.hypot(target.x-dead.x,target.y-dead.y)<=70)this.w.damage(target,Math.min(60,dead.maxHp*.3),target.x,target.y,true,'red');
+  }}finally{this.exploding=false;}
  }
- onBomb():void {
-  const targets=this.w.enemies.filter(e=>this.w.targetable(e)).length;
-  const threats=this.w.bullets.list.filter(b=>!b.dead&&!b.hard).length;
-  if(targets||threats)this.grant('bomb',Math.min(8,targets*2+threats*.08));
-  this.w.player.ink=Math.min(1,this.w.player.ink+this.bombMods.inkReturn);
-  if(this.has('I1')||this.has('I2')){const follow=this.has('I1');this.addField(this.w.player.x,this.w.player.y-70,120,3,28*this.bombMods.damageScale,false);this.fields[this.fields.length-1].follow=follow;this.trigger(follow?'I1':'I2');}
-  if(this.has('I4'))this.trigger('I4');
+ onDeath():boolean{
+  if(!this.has('niepan')||this.rebornUsed)return false;this.rebornUsed=true;const p=this.w.player;
+  for(const b of this.w.bullets.list)if(!b.dead&&!b.hard){b.dead=true;this.w.fx.gold(b.x,b.y);}
+  this.trigger('niepan',p.x,p.y);this.visual('niepan',p.x,p.y,1);return true;
+ }
+ blockBullet():boolean {
+  if(!this.has('hujian')||this.w.player.weapon!=='blue'||this.swordCooldown>1e-8)return false;
+  this.swordCooldown=3;this.swordFlash=.3;this.swordIndex=(this.swordIndex+1)%4;const p=this.w.player;
+  this.trigger('hujian',p.x,p.y);this.visual('hujian',p.x,p.y,.3);return true;
+ }
+ splitBeam(e:Enemy,x:number,y:number,width:number,damage:number):void {
+  if(!this.has('fenguang')||e.invulnerable)return;this.trigger('fenguang',x,y);
+  for(const side of [-1,1]){const dx=side*Math.sin(25*Math.PI/180),dy=-Math.cos(25*Math.PI/180),length=Math.min((side<0?x:PLAY_W-x)/Math.abs(dx),y/-dy);
+   const ex=x+dx*length,ey=y+dy*length;this.splits.push({x,y,ex,ey,width:width*.5,left:.04});
+   const hits:{e:Enemy;x:number;y:number;d:number}[]=[];
+   for(const target of this.w.enemies)if(target!==e&&this.w.targetable(target,true)&&this.w.hitSegment(target,x,y,ex,ey,width*.5))hits.push({e:target,x:this.w.hitX,y:this.w.hitY,d:Math.hypot(this.w.hitX-x,this.w.hitY-y)});
+   hits.sort((a,b)=>a.d-b.d);for(const hit of hits){this.w.damage(hit.e,damage*.4,hit.x,hit.y,true,'blue');if(hit.e.invulnerable)break;}
+  }
+ }
+ onDischarge(targets:Enemy[]):void{
+  const p=this.w.player,g=p.gun('gun');if(this.has('liansuo')&&targets.length>p.baseThunderTargets)this.trigger('liansuo',targets[p.baseThunderTargets].x,targets[p.baseThunderTargets].y);
+  if(!this.has('dianci'))return;
+  const arcs:[number,number,number,number][]=[];let previous:Enemy|null=null;
+  for(const e of targets){const from=previous&&Math.hypot(e.x-previous.x,e.y-previous.y)<320?previous:null;arcs.push([from?from.x:g.x,from?from.y+from.radius*.65:g.y,e.x,e.y+e.radius*.65]);previous=e;}
+  if(!arcs.length)for(const side of [-1,1])arcs.push([g.x,g.y,g.x+side*70,g.y-280]);
+  let cleared=0;for(const b of this.w.bullets.list){if(b.dead||b.hard||b.delay>0)continue;if(arcs.some(a=>segDist2(b.x,b.y,...a)<=40**2)){b.dead=true;this.w.fx.gold(b.x,b.y);this.trigger('dianci',b.x,b.y);if(++cleared===2)break;}}
+ }
+ onElectricHit(dt:number,target:Enemy,dps:number):void{
+  if(!this.has('tianlei'))return;this.thunderTime+=dt;
+  if(this.thunderTime+1e-8<3)return;this.thunderTime-=3;this.trigger('tianlei',target.x,target.y);this.visual('tianlei',target.x,target.y,.6);
+  this.w.damage(target,dps*2,target.x,target.y,true,'purple');
+  for(const e of this.w.enemies)if(e!==target&&this.w.targetable(e)&&Math.hypot(e.x-target.x,e.y-target.y)<=60)this.w.damage(e,dps,e.x,e.y,true,'purple');
  }
  addField(x:number,y:number,r:number,duration:number,damage=0,clear=true,source:DamageSource='ink'):void{this.fields.push({x,y,r,t:duration,damage,clear,source});if(this.fields.length>24)this.fields.shift();}
- strike(x:number,y:number,r:number,damage:number,source:DamageSource='ink'):number{let n=0;for(const e of this.w.enemies)if(this.w.targetable(e)&&Math.hypot(e.x-x,e.y-y)<r+e.radius){this.w.damage(e,damage,e.x,e.y,true,source);n++;}this.w.fx.shockwave(x,y,r,5,.4);return n;}
+ private visual(id:string,x:number,y:number,duration:number):void{this.visuals.push({id,x,y,left:duration,duration});if(this.visuals.length>80)this.visuals.shift();}
  draw(r:Renderer):void {
-  for(const f of this.fields){for(let i=0;i<32;i++){const a=i/32*Math.PI*2,b=(i+1)/32*Math.PI*2;r.ribbonMid.line(f.x+Math.cos(a)*f.r,f.y+Math.sin(a)*f.r,f.x+Math.cos(b)*f.r,f.y+Math.sin(b)*f.r,3,RS.InkHalo,.3,.6,.7,.6);}}
-  for(const c of this.circles)for(let i=0;i<c.pts.length-2;i+=2)r.ribbonMid.line(c.pts[i],c.pts[i+1],c.pts[i+2],c.pts[i+3],3,RS.InkTrail,.5,.5,.9,.7);
-  for(const e of this.echoes){
-   const n=e.pts.length/2,index=Math.min(n-1,Math.floor(Math.max(0,1-e.t/.5)*(n-1)));
-   for(let i=n-2;i>=n-2-index;i--)if(i>=0)r.ribbonMid.line(e.pts[i*2],e.pts[i*2+1],e.pts[i*2+2],e.pts[i*2+3],5,RS.Calligraphy,.8,.7,.4,.65);
+  const b=r.ribbonMid;
+  for(const f of this.fields)auraRing(b,f.x,f.y,f.r,f.r,[.3,.6,.7],.6,0,3);
+  for(const s of this.splits){b.line(s.x,s.y,s.ex,s.ey,s.width*1.35,RS.Glow,.02,.22,.16,.45);b.line(s.x,s.y,s.ex,s.ey,s.width*.5,RS.Bolt,.08,.9,.65,.85);}
+  for(const [e,burn]of this.burns)if(!e.dead)burnDraw(b,e,burn.age,this.time);
+  for(const f of this.visuals){const u=1-f.left/f.duration,alpha=(1-u)*.85,x=f.x,y=f.y;
+   if(['huoyu','liaoyuan','niepan'].includes(f.id)){const radius=(f.id==='niepan'?260:f.id==='liaoyuan'?70:38)*( .25+.75*u);auraRing(b,x,y,radius,radius,[1.9,.36,.06],alpha,0,6*(1-u)+1);for(let i=0;i<8;i++){const a=i*Math.PI/4;auraLine(b,[x+Math.cos(a)*radius*.8,y+Math.sin(a)*radius*.8,x+Math.cos(a)*radius,y+Math.sin(a)*radius-14],3,[2,.6,.08],alpha,RS.AuraFire);}}
+   else if(f.id==='tianlei'){const pts:number[]=[];for(let i=0;i<=12;i++)pts.push(x+(i===12?0:Math.sin(i*8)*16),y*i/12);auraLine(b,pts,8*(1-u)+1,[1.3,.7,2],alpha,RS.Lightning);auraRing(b,x,y,60*u,60*u,[.8,.4,1.6],alpha,0,3);}
+   else if(f.id==='fenguang')for(const side of [-1,1])auraLine(b,[x,y,x+side*45,y-96],4,[.15,1.5,1.1],alpha,RS.Beam);
+   else if(f.id==='guanri')for(const side of [-1,1])auraLine(b,[x+side*(15+u*12),y+40,x+side*(15+u*12),y-80],3,[.1,1.6,1.1],alpha,RS.Beam);
+   else if(f.id==='hujian'){auraRing(b,x,y,50+u*20,50+u*20,[.2,1.5,1.3],alpha,0,3);}
+   else if(f.id==='liansuo')for(let i=0;i<3;i++)auraLine(b,[x-40+i*40,y-20,x-25+i*40,y,x-40+i*40,y+20],3,[1,.4,1.8],alpha,RS.Lightning);
+   else if(f.id==='dianci'){for(let i=0;i<3;i++)auraRing(b,x,y,12+u*(18+i*12),12+u*(18+i*12),[.8,.5,2],alpha,0,2);}
+   else if(f.id==='jifeng')for(let i=0;i<3;i++)auraLine(b,[x-45,y+25+i*12,x-20,y+15+i*12,x+30,y+15+i*12,x+55,y+5+i*12],2,[.8,1.4,1.2],alpha,RS.Trail);
+   else if(f.id==='monang')for(let i=0;i<6;i++){const a=i*Math.PI/3;auraLine(b,[x+Math.cos(a)*10,y+Math.sin(a)*10,x+Math.cos(a)*(20+u*50),y+Math.sin(a)*(20+u*50)],5,[.12,.2,.19],alpha,RS.InkTrail);}
+   else if(f.id==='bili')auraLine(b,[x-65,y+35,x-25,y-10,x+15,y+12,x+65,y-40],6,[.08,.16,.15],alpha,RS.Calligraphy);
   }
  }
  update(dt:number):void {
   this.time+=dt;for(const s of this.signals.values())s.timer=Math.max(0,s.timer-dt);
-  for(const c of this.circles){c.t-=dt;for(const e of this.w.enemies)if(!c.seen.has(e)&&!e.phaseLock&&!e.def.boss&&!e.parent?.phaseLock&&this.w.targetable(e)&&pointInPoly(e.x,e.y,c.pts)){c.seen.add(e);e.sealed=Math.max(e.sealed,.7);this.trigger('W2');}}this.circles=this.circles.filter(c=>c.t>0);
-  this.hitBudget=Math.max(0,this.hitBudget-dt*2);
-  for(const f of this.fields){f.t-=dt;if(f.follow){f.x=this.w.player.x;f.y=this.w.player.y-70;}if(f.damage)for(const e of this.w.enemies)if(this.w.targetable(e)&&Math.hypot(e.x-f.x,e.y-f.y)<f.r+e.radius)this.w.damage(e,f.damage*dt,e.x,e.y,true,f.source);if(f.clear)for(const b of this.w.bullets.list)if(!b.dead&&!b.hard&&Math.hypot(b.x-f.x,b.y-f.y)<f.r){b.dead=true;this.w.fx.gold(b.x,b.y);}if(Math.floor(this.time*12)!==Math.floor((this.time-dt)*12))this.w.fx.glowSplat(f.x,f.y,f.r,[.02,.06,.08]);}
+  this.swordCooldown=Math.max(0,this.swordCooldown-dt);this.swordFlash=Math.max(0,this.swordFlash-dt);
+  this.visuals=this.visuals.filter(f=>(f.left-=dt)>0);this.splits=this.splits.filter(s=>(s.left-=dt)>0);this.hitBudget=Math.max(0,this.hitBudget-dt*2);
+  for(const [e,burn]of this.burns){if(e.dead){this.burns.delete(e);continue;}const tick=Math.min(dt,burn.left);burn.left-=tick;this.w.damage(e,burn.dps*tick,e.x,e.y,true,'red',{tag:'burn'});burn.age+=dt;burnEmit(this.w,e,burn.age,dt);if(burn.left<=1e-8)this.burns.delete(e);}
+  for(const f of this.fields){f.t-=dt;if(f.damage)for(const e of this.w.enemies)if(this.w.targetable(e)&&Math.hypot(e.x-f.x,e.y-f.y)<f.r+e.radius)this.w.damage(e,f.damage*dt,e.x,e.y,true,f.source);if(f.clear)for(const b of this.w.bullets.list)if(!b.dead&&!b.hard&&Math.hypot(b.x-f.x,b.y-f.y)<f.r){b.dead=true;this.w.fx.gold(b.x,b.y);}}
   this.fields=this.fields.filter(f=>f.t>0);
-  for(const e of this.echoes){
-   const old=e.t;e.t-=dt;if(e.t>.5)continue;
-   const n=e.pts.length/2;
-   const begin=Math.max(0,Math.floor((1-Math.min(.5,old)/.5)*(n-1)));
-   const end=Math.min(n-2,Math.floor((1-Math.max(0,e.t)/.5)*(n-1)));
-   for(const target of this.w.enemies){
-    if(e.seen.has(target)||!this.w.targetable(target))continue;
-    for(let j=begin;j<=end;j++){const i=(n-2-j)*2;if(segDist2(target.x,target.y,e.pts[i],e.pts[i+1],e.pts[i+2],e.pts[i+3])<(target.radius+this.brushMods.width)**2){e.seen.add(target);this.w.damage(target,e.damage,target.x,target.y,true,'ink');this.w.fx.hit(target.x,target.y,[1.5,.4,.2],6);break;}}
-   }
-  }
-  this.echoes=this.echoes.filter(e=>e.t>0);
  }
 }

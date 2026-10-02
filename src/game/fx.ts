@@ -1,13 +1,14 @@
 // 特效系统：爆炸、火花、墨、冲击波、震屏、闪白、色差。组合 GPU 粒子、墨流体与后处理。
 import type { Rng } from '../core/math';
 import { PK, type ParticleSpec, type ParticleSystem } from '../gl/particles';
+import { RS } from '../gl/ribbons';
 import type { Renderer } from '../gl/renderer';
-import { PLAY_W, type DamageSource, type GameAudio } from '../types';
+import { PLAY_W, type DamageSource, type GameAudio, type WeaponColor } from '../types';
 import type { Fx, ExplosionPalette } from './api';
 import type { Enemy } from './enemy';
 import type { ExplosionSize } from './enemy';
 
-interface Scar { x:number; y:number; angle:number; size:number; source:DamageSource; time:number; blocked:boolean }
+interface Scar { x:number; y:number; angle:number; size:number; source:DamageSource; visual:Exclude<DamageSource,'bomb'|'qte'>; time:number; blocked:boolean; armor:boolean }
 interface DamageState { scars:Scar[]; next:Partial<Record<DamageSource,number>> }
 type RGB = [number, number, number];
 
@@ -28,6 +29,7 @@ export class FxSystem implements Fx {
   /** 火球转墨烟时衔接的墨流体 splat（延时）。 */
   private inkDrops: InkDrop[] = [];
   trauma = 0;
+  private downward=0;
   flashAmt = 0;
   flashCol: RGB = [1, 0.95, 0.85];
   caAmt = 0;
@@ -137,24 +139,28 @@ export class FxSystem implements Fx {
   }
 
   /** 每个敌人保存本地坐标伤痕；连续武器按来源节流，阻挡保留反弹标识。 */
-  onDamage(enemy:Enemy,source:DamageSource,x:number,y:number,actualAmount:number,blocked=false):void {
+  onDamage(enemy:Enemy,source:DamageSource,x:number,y:number,actualAmount:number,blocked=false,inkColor?:WeaponColor):void {
     let state=this.damageStates.get(enemy);
     if(!state){state={scars:[],next:{}};this.damageStates.set(enemy,state);}
     const now=this.high.time;
     if(now < (state.next[source] ?? -1))return;
     state.next[source]=now+(blocked?.16:source==='red'?.065:.11);
-    const c:RGB=source==='blue'?[.1,1.45,1.0]:source==='purple'?[1.1,.3,1.6]:source==='red'?[2.0,.45,.06]:[.7,.34,.12];
+    const armorHit=!!enemy.data.hitArmor;
+    const visual=source==='ink'&&inkColor?inkColor:source==='qte'||source==='bomb'?'ink':source;
+    const c:RGB=armorHit?[.75,.78,.82]:visual==='blue'?[.1,1.45,1.0]:visual==='purple'?[1.1,.3,1.6]:visual==='red'?[2.0,.45,.06]:source==='companion'?[1.8,.55,.15]:[.7,.34,.12];
     if(!blocked){
       // 主体形状由 drawDamage 画；少量粒子补上各自材质的飞散。
-      this.radial(x,y,this.n(source==='blue'?3:2),75,190,{life:source==='blue'?.24:.15,drag:5,size:source==='blue'?3:1.6,spin:source==='blue'?9:0,r:c[0],g:c[1],b:c[2],kind:source==='blue'?PK.Shard:PK.Spark});
+      this.radial(x,y,this.n(armorHit?5:enemy.data.copperPart?14:6),armorHit?70:110,armorHit?160:320,{life:armorHit?.22:source==='blue'?.24:.2,drag:5,size:armorHit?2:enemy.data.copperPart?4:2.5,spin:source==='blue'?9:0,r:c[0],g:c[1],b:c[2],kind:PK.Spark});
       this.emitHigh({x,y,life:.045,size:4,sizeEnd:7,r:c[0],g:c[1],b:c[2],a:.4,kind:PK.Dot});
+      if(!armorHit&&visual==='blue')this.emitHigh({x,y,life:.22,size:3,sizeEnd:20,r:.2,g:1.3,b:1.4,a:.32,kind:PK.Ring});
+      if(!armorHit&&visual==='red')this.emit({x,y,vx:this.rr(-45,45),vy:this.rr(-25,40),life:.22,size:2,sizeEnd:1,r:.02,g:.015,b:.012,a:.65,kind:PK.Ink});
     }
     const cs=Math.cos(enemy.angle),sn=Math.sin(enemy.angle),dx=x-enemy.x,dy=y-enemy.y;
     const lx=(dx*cs+dy*sn)/(enemy.scaleX||1),ly=(-dx*sn+dy*cs)/(enemy.scaleY||1);
-    const existing=state.scars.find(s=>s.source===source&&Math.hypot(s.x-lx,s.y-ly)<12&&s.blocked===blocked);
+    const existing=state.scars.find(s=>s.source===source&&s.visual===visual&&Math.hypot(s.x-lx,s.y-ly)<12&&s.blocked===blocked&&s.armor===armorHit);
     if(existing){existing.time=now;existing.size=Math.min(18,existing.size+Math.max(0,actualAmount)*.12);}
-    else {state.scars.push({x:lx,y:ly,angle:this.rr(-1,1),size:blocked?6:Math.min(16,7+actualAmount*.6),source,time:now,blocked});if(state.scars.length>12)state.scars.shift();}
-    if(!blocked && actualAmount>0 && this.rng.next()<.28)this.r.debris.spawn(now,x,y,.32,source==='blue'?2:1,this.rng.next(),source==='blue'?'cyan':source==='purple'?'violet':'fire');
+    else {state.scars.push({x:lx,y:ly,angle:this.rr(-1,1),size:blocked?6:Math.min(16,7+actualAmount*.6),source,visual,time:now,blocked,armor:armorHit});if(state.scars.length>12)state.scars.shift();}
+    if(!armorHit&&!blocked && actualAmount>0 && this.rng.next()<.28)this.r.debris.spawn(now,x,y,.32,source==='blue'?2:1,this.rng.next(),source==='blue'?'cyan':source==='purple'?'violet':'fire');
   }
 
   drawDamage(enemy:Enemy,_time:number):void {
@@ -163,12 +169,15 @@ export class FxSystem implements Fx {
     const time=this.high.time;
     const cs=Math.cos(enemy.angle),sn=Math.sin(enemy.angle);
     for(const s of state.scars){
-      const age=Math.max(0,time-s.time);if(s.blocked&&age>.28)continue;
+      const age=Math.max(0,time-s.time);if((s.blocked||s.armor)&&age>.28)continue;
       const dx=s.x*enemy.scaleX,dy=s.y*enemy.scaleY;
       const x=enemy.x+dx*cs-dy*sn,y=enemy.y+dx*sn+dy*cs;
-      this.r.impact.hit(x,y,s.source,age,s.blocked,enemy.alpha);
-      if(s.blocked)continue;
-      this.r.impact.scar(x,y,enemy.angle+s.angle,s.size,s.source,Math.exp(-age*3.5),enemy.alpha*.85);
+      if(s.armor){
+        const fade=Math.max(0,1-age/.22)*enemy.alpha;
+        if(fade>0)for(let i=0;i<5;i++){const a=s.angle+i*Math.PI*2/5,from=4+age*80,to=from+12;this.r.ribbonTop.line(x+Math.cos(a)*from,y+Math.sin(a)*from,x+Math.cos(a)*to,y+Math.sin(a)*to,2,RS.Trail,.8,.84,.9,fade);}
+      }else this.r.impact.hit(x,y,s.visual,age,s.blocked,enemy.alpha);
+      if(s.blocked||s.armor)continue;
+      this.r.impact.scar(x,y,enemy.angle+s.angle,s.size,s.visual,Math.exp(-age*3.5),enemy.alpha*.85);
     }
   }
 
@@ -187,6 +196,7 @@ export class FxSystem implements Fx {
   shake(amount: number): void {
     this.trauma = Math.min(1, this.trauma + amount);
   }
+  downwardShake(amount:number):void {this.trauma=Math.max(this.trauma,amount);this.downward=.22;}
 
   aberration(amount: number): void {
     this.caAmt = Math.min(1, Math.max(this.caAmt, amount));
@@ -261,6 +271,7 @@ export class FxSystem implements Fx {
     const post = this.r.post;
     const s = this.shakeEnabled ? this.trauma * this.trauma * 16 : 0;
     post.shake = [s * (Math.sin(time * 71.3) + Math.sin(time * 37.1) * 0.5), s * (Math.cos(time * 63.7) + Math.cos(time * 29.3) * 0.5)];
+    if(this.downward>0){post.shake=[post.shake[0]*.25,s*(.5+Math.abs(Math.sin(time*63.7)))];this.downward=Math.max(0,this.downward-realDt);}
     post.zoom = 1 + (this.shakeEnabled ? this.trauma * this.trauma * 0.03 : 0);
     post.flash = this.flashAmt;
     post.flashCol = this.flashCol;
