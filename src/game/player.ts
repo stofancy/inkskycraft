@@ -90,8 +90,8 @@ export class Player {
   updateEcho(dt:number):void{this.fire(dt);this.updateShots(dt);}
   private primaryDamage(e:Enemy,amount:number,x:number,y:number,source:WeaponColor):void{
     const hit=this.w.targetable(e)&&amount>0;
-    if(hit&&source==='red')this.w.progression.onRedHit(e,amount*(this.echo?.6:1));
-    this.w.damage(e,amount*(this.echo?.6:1),x,y,this.echo,source);
+    if(hit&&source==='red')this.w.progression.onRedHit(e,amount);
+    this.w.damage(e,amount,x,y,this.echo,source);
     if(hit)this.hitBurst(x,y,source,e.id);
     if(hit&&!this.echo)this.w.skills.primaryHit(e.id,source);
   }
@@ -355,7 +355,7 @@ export class Player {
 
   // ------------------------------------------------------------ 死亡与重生
 
-  /** 撞机掉火力、弹开并短暂无敌；普通敌机承受碰撞伤害。 */
+  /** 撞机扣 1 格羽甲并弹开，不掉火力；普通敌机承受碰撞伤害。 */
   collideWith(enemy: Enemy): void {
     const w = this.w;
     if (!this.alive || this.invuln > 0 || w.brush.protected) return;
@@ -366,8 +366,6 @@ export class Player {
     const length = Math.hypot(dx, dy);
     if (length === 0) { dx = 0; dy = 1; }
     else { dx /= length; dy /= length; }
-    const lostPower = this.power > 1;
-    this.power = this.power - 1;
     this.x = clamp(x + dx * 60, 26, PLAY_W - 26);
     this.y = clamp(y + dy * 60, 50, PLAY_H - 36);
     let body = enemy;
@@ -375,7 +373,7 @@ export class Player {
     if (!body.def.boss && !enemy.phaseLock) w.damage(enemy, 50, x, y, false, 'neutral');
     w.fx.shockwave(x, y, 60, 6, .3);
     w.fx.shake(.2);
-    w.ui.popup(this.x, this.y - 40, lostPower ? '撞机 · 火力降低' : '撞机 · 弹开', 'info');
+    w.ui.popup(this.x, this.y - 40, '撞机 · 弹开', 'info');
   }
 
   /** 所有致死入口（弹幕、激光、撞机、Boss 机制判死）统一走这里：扣 1 格羽甲，掉光才掉命。 */
