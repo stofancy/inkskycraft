@@ -74,7 +74,7 @@ export class Game implements UIEvents {
 
   applySettings(s: Settings): void {
     this.settings = s;
-    this.audio.setVolumes(s.masterVol, s.musicVol, s.sfxVol);
+    this.audio.setVolumes(s.masterVol, s.musicVol, s.sfxVol, s.voiceVol);
     this.world.fx.shakeEnabled = s.screenShake;
     this.world.fx.density = s.quality === 'ultra' ? 2 : 1;
     this.r.setQuality(s.quality);

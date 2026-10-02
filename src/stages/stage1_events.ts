@@ -7,9 +7,10 @@ import type { World } from '../game/world';
 import type { EscortShip } from '../game/escort';
 import { CH1_AIR_ART } from '../game/escort';
 import { NetPost,BridgeTurret,ShoreCannon,Bomber } from './stage1_air_enemies';
-import { beeSwarm,beeShot,craneRow,kiteGlide,scout,shieldSquad,inspector,stopGo,turtle,arm,sweepTop,sweepSide,sweepWave,chaseBehind,sweepLaser,seq } from './stage1_patrol';
+import { beeSwarm,beeShot,craneRow,kiteGlide,kitePair,scout,shieldSquad,inspector,stopGo,turtle,arm,sweepTop,sweepSide,sweepWave,chaseBehind,sweepLaser,seq } from './stage1_patrol';
 import { director,sayEvent } from './dialogue1';
-export interface RouteState {ship:EscortShip;cart:Scenery;gatePosts?:Enemy[]; gate?:Scenery; bridge:Scenery[]; tools:Scenery[]; events:string[];times:Record<string,number>;lastStrikeBlocked?:boolean;bossResults?:Record<string,{result:string;events:unknown;phases:unknown;timing?:unknown;assisted?:boolean;paperStats?:unknown}>}
+import { enterLowPass,LowCannon,LowBallista,LowEaveGunner,lowTarget,type LowPass } from './stage1_low';
+export interface RouteState {low?:LowPass;ship:EscortShip;cart:Scenery;gatePosts?:Enemy[]; gate?:Scenery; bridge:Scenery[]; tools:Scenery[]; events:string[];times:Record<string,number>;lastStrikeBlocked?:boolean;bossResults?:Record<string,{result:string;events:unknown;phases:unknown;timing?:unknown;assisted?:boolean;paperStats?:unknown}>}
 export function routeState(g:G):RouteState{const ship=(g as World).createEscort();const s:RouteState={ship,cart:ship.scene,bridge:[],tools:[],events:[],times:{}};(g as World).sceneState=s;return s;}
 function emit(g:G,s:RouteState,id:string,_replace=false):boolean {if(s.events.includes(id))return true;s.events.push(id);sayEvent(g,id);return true;}
 export function* conversation(g:G,s:RouteState,...ids:string[]):Co{for(const id of ids)if(!s.events.includes(id))s.events.push(id);yield* director(g).conversation(...ids);}
@@ -20,9 +21,9 @@ function clear(g:G,preserveFodder=false):void{for(const e of g.liveEnemies())if(
 function* run(g:G,seconds:number,update:(elapsed:number)=>void):Co{const start=g.t;while(g.t-start<seconds){update(g.t-start);yield;}}
 function* travel(g:G,s:Scenery,x:number,y:number,seconds:number):Co{const sx=s.x,sy=s.y;yield* run(g,seconds,t=>{const k=t/seconds;s.x=sx+(x-sx)*k;s.y=sy+(y-sy)*k;});s.x=x;s.y=y;}
 export function copperGate(g:G,s:RouteState):void{
- if(s.bridge.some(p=>p.sprite==='sky_chain-gate'))return;
- const rocks=[g.scene('sky_rock',90,260),g.scene('sky_rock',810,260)];rocks.forEach(r=>{r.sx=1.7;r.sy=1.8;});
- s.bridge.push(...rocks,g.scene('sky_chain-gate',450,260));
+ enterLowPass(g,s);
+ if(s.bridge.some(p=>p.sprite==='sky_low-bridge'))return;
+ s.bridge.push(g.scene('sky_low-bridge',450,300));s.low!.stop=(g as World).scroll;
 }
 export function* barrier(g:G,s:RouteState):Co{
  const d=director(g),w=g as World;s.ship.protected=false;
@@ -76,7 +77,7 @@ export function* depart(g:G,s:RouteState):Co{
  g.scrollSpeed(200,.1);g.scrollSpeed(80,12);
  const rock=g.scene('sky_rock-medium-vine',1080,1020);rock.sx=rock.sy=.8;const start=g.t;let said=0;
  const plan:Plan=[{at:.5,go:()=>director(g).event('CH1.air.turn')},{at:7.6,go:()=>director(g).event('CH1.air.rock')},{at:9,go:beeShot(-1)},{at:12,go:beeShot(1)}];
- yield* timeline(g,15,plan,t=>{rock.x=1080-t*58;rock.y=s.ship.vessels[2].y-70;rock.rot=Math.sin(t*.3)*.06;rock.alpha=Math.min(1,(15-t)/2);void said;void w;});
+ yield* timeline(g,15,plan,t=>{rock.x=1080-t*58;rock.y=s.ship.scene.y-70;rock.rot=Math.sin(t*.3)*.06;rock.alpha=Math.min(1,(15-t)/2);void said;void w;});
  rock.dead=true;clear(g);
 }
 /** 第一波：弱蜂机成群从上方和两侧扫过，一两下就能打掉，掉火力。 */
@@ -97,7 +98,7 @@ export function* hijack(g:G,s:RouteState):Co{
  s.ship.follow=true;s.ship.protected=false;
  const hook=(side:-1|1,first=false)=>(g:G)=>{kiteGlide(true,side,first?{weakLabel:'钩机',weakWeapon:'red',hookLabel:'打掉钩机'}:{})(g);if(first)director(g).event('CH1.hijack');};
  const plan:Plan=[
-  {at:1,go:sweepTop(3)},{at:3,go:hook(-1,true)},{at:9,go:craneRow},{at:13,go:turtle(450)},{at:16,go:sweepWave(4)},
+  {at:1,go:sweepTop(3)},{at:3,go:hook(-1,true)},{at:9,go:craneRow},{at:13,go:turtle(450)},{at:16,go:kitePair},
   {at:19,go:hook(1)},{at:21,go:shieldSquad(2)},{at:25,go:scout(250,330)},
   {at:26,go:hook(-1)},{at:27,go:sweepTop(4,600,400)},{at:31,go:seq(stopGo(-1),sweepSide(1,4))},
  ];
@@ -116,7 +117,7 @@ export function* battery(g:G,s:RouteState):Co{
  s.ship.follow=true;s.ship.protected=false;const w=g as World;
  director(g).brief(3);while(director(g).briefRemaining>0)yield;
  let fort:Fortress|undefined,stone:Scenery|undefined,tow:Scenery|undefined,openedAt=-1;
- const bombers=(g:G)=>{for(let i=0;i<3;i++)spawn(g,Bomber,250+i*200,-80-i*40,{noSupplementFire:true});};
+ const bombers=(g:G)=>{for(let i=0;i<3;i++)spawn(g,Bomber,250+i*200,-80-i*40,{noSupplementFire:true,attack:i===0?'oil':i===2?'rocket':undefined});};
  const plan:Plan=[
   {at:0,go:seq(bombers,sweepTop(4))},{at:6,go:g=>{director(g).event('E07.rockWarningShown');}},
   {at:8,go:seq(sweepSide(-1,4),sweepSide(1,4))},
@@ -131,21 +132,42 @@ export function* battery(g:G,s:RouteState):Co{
  yield* timeline(g,66,plan,each);
  if(stone)stone.dead=true;if(tow)tow.dead=true;g.drop('medal',450,40);clear(g);
 }
-/** 急行：追兵从后方和两侧扑来，横扫激光逼出走位。 */
+/** 急行：穿云俯冲进入两侧崖台，追兵与地面火力交错。 */
 export function* rush(g:G,s:RouteState):Co{
- s.ship.follow=true;s.ship.protected=false;director(g).event('CH1.rush');
+ s.ship.follow=true;s.ship.protected=false;enterLowPass(g,s,true);director(g).event('CH1.rush');
  const plan:Plan=[
-  {at:1,go:chaseBehind(5)},{at:4,go:sweepLaser(-1,260)},{at:6,go:inspector},{at:8,go:sweepSide(1,4)},{at:11,go:chaseBehind(6)},
-  {at:14,go:seq(sweepLaser(1,400),sweepSide(-1,3))},{at:16,go:arm(300)},{at:19,go:sweepLaser(-1,200)},{at:20,go:shieldSquad(2,600)},{at:21,go:chaseBehind(5)},
-  {at:25,go:seq(sweepSide(-1,4),sweepSide(1,4))},{at:27,go:seq(sweepLaser(1,300),sweepLaser(-1,500))},{at:30,go:chaseBehind(6)},{at:32,go:drop('ink',450)},
+  {at:2,go:seq(chaseBehind(3),lowTarget(LowCannon,-1))},
+  {at:5,go:lowTarget(LowBallista,1)},
+  {at:8,go:sweepSide(1,2)},
+  {at:9,go:lowTarget(LowEaveGunner,-1)},
+  {at:11,go:chaseBehind(3)},
+  {at:13,go:lowTarget(LowCannon,1)},
+  {at:14,go:seq(sweepLaser(1,400),sweepSide(-1,2))},
+  {at:17,go:lowTarget(LowBallista,-1)},
+  {at:20,go:shieldSquad(1,600)},
+  {at:21,go:seq(chaseBehind(2),lowTarget(LowEaveGunner,1))},
+  {at:25,go:seq(sweepSide(-1,2),sweepSide(1,2),lowTarget(LowCannon,-1))},
+  {at:28,go:lowTarget(LowBallista,1)},
+  {at:30,go:chaseBehind(3)},{at:32,go:drop('ink',450)},
  ];
  yield* timeline(g,36,plan);clear(g);
 }
-/** 关前：铜雀关露出，放慢，短对白交代。 */
+/** 关前：石桥随卷轴滚入并停在铜雀脚下。 */
 export function* gate(g:G,s:RouteState):Co{
- s.ship.follow=true;copperGate(g,s);const silhouette=g.scene('b_sparrow_body',450,190);silhouette.sx=silhouette.sy=.35;silhouette.alpha=.65;
- spawn(g,ShoreCannon,200,370);yield* timeline(g,6,[{at:1,go:sweepSide(-1,2)}]);
- yield* conversation(g,s,'E10.tongqueBlockShown');silhouette.dead=true;g.drop('ink',450,700);clear(g);
+ s.ship.follow=true;copperGate(g,s);const w=g as World,bridge=s.bridge.find(p=>p.sprite==='sky_low-bridge')!;
+ const start=w.scroll;s.low!.stop=undefined;bridge.y=-180;
+ const silhouette=g.scene('b_sparrow_body',450,-250);silhouette.sx=silhouette.sy=.35;silhouette.alpha=.65;silhouette.layer='air';
+ const cannons=[spawn(g,LowCannon,112,-180),spawn(g,LowCannon,788,-180)];
+ g.scrollSpeed(80,1.8);
+ while(bridge.y<300){bridge.y=Math.min(300,-180+w.scroll-start);silhouette.y=bridge.y-70;yield;}
+ // 停靠后景物锁在同一地面坐标，首领的空战卷轴不带走石桥。
+ s.low!.stop=w.scroll;g.scrollSpeed(0);
+ for(const e of cannons)e.y=bridge.y;
+ yield* timeline(g,3,[{at:0,go:sweepSide(-1,2)}]);
+ yield* conversation(g,s,'E10.tongqueBlockShown');
+ g.drop('ink',450,700);clear(g);
+ // 保留桥上剪影，正式首领登场时交接。
+ g.fork((function*():Co{while(!g.liveEnemies().some(e=>e.def.boss))yield;silhouette.dead=true;})());
 }
 export function* escortEnd(g:G,s:RouteState):Co{
  g.music('rest',.8);clear(g);yield* conversation(g,s,'TQ.POST.laodunJoin');join(g,'laodun');s.cart.rot=0;const escortY=s.cart.y;

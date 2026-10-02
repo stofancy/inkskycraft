@@ -10,12 +10,12 @@ export const Kun:EnemyDef={sprite:'b_kun_body',hp:1,score:60000,noCollide:true,b
  const start=e.data.startPhase??1;
  e.invulnerable=true;yield* g.present(e.moveTo(450,80,2));e.data.weakWeapon='blue';e.data.bodyPhase='负城';
     if(start <= 1){
- const eyes=[g.attach(e,Eye,[-205,335]),g.attach(e,Eye,[205,335])];eyes.forEach(n=>mark(n,e,'red','刃 · 独立眼裂','eye'));
+ const eyes=[g.attach(e,Eye,'eyeL'),g.attach(e,Eye,'eyeL',{mirror:true})];eyes.forEach(n=>mark(n,e,'red','刃 · 独立眼裂','eye'));
  yield* g.phase(e,{hp:1000,time:32,name:'鲲张口 · 破眼改变吸口'},function*(){e.invulnerable=false;for(let k=0;;k++){const side=eyes[0].dead?-1:eyes[1].dead?1:k%2?1:-1;e.data.mouthSide=-side;if(eyes.every(n=>n.dead)){e.hp=0;return;}for(let i=0;i<2;i++)if(!eyes[i].dead)g.shoot(eyes[i].x,eyes[i].y,g.aim(eyes[i].x,eyes[i].y),170,{color:'cyan',shape:'rice'});g.fx.charge(450+e.data.mouthSide*160,440,65,1,[.2,1,1]);yield* g.wait(1);g.force({x:450+e.data.mouthSide*160,y:440,radius:540,strength:85,duration:1.4,mode:'attract'});g.laser(450+e.data.mouthSide*160,430,PI/2,{warn:1,duration:.4,width:10,color:'cyan'});yield* g.wait(1.4/g.difficulty.aggression);}});
  e.data.eyeBreaks=eyes.map(n=>n.dead);if(eyes.every(n=>n.dead))e.data.mouthSide=0;for(const n of eyes)if(!n.dead)g.remove(n);
     }
     if(start <= 2){
- const fins=[g.attach(e,Fin,[-245,370]),g.attach(e,Fin,[-245,370],{mirror:true})];fins.forEach(n=>mark(n,e,'blue','流 · 射鳍或引雷','fin'));
+ const fins=[g.attach(e,Fin,'finL'),g.attach(e,Fin,'finL',{mirror:true})];fins.forEach(n=>mark(n,e,'blue','流 · 射鳍或引雷','fin'));
  yield* g.phase(e,{hp:1000,time:32,name:'引雷卸鳍 · 靠柱再撤离'},function*(){e.invulnerable=true;for(let k=0;;k++){if(fins.every(n=>n.dead)){e.hp=0;return;}const p=g.spawn(LightningPillar,k%2?205:695,520,n=>{n.data.contentRole='prop';n.data.linkTo=e.id;});for(const n of fins.filter(n=>!n.dead))g.shoot(n.x,n.y,PI/2,100,{color:'cyan',shape:'big'});const x=450+(e.data.mouthSide??0)*140;g.fx.charge(x,440,80,1,[.2,1,1]);yield* g.wait(1);g.force({x,y:440,radius:520,strength:95-fins.filter(n=>n.dead).length*20,duration:1.5,mode:'attract'});yield* g.wait(4/g.difficulty.aggression);if(!p.dead)g.remove(p);}});
  e.data.finBreaks=fins.filter(n=>n.dead).length;for(const n of fins)if(!n.dead)g.remove(n);
     }
@@ -71,9 +71,9 @@ export function strokeEncloses(pts: readonly number[], px: number, py: number): 
 }
 
 const Wing:EnemyDef={sprite:'b_peng_wing',hp:220,score:5000,noCollide:true,drops:'ink'};
-export const Peng:EnemyDef={sprite:'b_peng_body',hp:1,score:200000,noCollide:true,hits:[[0,140,55]],boss:{name:'鲲鹏 · 鹏',phases:3,music:'boss-peng'},*ai(e,g){
+export const Peng:EnemyDef={sprite:'b_peng_body',hp:1,score:200000,noCollide:true,hits:[[0,20,55]],boss:{name:'鲲鹏 · 鹏',phases:3,music:'boss-peng'},*ai(e,g){
  const start=e.data.startPhase??1;
- e.invulnerable=true;e.x=450;e.y=250;const wings=[g.attach(e,Wing,[-225,140]),g.attach(e,Wing,[-225,140],{mirror:true})];wings.forEach(n=>mark(n,e,'red','刃 · 断翼永久削风','wing'));g.caption('','',.01);
+ e.invulnerable=true;e.x=450;e.y=250;const wings=[g.attach(e,Wing,'wingL'),g.attach(e,Wing,'wingL',{mirror:true})];wings.forEach(n=>mark(n,e,'red','刃 · 断翼永久削风','wing'));g.caption('','',.01);
  if(start<=1)yield* g.phase(e,{hp:1700,time:38,name:'鹏展翼 · 断翼选择风路'},function*(){e.invulnerable=false;e.data.weakWeapon='red';for(let k=0;;k++){const n=wings[k%2];if(!n.dead){g.fx.charge(n.x,n.y,60,1,[1,.4,.2]);yield* g.wait(1);g.force({x:n.x,y:660,radius:300,strength:60,duration:1.2,mode:'wind',vx:k%2?-1:1,vy:0});g.laser(n.x,n.y,PI/2+(k%2?.2:-.2),{warn:1,duration:.7,width:14,color:'amber',follow:n});}else{g.fx.burst(n.x,n.y,4,30,[.2,1,1]);yield* g.wait(1);}if(wings.every(n=>n.dead)){e.hp=0;return;}yield* g.wait(1.4/g.difficulty.aggression);}});
  const broken=wings.map(n=>n.dead);for(let i=0;i<2;i++)if(!wings[i].dead)wings[i].invulnerable=true;e.data.brokenWings=broken;
     if(start <= 2){
@@ -84,7 +84,7 @@ export const Peng:EnemyDef={sprite:'b_peng_body',hp:1,score:200000,noCollide:tru
     }
  for(const wing of wings)if(!wing.dead)g.remove(wing);
  // 终局在无时限的Boss作用域：输入及圈住可见核心共同完成才结束。
- e.data.phase=3;e.invulnerable=true;e.data.bodyPhase='seal';e.data.weakWeapon='purple';e.y=210;const core=g.attach(e,{...Node,hp:1,invulnerable:true},[0,250]);mark(core,e,'purple','印 · 一笔封天闭环','final');
+ e.data.phase=3;e.invulnerable=true;e.data.bodyPhase='seal';e.data.weakWeapon='purple';e.y=210;const core=g.attach(e,{...Node,sprite:'b_peng_core',hp:1,invulnerable:true},'core');mark(core,e,'purple','印 · 一笔封天闭环','final');
  for(;;){g.clearBullets();g.player.ink=1;let last:number[]=[];let was=false,enclosed=false,watching=true;
  g.fork((function*():Co{while(watching){if(g.brush.active){last=g.brush.pts.slice();was=true;}else if(was){enclosed ||=strokeEncloses(last,core.x,core.y);was=false;}yield;}})());
  const pressed=yield* g.challenge({action:'brush',title:'一笔封天',hint:'落笔圈住墨金核心；失手后射三阵眼再试',duration:3});

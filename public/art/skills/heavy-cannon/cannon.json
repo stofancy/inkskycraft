@@ -1,0 +1,153 @@
+{
+  "version": 1,
+  "image": "cannon.png",
+  "atlasSize": [
+    512,
+    384
+  ],
+  "textureScale": 2,
+  "forward": [
+    0,
+    -1
+  ],
+  "coordinateSystem": "所有矩形、锚点、展开位置均为2倍纹理像素；x向右、y向下。rect=[x,y,width,height]；anchor为分件矩形内局部坐标；assemblyPosition为该锚点相对朱雀腹部安装原点的位置。运行时除以textureScale。",
+  "assembly": {
+    "origin": "朱雀腹部安装中心",
+    "bounds": [
+      -90,
+      -188,
+      180,
+      240
+    ],
+    "gameSize": [
+      90,
+      120
+    ],
+    "pose": "展开",
+    "placement": "各分件绘制左上角 = 腹部原点 + (assemblyPosition - anchor) / textureScale；按layer从小到大绘制。"
+  },
+  "parts": {
+    "mount": {
+      "name": "固定座",
+      "rect": [
+        24,
+        24,
+        94,
+        104
+      ],
+      "anchor": [
+        47,
+        52
+      ],
+      "assemblyPosition": [
+        0,
+        0
+      ],
+      "layer": 0,
+      "hinges": {
+        "left": [
+          8,
+          38
+        ],
+        "right": [
+          86,
+          38
+        ]
+      }
+    },
+    "featherLeft": {
+      "name": "左羽板",
+      "rect": [
+        186,
+        24,
+        60,
+        52
+      ],
+      "anchor": [
+        51,
+        9
+      ],
+      "assemblyPosition": [
+        -39,
+        -14
+      ],
+      "layer": 2
+    },
+    "featherRight": {
+      "name": "右羽板",
+      "rect": [
+        342,
+        24,
+        60,
+        52
+      ],
+      "anchor": [
+        9,
+        9
+      ],
+      "assemblyPosition": [
+        39,
+        -14
+      ],
+      "layer": 2
+    },
+    "barrel": {
+      "name": "滑动炮管",
+      "rect": [
+        38,
+        184,
+        66,
+        172
+      ],
+      "anchor": [
+        33,
+        152
+      ],
+      "assemblyPosition": [
+        0,
+        28
+      ],
+      "layer": 1,
+      "muzzle": [
+        33,
+        2
+      ]
+    },
+    "ringRear": {
+      "name": "后悬浮环",
+      "rect": [
+        184,
+        216,
+        64,
+        32
+      ],
+      "anchor": [
+        32,
+        16
+      ],
+      "assemblyPosition": [
+        0,
+        -136
+      ],
+      "layer": 3
+    },
+    "ringFront": {
+      "name": "前悬浮环",
+      "rect": [
+        340,
+        216,
+        64,
+        32
+      ],
+      "anchor": [
+        32,
+        16
+      ],
+      "assemblyPosition": [
+        0,
+        -172
+      ],
+      "layer": 4
+    }
+  }
+}

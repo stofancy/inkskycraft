@@ -205,7 +205,13 @@ export class Brush {
     if(form)w.ui.popup(w.player.x,w.player.y-55,form==='横'?'横 · 墨堤':'竖 · 贯','seal','brush:form');
     if(form==='竖')this.paths.spear(pts,cast);
     if(form==='横')this.colors.wall(pts,cast);
-    if(!closed&&!form)this.slashes.push({pts:pts.slice(),t:0});
+    if(!closed&&!form){
+      this.slashes.push({pts:pts.slice(),t:0});
+      const c=BRUSH_COLORS[w.player.weapon];
+      for(let i=2;i<pts.length;i+=8){const dx=pts[i]-pts[i-2],dy=pts[i+1]-pts[i-1];
+        w.fx.emitHigh({x:pts[i],y:pts[i+1],vx:dx*3,vy:dy*3,drag:10,life:.22,size:17,sizeEnd:8,r:c[0]*.65,g:c[1]*.65,b:c[2]*.65,a:.55,kind:PK.TraceTex});
+      }
+    }
     let sealedEnemies = 0, sealedBullets = 0, rewardedEnemies=0;
     const sealSet=new Set<Enemy>(),freshTargets:Enemy[]=[];
     let hasBoss=false;

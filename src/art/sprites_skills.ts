@@ -8,3 +8,9 @@ export const PAPER_DECOY:SpriteDef={id:'paper_decoy',w:96,h:112,frames:9,draw(ct
  ctx.strokeStyle='#9d3e27';ctx.lineWidth=2;ctx.strokeRect(-7,-16,14,30);ctx.beginPath();ctx.moveTo(-5,-8);ctx.lineTo(5,-8);ctx.moveTo(0,-13);ctx.lineTo(0,9);ctx.moveTo(-5,3);ctx.lineTo(5,3);ctx.stroke();
  for(let i=0;i<hits;i++){const a=i*2.4,x=Math.cos(a)*(9+i)*1.35,y=Math.sin(a)*(9+i)*1.35;ctx.beginPath();for(let j=0;j<=10;j++){const t=j/10*Math.PI*2,r=4.5+Math.sin(j*3+i)*1.5;ctx.lineTo(x+Math.cos(t)*r,y+Math.sin(t)*r);}ctx.closePath();ctx.strokeStyle='#592b0f';ctx.lineWidth=2;ctx.stroke();ctx.save();ctx.globalCompositeOperation='destination-out';ctx.fill();ctx.restore();}
 }};
+
+/** 启动时统一烘焙；炮座分件在运行时仅裁取 UV。 */
+export const HEAVY_CANNON_SPRITES:SpriteDef[]=[
+ {id:"heavy_cannon",w:256,h:192,image:"art/skills/heavy-cannon/cannon.png"},
+ {id:"heavy_phoenix",w:300,h:203,image:"art/skills/heavy-cannon/phoenix.png"},
+];

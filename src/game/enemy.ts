@@ -6,6 +6,7 @@ import type { MusicId, DamageSource } from '../types';
 import type { G } from './api';
 import { oscillate, type BoneAnimation } from '../core/animation';
 import type { SpriteDeform } from '../gl/sprites';
+import { startCh3Animation } from '../art/sprites_ch3_art';
 
 export type ItemKind = 'p' | 'bomb' | 'medal' | 'ink' | 'missile';
 export type ExplosionSize = 's' | 'm' | 'l' | 'xl';
@@ -140,6 +141,7 @@ export class Enemy {
     this.radius = def.radius ?? info.radius;
     this.invulnerable = !!def.invulnerable;
     this.scope = new Scope(parentScope);
+    startCh3Animation(this);
   }
 
   get alive(): boolean {

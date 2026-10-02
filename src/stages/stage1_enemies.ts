@@ -1,3 +1,4 @@
+import { bladeAttack,mineAttack,hookAttack,closeSlash,kiteLine,mountShield } from './stage1_attacks';
 // 第一幕 · 墨山晓：普通敌人定义。每种敌人各有一套走位与攻击，中型以上带一种贴身手段，预警后才出手。
 // 颜色约定：cyan = 自机狙 / 快弹；magenta = 慢速花瓣、圆弹（适合画圈）；amber = 炮塔 / 铜龟的水晶弹。
 import type { Enemy,EnemyDef } from '../game/enemy';
@@ -43,9 +44,10 @@ export const RouteHornet:EnemyDef={name:'巡山蜂机',sprite:'e_hornet',hp:16,s
   g.shoot(e.x,e.y,g.aim(e.x,e.y),140,{shape:'rice',color:'amber'});
   const side=e.x<450?-1:1;let ang=Math.atan2(e.vy,e.vx);for(;;){ang+=-side*2.4*g.dt;e.vel(ang,340);yield;}
  }};
-/** 纸鹤：data.row 为整排压下，按 data.slot 错开依次开火。每轮蓄力 1 秒撒一圈慢弹（第 2 轮加一束瞄准扇形），然后整体横移一步停下；半血折翼成纸团撞船。 */
+/** 纸鹤：编队首尾分别使用纸刃、符雷；其余按 data.slot 错开开火。每轮蓄力 1 秒撒一圈慢弹（第 2 轮加一束瞄准扇形），然后整体横移一步停下；半血折翼成纸团撞船。 */
 export const RouteCrane:EnemyDef={name:'巡路纸鹤',sprite:'e_crane',hp:60,score:650,
  *ai(e,g){const d=e.data,half=()=>e.hp<=e.maxHp*.5;
+  if(d.attack){d.noSupplementFire=true;yield* e.moveTo(d.tx??450,300,1.6);yield* g.wait(.5+(d.slot??0)*.45);for(let i=0;i<2;i++){if(d.attack==='blade')yield* bladeAttack(e,g);else yield* mineAttack(e,g);yield* g.wait(3.5);}yield* e.moveTo(e.x<450?-100:1000,200,2);g.remove(e);return;}
   const wait=function*(sec:number):Generator<void,boolean>{let t=0;while(t<sec){if(half())return true;t+=g.dt;yield;}return half();};
   const x0=d.tx??450;yield* e.moveTo(x0,d.row?240:260,d.row?1.6:2);
   if(yield* wait(d.row?.4+(d.slot??0)*.9:(d.delay??1.5))){yield* crumple(e,g);return;}
@@ -61,23 +63,24 @@ export const RouteCrane:EnemyDef={name:'巡路纸鹤',sprite:'e_crane',hp:60,sco
 function* crumple(e:Enemy,g:G):Co{
  const ship=(g as World).escort;e.scaleX=e.scaleY=.6;e.tint=[.95,.85,.7];g.fx.burst(e.x,e.y,8,40,[1.2,.9,.5]);e.charging=false;
  yield* g.wait(.3);
- for(;;){if(e.dead)return;const vs=ship?.vessels.length?ship.vessels:ship?[ship.scene]:[];let best=vs[0];for(const v of vs)if(!best||Math.hypot(v.x-e.x,v.y-e.y)<Math.hypot(best.x-e.x,best.y-e.y))best=v;
+ for(;;){if(e.dead)return;const best=ship?.scene;
   if(!best){e.vel(PI/2,220);yield;continue;}
   const a=Math.atan2(best.y-e.y,best.x-e.x);e.vel(a,220);
   if(Math.hypot(best.x-e.x,best.y-e.y)<80){ship!.hit(3);g.fx.explosion(e.x,e.y,'s');g.remove(e);return;}
   yield;}
 }
-/** 铜龟：落到浮石林中央，两轮「蓄力 2 秒 → 瞄准扇形晶弹 → 一圈慢弹」，随后缩壳（金线预警 1 秒）滚撞过来，撞完离场。 */
+/** 铜龟：两轮蓄力稀疏晶弹；160像素内蓄势挥斩，随后缩壳滚撞并离场。 */
 export const RouteTurtle:EnemyDef={name:'浮石林铜龟',sprite:'e_turtle',hp:85,armor:.7,score:1000,
- *ai(e,g){yield* e.moveTo(e.data.tx??450,440,2);
+ *ai(e,g){e.data.noSupplementFire=true;closeSlash(e,g);yield* e.moveTo(e.data.tx??450,440,2);
   for(let i=0;i<2;i++){e.charging=true;g.fx.charge(e.x,e.y,32,2,[1.5,.7,.2]);yield* g.wait(2);
-   if(e.charging){g.fan(e.x,e.y,g.aim(e.x,e.y),B(5),.5,150,{shape:'crystal',color:'amber'});e.charging=false;}
-   yield* g.wait(.6);g.ring(e.x,e.y,B(8),100,{shape:'orb',color:'amber'},i*PI/8);yield* g.wait(1);}
+   if(e.charging){g.fan(e.x,e.y,g.aim(e.x,e.y),B(2),.5,150,{shape:'crystal',color:'amber'});e.charging=false;}
+   yield* g.wait(1.6);}
   yield* lunge(e,g,1,280,1.3);yield* g.wait(1.5);
   yield* e.moveTo(e.x<450?-100:1000,390,2);g.remove(e);}};
 /** 纸鸢：顺风滑翔、被阵风吹偏，每滑 2.2 秒停下撒一圈慢花瓣（第 2 圈带瞄准扇形），三圈后金线预警俯冲撞向玩家。data.hook=true 时滑到船上方放钩（线先亮 1.5 秒），钩住后每 2 秒扣船 1 点；半血断线逃走。 */
 export const RouteKite:EnemyDef={name:'横越风筝',sprite:'e_kite',hp:80,score:1100,
  *ai(e,g){const d=e.data,dir=e.x<450?1:-1,y0=e.y,seed=e.id*1.7,ship=(g as World).escort;
+  if(d.lineX!==undefined){d.noSupplementFire=true;if(d.lineLead)yield* kiteLine(e,g);else{yield* e.moveTo(d.lineX,300,1.5);while(!d.lineDone&&d.linePartner&&!d.linePartner.dead)yield;}yield* e.moveTo(e.x<450?-100:1000,e.y-100,1.5);g.remove(e);return;}
   const glide=function*(sec:number):Co{let t=0;while(t<sec){t+=g.dt;e.x+=(dir*80+38*Math.sin(e.age*.55+seed))*g.dt;e.y=y0+34*Math.sin(e.age*.9+seed);yield;}};
   const petals=function*(i:number):Co{g.fx.charge(e.x,e.y,22,.8,[1.5,.7,.2]);yield* g.wait(.8);g.ring(e.x,e.y,B(8),95,{shape:'petal',color:'magenta',life:9,angVel:.3},i*PI/8);if(i===1)g.fan(e.x,e.y,g.aim(e.x,e.y),B(3),.5,185,{shape:'rice',color:'cyan'});};
   if(!d.hook||!ship){for(let i=0;i<3;i++){yield* glide(2.2);yield* petals(i);}yield* lunge(e,g,.9,340,1.1);yield* g.wait(2);g.remove(e);return;}
@@ -88,7 +91,7 @@ export const RouteKite:EnemyDef={name:'横越风筝',sprite:'e_kite',hp:80,score
   yield* g.wait(1.5);
   // 红链挂住云梭并往上拖；8 秒内把钩机打掉一半血，链断云梭回队，否则云梭受 12 点损伤后松钩。
   if(d.hookLabel)(g as World).fodder?.mark(d.hookLabel,e,8);
-  ship.hooks.push(e);d.hooked=true;let next=1.5,held=0;const pl=ship.pull[Math.max(0,ship.vessels.indexOf(ship.scene))];
+  ship.hooks.push(e);d.hooked=true;let next=1.5,held=0;const pl=ship.pull[0];
   while(held<8&&e.hp>e.maxHp*.5){held+=g.dt;next-=g.dt;e.x+=(ship.scene.x-e.x)*Math.min(1,g.dt*1.2);e.y=y0+14*Math.sin(e.age*.9+seed);
    if(ship.follow&&ship.scene.y>e.y+170)pl.y=Math.max(-900,pl.y-120*g.dt);
    if(next<=0){ship.hit(1);next=1.5;}yield;}
@@ -121,30 +124,25 @@ export const RouteScout:EnemyDef={name:'云哨',sprite:'e_turret',hp:60,score:60
   }
   rock.dead=true;g.remove(e);}};
 
-/** 盾筝：编队前的方形大筝。盾面上时只有青（贯穿）能正常打伤；其余颜色伤害 ×0.6；每 3 秒从盾面放一束 5 发宽扇；每 4 秒给 250 范围内的蜂机加 3 秒半伤护盾；血量降到一半盾碎，狂暴直撞玩家。 */
+/** 盾筝：铜盾挡在编队下方，盾可击碎，左右两侧留出射击角度。 */
 export const RouteShield:EnemyDef={name:'盾筝',sprite:'e_kite',hp:60,score:900,
- onHit(e,_g,_x,_y,source){if(!e.data.broken)e.data.damageBonus=source==='blue'?1:.6;},
- *ai(e,g){const d=e.data,x0=d.tx??450;e.scaleX=e.scaleY=1.25;e.tint=[1.2,.95,.7];e.data.damageBonus=.6;
-  yield* e.moveTo(x0,d.ty??330,2);let next=1.5,t=0,fire=2.2;
-  while(e.hp>e.maxHp*.5&&t<16){t+=g.dt;next-=g.dt;fire-=g.dt;e.x=x0+Math.sin(e.age*.8)*70;
-   if(fire<=0){fire=3;g.fx.charge(e.x,e.y,28,.5,[1.5,.7,.2]);yield* g.wait(.5);g.fan(e.x,e.y,g.aim(e.x,e.y),B(5),.8,150,{shape:'crystal',color:'amber'});}
-   if(next<=0){next=4;g.fx.shockwave(e.x,e.y,120,1,.5);for(const a of g.liveEnemies())if(a!==e&&a.def===RouteHornet&&Math.hypot(a.x-e.x,a.y-e.y)<250&&!a.data.shielded){a.data.shielded=true;a.data.damageBonus=.5;a.tint=[1.3,1.1,.7];g.fork((function*(){yield* g.wait(3);a.data.damageBonus=1;a.tint=[1,1,1];a.data.shielded=false;})());}}
-   yield;}
-  e.data.damageBonus=1;
-  if(e.hp>e.maxHp*.5){e.vy=-120;yield* g.wait(3);g.remove(e);return;}
-  // 盾碎：变红，直撞玩家一次
-  e.data.broken=true;e.tint=[1.5,.7,.6];g.fx.burst(e.x,e.y,14,80,[1.4,.9,.5]);e.vel(0,0);yield* g.wait(.5);
-  const a=g.aim(e.x,e.y);e.vel(a,260);yield* g.wait(2.6);e.vy=-160;yield* g.wait(2);g.remove(e);}};
+ *ai(e,g){e.data.noSupplementFire=true;e.scaleX=e.scaleY=1.25;
+  yield* e.moveTo(e.data.tx??450,e.data.ty??330,2);const shield=mountShield(e,g);let t=0;
+  while(t<12&&!shield.dead){t+=g.dt;const ally=g.liveEnemies().find(a=>a!==e&&!a.parent&&a.def===RouteHornet&&a.y<e.y&&Math.abs(a.x-e.x)<240);
+   if(ally)e.x+=(ally.x-e.x)*Math.min(1,g.dt*1.2);yield;}
+  if(!shield.dead)g.remove(shield);yield* e.moveTo(e.x<450?-120:1020,220,2);g.remove(e);
+ }};
 
-/** 巡检机：绕船盘旋一圈（边转边每 1.8 秒朝玩家打 3 发）后拉线（1.2 秒）飞贴船，贴上催缴符，6 秒后扣船 8 点耐久；打死巡检机符立刻揭掉。半血放信号烟，叫来 2 架蜂机。 */
+/** 巡检机：绕船盘旋时朝玩家放两次可打断钩索，随后拉线（1.2 秒）飞贴船，贴上催缴符，6 秒后扣船 8 点耐久；打死巡检机符立刻揭掉。半血放信号烟，叫来 2 架蜂机。 */
 export const RouteInspector:EnemyDef={name:'巡检机',sprite:'e_rotor',hp:60,score:1200,
- *ai(e,g){const ship=(g as World).escort;e.tint=[.85,1,1];
+ *ai(e,g){const ship=(g as World).escort;e.tint=[.85,1,1];e.data.noSupplementFire=true;
+  e.run((function*():Co{yield* g.wait(1.2);for(let i=0;i<2;i++){yield* hookAttack(e,g);yield* g.wait(4.5);}})());
   if(!ship){yield* g.wait(1);g.remove(e);return;}
-  let called=false,fire=1.5;
+  let called=false;
   e.run((function*(){while(e.hp>e.maxHp*.5)yield;if(called)return;called=true;g.fx.burst(e.x,e.y,12,60,[1.4,1.1,.6]);for(let i=0;i<2;i++)g.spawn(RouteHornet,i?960:-60,150,b=>{b.data.contentRole='normal';b.data.patrol=true;b.data.tx=i?640:260;b.data.ty=210;b.data.delay=i*.5;});})());
   const R=230;let ang=e.x<450?PI:0,sweep=0;
   // 绕船一圈
-  while(sweep<PI*2){const cx=ship.scene.x,cy=Math.min(ship.scene.y-130,760);ang+=.8*g.dt;sweep+=.8*g.dt;fire-=g.dt;if(fire<=0){fire=1.8;g.fan(e.x,e.y,g.aim(e.x,e.y),B(3),.4,170,{shape:'rice',color:'cyan'});}e.x+=(cx+Math.cos(ang)*R-e.x)*Math.min(1,g.dt*4);e.y+=(cy+Math.sin(ang)*R*.6-e.y)*Math.min(1,g.dt*4);yield;}
+  while(sweep<PI*2){const cx=ship.scene.x,cy=Math.min(ship.scene.y-130,760);ang+=.8*g.dt;sweep+=.8*g.dt;e.x+=(cx+Math.cos(ang)*R-e.x)*Math.min(1,g.dt*4);e.y+=(cy+Math.sin(ang)*R*.6-e.y)*Math.min(1,g.dt*4);yield;}
   // 拉线 1.2 秒，然后贴符
   const lx=ship.scene.x,ly=ship.scene.y-40;g.laser(e.x,e.y,Math.atan2(ly-e.y,lx-e.x),{warn:1.2,duration:.02,length:Math.hypot(lx-e.x,ly-e.y),width:3,color:'gold'});g.fx.charge(e.x,e.y,28,1.2,[1.5,.9,.3]);yield* g.wait(1.2);
   while(Math.hypot(ship.scene.x-e.x,ship.scene.y-80-e.y)>30){const a=Math.atan2(ship.scene.y-80-e.y,ship.scene.x-e.x);e.x+=Math.cos(a)*320*g.dt;e.y+=Math.sin(a)*320*g.dt;yield;}

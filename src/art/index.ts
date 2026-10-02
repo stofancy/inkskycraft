@@ -1,4 +1,4 @@
-import { PAPER_DECOY } from './sprites_skills';
+import { PAPER_DECOY, HEAVY_CANNON_SPRITES } from './sprites_skills';
 import { SKY_SPRITES } from './sprites_sky';
 import { CH1_FODDER_SPRITES } from './sprites_ch1_fodder';
 import { CH2_STORY_SPRITES } from './ch2_story_assets';
@@ -19,11 +19,12 @@ import { PIPELINE_SPRITES } from './sprites_pipeline';
 import { FX_SPRITES } from './sprites_fx';
 import { CH1_BOSS_SPRITES } from './sprites_boss_ch1';
 import { applyCh2Art } from './sprites_ch2_art';
+import { applyCh3Art } from './sprites_ch3_art';
 import { applyCh1Art } from './sprites_ch1_art';
 
 const SKILL_PARTS:SpriteDef[]=['chaifa','tishen','zhongpao','shenying','bilei'].map(id=>({id:`skill_part_${id}`,w:48,h:48,image:`art/icons/skills/${id}.png`}));
 export const ALL_SPRITES: SpriteDef[] = [
-  PAPER_DECOY, ...SKY_SPRITES, ...SKILL_PARTS, ...STORY_SPRITES, ...CH1_FODDER_SPRITES, ...CH1_AIR_SPRITES, ...CH2_STORY_SPRITES,
+  ...HEAVY_CANNON_SPRITES, PAPER_DECOY, ...SKY_SPRITES, ...SKILL_PARTS, ...STORY_SPRITES, ...CH1_FODDER_SPRITES, ...CH1_AIR_SPRITES, ...CH2_STORY_SPRITES,
   ...PLAYER_SPRITES,
   ...['red','blue','purple'].map(color=>({...PLAYER_SPRITES[0],id:`player_body_${color}`})),
   ...COMMON_SPRITES,
@@ -39,4 +40,4 @@ export const ALL_SPRITES: SpriteDef[] = [
   ...CH1_BOSS_SPRITES,
   ...LETTER_SPRITES,
 ];
-applyCh1Art(ALL_SPRITES);applyCh2Art(ALL_SPRITES);
+applyCh1Art(ALL_SPRITES);applyCh2Art(ALL_SPRITES);applyCh3Art(ALL_SPRITES);

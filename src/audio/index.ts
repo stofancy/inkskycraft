@@ -60,7 +60,7 @@ export function createAudio(): MaterialAudio {
   let G: Graph | null = null;
   let samples: SampleAudio | null = null;
   let ctx: AudioContext | null = null;
-  let vols = { master: 0.8, music: 0.7, sfx: 0.9 };
+  let vols = { master: 0.8, music: 0.7, sfx: 0.9, voice: 0.8 };
   let slow = 0;
   let pending: { id: MusicId | null; fade: number } | null = null;
   const last: Record<string, number> = {};
@@ -73,7 +73,7 @@ export function createAudio(): MaterialAudio {
     G.master.gain.setTargetAtTime(0.9 * vols.master, t, 0.03);
     G.musicIn.gain.setTargetAtTime(0.2 * vols.music, t, 0.03);
     G.sfxIn.gain.setTargetAtTime(0.85 * vols.sfx, t, 0.03);
-    samples?.volumes(vols.music, vols.sfx);
+    samples?.volumes(vols.music, vols.voice);
   };
   // 未就绪的采样由 SampleAudio 延续道中曲，不调度合成鼓组。
   const startMusic = (id: MusicId | null, fade: number) => {
@@ -127,6 +127,9 @@ export function createAudio(): MaterialAudio {
       } catch { /* 忽略 */ }
     },
     stopSfx(id){samples?.stopSfx(id);},
+    prefetchDialogue(lines) { samples?.dialogue.prefetch(lines); },
+    playDialogue(id, text) { return samples?.playDialogue(id, text) ?? null; },
+    stopDialogue() { samples?.dialogue.stop(); },
     music(id, fadeSec = 1) {
       if (!G) { pending = { id, fade: fadeSec }; return; }
       const chapter = id ? MUSIC_CONTEXT[id] : undefined;
@@ -142,7 +145,7 @@ export function createAudio(): MaterialAudio {
       G.revOut.gain.setTargetAtTime(0.5 + 0.6 * slow, t, 0.1);
       G.det.offset.setTargetAtTime(-130 * slow, t, 0.1);
     },
-    setVolumes(m, mu, s) { vols = { master: m, music: mu, sfx: s }; applyVols(); },
+    setVolumes(m, mu, s, v) { vols = { master: m, music: mu, sfx: s, voice: v }; applyVols(); },
     beat(): BeatInfo {
       if (G && ctx && samples?.playing) {
         const track = samples.playing, bpm = MUSIC_CUES[track.id].bpm;

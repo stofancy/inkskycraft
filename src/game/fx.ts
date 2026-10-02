@@ -54,7 +54,7 @@ export class FxSystem implements Fx {
 
   /** 按粒子类型自动选择层：墨/烟/花瓣/碎片在低层，其余在高层。 */
   emit(p: ParticleSpec): void {
-    const lowKind = p.kind === PK.Ink || p.kind === PK.Smoke || p.kind === PK.Shard || p.kind === PK.Petal;
+    const lowKind = p.kind === PK.Ink || p.kind === PK.Smoke || p.kind === PK.SmokeShape || p.kind === PK.Shard || p.kind === PK.Petal;
     (lowKind ? this.low : this.high).emit(p);
   }
 
@@ -98,10 +98,10 @@ export class FxSystem implements Fx {
     // 点火闪光短促收住，让翻卷体积的明暗面在爆发后显露。
     this.emitHigh({ x, y, life: 0.10 + 0.008 * k, size: 12 * sk, sizeEnd: 30 * sk, r: color[0], g: color[1], b: color[2], a: 0.65, kind: PK.Dot });
     if (cold || electric) {
-      this.radial(x,y,this.n(18*k),180*sk,650*sk,{life:cold?0.6:0.35,drag:2.8,size:cold?4:2.4,spin:cold?8:0,r:color[0],g:color[1],b:color[2],r1:color[0]*.18,g1:color[1]*.18,b1:color[2]*.18,kind:cold?PK.Shard:PK.Spark});
+      this.radial(x,y,this.n(18*k),180*sk,650*sk,{life:cold?0.6:0.35,drag:2.8,size:cold?4:2.4,spin:cold?8:0,r:color[0],g:color[1],b:color[2],r1:color[0]*.18,g1:color[1]*.18,b1:color[2]*.18,kind:cold?PK.Shard:PK.SparkTex});
     } else if (!ink) {
       // 火花（HDR 头 + 运动模糊尾）
-      this.radial(x, y, this.n(24 * k), 260 * sk, 900 * sk, { life: 0.6, drag: 3.0, size: 3, r: 3.0, g: 1.9, b: 0.75, r1: 1.3, g1: 0.32, b1: 0.05, kind: PK.Spark });
+      this.radial(x, y, this.n(24 * k), 260 * sk, 900 * sk, { life: 0.6, drag: 3.0, size: 5, r: 1.8, g: 1.0, b: 0.3, r1: .7, g1: .18, b1: .04, kind: PK.SparkTex });
       // 余烬（上浮）
       this.radial(x, y, this.n(10 * k), 40 * sk, 220 * sk, { life: 1.6, drag: 1.6, grav: -40, size: 2.2, r: 2.2, g: 0.8, b: 0.18, r1: 0.6, g1: 0.1, b1: 0.02, kind: PK.Ember });
     } else {
@@ -136,6 +136,12 @@ export class FxSystem implements Fx {
     if (k >= 3) this.flash(k >= 5 ? 0.07 : 0.025,color);
     const pan = (x / PLAY_W) * 2 - 1;
     this.audio.sfx(size === 's' ? 'explode_s' : size === 'm' ? 'explode_m' : size === 'l' ? 'explode_l' : 'explode_boss', { pan: pan * 0.6 });
+    // 形状层沿爆点翻卷：保留体积主体，小中大按同一尺度递增。
+    const shapeColor:RGB = cold ? [.18,.85,.65] : electric ? [.68,.3,.9] : ink ? [1.05,.24,.065] : [1.5,.55,.12];
+    this.radial(x,y,this.n(4*k),25*sk,125*sk,{life:.46,drag:3,size:18*sk,sizeEnd:30*sk,spin:1.1,r:shapeColor[0],g:shapeColor[1],b:shapeColor[2],r1:shapeColor[0]*.3,g1:shapeColor[1]*.2,b1:shapeColor[2]*.2,a:.65,kind:PK.FireShape},10*sk);
+    this.radial(x,y,this.n(3*k),35*sk,110*sk,{life:1.15,drag:2,grav:-22,size:14*sk,sizeEnd:36*sk,spin:.4,r:.095,g:.08,b:.065,a:.48,kind:PK.SmokeShape},14*sk);
+    this.emitHigh({x,y,life:.12,size:25*sk,sizeEnd:36*sk,r:shapeColor[0],g:shapeColor[1],b:shapeColor[2],a:.4,kind:PK.FlareTex});
+    if(cold||electric)this.emitHigh({x,y,life:.32,size:22*sk,sizeEnd:45*sk,rot:this.rr(-1,1),spin:1.2,r:shapeColor[0],g:shapeColor[1],b:shapeColor[2],a:.35,kind:PK.TwirlTex});
   }
 
   /** 每个敌人保存本地坐标伤痕；连续武器按来源节流，阻挡保留反弹标识。 */
@@ -151,7 +157,8 @@ export class FxSystem implements Fx {
     if(!blocked){
       // 主体形状由 drawDamage 画；少量粒子补上各自材质的飞散。
       this.radial(x,y,this.n(armorHit?5:enemy.data.copperPart?14:6),armorHit?70:110,armorHit?160:320,{life:armorHit?.22:source==='blue'?.24:.2,drag:5,size:armorHit?2:enemy.data.copperPart?4:2.5,spin:source==='blue'?9:0,r:c[0],g:c[1],b:c[2],kind:PK.Spark});
-      this.emitHigh({x,y,life:.045,size:4,sizeEnd:7,r:c[0],g:c[1],b:c[2],a:.4,kind:PK.Dot});
+      this.radial(x,y,this.n(2),60,180,{life:.22,drag:5,size:8,sizeEnd:4,r:c[0]*.7,g:c[1]*.7,b:c[2]*.7,a:.7,kind:PK.SparkTex});
+      this.emitHigh({x,y,life:.045,size:12,sizeEnd:18,r:c[0]*.7,g:c[1]*.7,b:c[2]*.7,a:.45,kind:PK.FlareTex});
       if(!armorHit&&visual==='blue')this.emitHigh({x,y,life:.22,size:3,sizeEnd:20,r:.2,g:1.3,b:1.4,a:.32,kind:PK.Ring});
       if(!armorHit&&visual==='red')this.emit({x,y,vx:this.rr(-45,45),vy:this.rr(-25,40),life:.22,size:2,sizeEnd:1,r:.02,g:.015,b:.012,a:.65,kind:PK.Ink});
     }
@@ -241,12 +248,13 @@ export class FxSystem implements Fx {
       this.emitHigh({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, drag: 5, life: this.rr(.15, .32), size: 2.5, r: c[0], g: c[1], b: c[2], kind: PK.Spark });
     }
     this.emitHigh({ x, y, life: .1, size: 14, sizeEnd: 30, r: c[0] * .7, g: c[1] * .7, b: c[2] * .7, a: .85, kind: PK.Dot });
-    this.emitHigh({ x, y, life: .2, size: 8, sizeEnd: 40, r: c[0] * .5, g: c[1] * .5, b: c[2] * .5, a: .6, kind: PK.Ring });
+    this.emitHigh({ x, y, life: .2, size: 42, sizeEnd: 58, rot:angle-Math.PI/2, r: c[0] * .5, g: c[1] * .5, b: c[2] * .5, a: .7, kind: PK.SlashTex });
   }
 
   /** 子弹化金的闪光。 */
   gold(x: number, y: number): void {
     this.emitHigh({ x, y, life: 0.35, size: 5, sizeEnd: 16, r: 2.2, g: 1.6, b: 0.5, a: 0.8, kind: PK.Ring });
+    this.emitHigh({x,y,life:.2,size:14,sizeEnd:20,r:1.1,g:.7,b:.2,a:.65,kind:PK.StarTex});
     const a = this.rng.next() * 6.28;
     this.emitHigh({ x, y, vx: Math.cos(a) * 60, vy: Math.sin(a) * 60 - 40, drag: 1.5, life: 0.9, size: 3, spin: 8, r: 2.0, g: 1.4, b: 0.4, kind: PK.Leaf });
   }

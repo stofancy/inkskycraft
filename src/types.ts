@@ -40,6 +40,7 @@ export interface Settings {
   masterVol: number; // 0..1
   musicVol: number;  // 0..1
   sfxVol: number;    // 0..1
+  voiceVol: number;  // 0..1
   showFps: boolean;
 }
 
@@ -50,6 +51,7 @@ export const DEFAULT_SETTINGS: Settings = {
   masterVol: 0.8,
   musicVol: 0.7,
   sfxVol: 0.8,
+  voiceVol: 0.8,
   showFps: false,
 };
 
@@ -172,6 +174,7 @@ export interface UIEvents {
   onChoice?(id: string): void;
   /** 暂停对白的手动补全与翻页反馈。 */
   onDialogueSound?(): void;
+  onDialogueStop?(): void;
   /** 让音频播放菜单音效。 */
   onMenuSound(kind: 'move' | 'ok' | 'back'): void;
 }
@@ -254,6 +257,8 @@ export interface BeatInfo {
 }
 
 /** 由 src/audio 实现。 */
+export interface DialogueVoiceState { id: string; state: 'loading' | 'playing' | 'ended' | 'silent' | 'stopped' }
+
 export interface GameAudio {
   /** 首次用户手势时调用。可重复调用。 */
   init(): Promise<void>;
@@ -261,10 +266,13 @@ export interface GameAudio {
   prepareMusic(chapter: number, bossesReady?: boolean): Promise<void>;
   sfx(id: Sfx, opts?: { pan?: number; vol?: number; pitch?: number }): void;
   stopSfx?(id:Sfx):void;
+  prefetchDialogue(lines: readonly { id: string; text: string }[]): void;
+  playDialogue(id: string, text: string): DialogueVoiceState | null;
+  stopDialogue(): void;
   /** 切换音乐，null 为停止。 */
   music(id: MusicId | null, fadeSec?: number): void;
   /** 一笔（子弹时间）强度 0..1：低通、降调、混响加深。 */
   setSlowmo(amount: number): void;
-  setVolumes(master: number, music: number, sfx: number): void;
+  setVolumes(master: number, music: number, sfx: number, voice: number): void;
   beat(): BeatInfo;
 }

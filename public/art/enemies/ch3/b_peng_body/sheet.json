@@ -1,0 +1,173 @@
+{
+  "version": 1,
+  "assetVersion": "ART-27-v1",
+  "image": "art/enemies/ch3/b_peng_body/sheet.png",
+  "columns": 4,
+  "rows": 2,
+  "count": 8,
+  "fps": 10,
+  "mode": "loop",
+  "frameSize": [
+    300,
+    380
+  ],
+  "runtimeSize": [
+    300,
+    380
+  ],
+  "radius": 90,
+  "anchorPixel": [
+    150.0,
+    190.0
+  ],
+  "pivot": [
+    0,
+    0
+  ],
+  "anchors": {
+    "wingL": [
+      -88,
+      -20
+    ],
+    "core": [
+      0,
+      20
+    ],
+    "beak": [
+      0,
+      187
+    ]
+  },
+  "anchorPixels": {
+    "wingL": [
+      62.0,
+      170.0
+    ],
+    "core": [
+      150.0,
+      210.0
+    ],
+    "beak": [
+      150.0,
+      377.0
+    ]
+  },
+  "segments": {
+    "idle": {
+      "start": 0,
+      "count": 8,
+      "fps": 10,
+      "mode": "loop"
+    }
+  },
+  "source": "studio/art/ART-27/b_peng_body-source.png",
+  "orientation": "nose-down",
+  "lighting": "upper-left",
+  "frames": [
+    {
+      "index": 0,
+      "anchorPixel": [
+        150.0,
+        190.0
+      ],
+      "contentBounds": [
+        23,
+        0,
+        276,
+        378
+      ]
+    },
+    {
+      "index": 1,
+      "anchorPixel": [
+        150.0,
+        190.0
+      ],
+      "contentBounds": [
+        23,
+        0,
+        276,
+        378
+      ]
+    },
+    {
+      "index": 2,
+      "anchorPixel": [
+        150.0,
+        190.0
+      ],
+      "contentBounds": [
+        23,
+        0,
+        276,
+        378
+      ]
+    },
+    {
+      "index": 3,
+      "anchorPixel": [
+        150.0,
+        190.0
+      ],
+      "contentBounds": [
+        23,
+        0,
+        276,
+        378
+      ]
+    },
+    {
+      "index": 4,
+      "anchorPixel": [
+        150.0,
+        190.0
+      ],
+      "contentBounds": [
+        23,
+        0,
+        276,
+        378
+      ]
+    },
+    {
+      "index": 5,
+      "anchorPixel": [
+        150.0,
+        190.0
+      ],
+      "contentBounds": [
+        23,
+        0,
+        276,
+        378
+      ]
+    },
+    {
+      "index": 6,
+      "anchorPixel": [
+        150.0,
+        190.0
+      ],
+      "contentBounds": [
+        23,
+        0,
+        276,
+        378
+      ]
+    },
+    {
+      "index": 7,
+      "anchorPixel": [
+        150.0,
+        190.0
+      ],
+      "contentBounds": [
+        23,
+        0,
+        276,
+        378
+      ]
+    }
+  ],
+  "note": "固定安装点；右侧鳍与翼由代码镜像。8 帧待机：铜羽轻摆与金白光呼吸，炮位和连接区域保持固定。"
+}

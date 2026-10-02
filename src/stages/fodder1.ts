@@ -9,10 +9,10 @@ import { FODDER_TEXT,FODDER_NAME,type FodderName } from './fodder1_text';
 import { AirBomb,Bomber,NetPost,BridgeTurret } from './stage1_air_enemies';
 import { RouteHornet } from './stage1_enemies';
 import { RS } from '../gl/ribbons';
-import type { DamageSource } from '../types';
+import type { DamageSource,DialogueVoiceState } from '../types';
 import type { Co } from '../core/tasks';
 
-interface Bubble {name:FodderName;trigger:string;text:string;owner?:Enemy;x:number;y:number;at:number;duration:number}
+interface Bubble {name:FodderName;trigger:string;text:string;owner?:Enemy;x:number;y:number;at:number;duration:number;voice:DialogueVoiceState|null}
 interface Actor {name:FodderName;e:Enemy;state:string;at:number;next:number;count:number;stolen?:Item;target?:Enemy;startHp?:number;exposedUntil?:number;rage?:number;warnings?:{x:number;y:number;started:number;dead:boolean}[]}
 export class FodderChapter {
  readonly actors:Actor[]=[];bubbles:Bubble[]=[];labels:{text:string;owner:Enemy;until:number}[]=[];
@@ -32,18 +32,24 @@ export class FodderChapter {
  dispose(){this.canvas.remove();}
  record(name:string,event:string,detail?:unknown){this.log.push({name,event,at:this.w.real,detail});}
  get longDialogue(){return !!this.w.chapterDialogue?.current?.long;}
+ private retainBubble(b:Bubble){
+  if(this.longDialogue||b.owner?.dead){if(b.voice?.state==='playing'||b.voice?.state==='loading')this.w.audio.stopDialogue();return false;}
+  if(b.voice?.state==='playing'||b.voice?.state==='loading')return true;
+  if(b.voice?.state==='ended'){b.duration=this.w.real-b.at+.3;b.voice=null;}
+  return this.w.real-b.at<b.duration;
+ }
  bubble(name:FodderName,trigger:string,e:Enemy,ending=false):boolean{
   if(this.longDialogue)return false;
   const text=(FODDER_TEXT[name] as Record<string,unknown>)[trigger];if(typeof text!=='string')return false;
-  this.bubbles=this.bubbles.filter(b=>this.w.real-b.at<b.duration&&(!b.owner||!b.owner.dead));
+  this.bubbles=this.bubbles.filter(b=>this.retainBubble(b));
   if(ending)this.bubbles=this.bubbles.filter(b=>b.owner!==e);
   else if(this.w.real-(this.lastBubble.get(name)??-Infinity)<1.5)return false;
   this.bubbles=this.bubbles.filter(b=>b.owner!==e);
   if(this.bubbles.length>=2)return false;
-  this.bubbles.push({name,trigger,text,owner:ending?undefined:e,x:e.x,y:e.y,at:this.w.real,duration:Math.max(2.5,Array.from(text).length*.18)});this.lastBubble.set(name,this.w.real);
+  this.bubbles.push({name,trigger,text,owner:ending?undefined:e,x:e.x,y:e.y,at:this.w.real,duration:Math.max(2.5,Array.from(text).length*.18),voice:this.w.audio.playDialogue(`CH1.FODDER.${name}.${trigger}`,text)});this.lastBubble.set(name,this.w.real);
   this.record(name,'bubble',trigger);return true;
  }
- reaction(name:FodderName){const r=(FODDER_TEXT[name] as {R?:readonly string[]}).R;if(r)this.w.chapterDialogue?.short(`fodder.${name}.${this.event}.${this.w.real}`,r[0],r[1]);}
+ reaction(name:FodderName){const r=(FODDER_TEXT[name] as {R?:readonly string[]}).R;if(r)this.w.chapterDialogue?.short(`CH1.FODDER.${name}.R`,r[0],r[1]);}
  hit(e:Enemy){const a=this.actors.find(a=>a.e===e);if(!a)return;e.data.fodderHit=true;
   const hit:Partial<Record<FodderName,string>>={周网:'02',钱耗:'03',老鸹:'03',小铃:'02',麻三:'03',阿豆:'02',老耿:'03'};
   if(a.name==='周网'&&a.state==='repair'){a.state='interrupted';e.data.repairProgress=0;this.record(a.name,'repairInterrupted');}
@@ -99,12 +105,11 @@ export class FodderChapter {
    case 'S7':this.schedule('小铃',10,100,160);break;
   }
  }
- end(){this.serial++;for(const a of this.actors)a.warnings?.forEach(v=>v.dead=true);for(const s of this.decor)s.dead=true;this.decor=[];for(const a of this.actors)if(!a.e.dead)this.w.remove(a.e);this.bubbles=[];this.labels=[];this.event='';}
+ end(){this.serial++;for(const a of this.actors)a.warnings?.forEach(v=>v.dead=true);for(const s of this.decor)s.dead=true;this.decor=[];for(const a of this.actors)if(!a.e.dead)this.w.remove(a.e);if(this.bubbles.some(b=>b.voice?.state==='playing'||b.voice?.state==='loading'))this.w.audio.stopDialogue();this.bubbles=[];this.labels=[];this.event='';}
  scene(key:string,x:number,y:number){const s=this.w.scene(CH1_DECOR_ART[key].sprite,x,y);s.layer='ground';s.fps=CH1_DECOR_ART[key].asset?.sheet?.fps??0;this.decor.push(s);return s;}
  splash(x:number,y:number){this.w.fx.burst(x,y,14,100,[.6,.85,.9],.6);this.record('环境','splash',{x,y});}
  update(){const w=this.w,dt=w.dt,now=w.real;
-  if(this.longDialogue)this.bubbles=[];
-  this.bubbles=this.bubbles.filter(b=>now-b.at<b.duration&&(!b.owner||!b.owner.dead));this.maxBubbles=Math.max(this.maxBubbles,this.bubbles.length);this.maxEnemies=Math.max(this.maxEnemies,w.density.count(w.enemies));this.maxBullets=Math.max(this.maxBullets,w.bulletCount());
+  this.bubbles=this.bubbles.filter(b=>this.retainBubble(b));this.maxBubbles=Math.max(this.maxBubbles,this.bubbles.length);this.maxEnemies=Math.max(this.maxEnemies,w.density.count(w.enemies));this.maxBullets=Math.max(this.maxBullets,w.bulletCount());
   for(const a of this.actors){const e=a.e;if(e.dead||e.data.densityQueued||e.sealed>0||e.stunned>0)continue;
    const move=(x:number,y:number,speed:number)=>{const dx=x-e.x,dy=y-e.y,d=Math.hypot(dx,dy),step=Math.min(d,speed*dt);if(d){e.x+=dx/d*step;e.y+=dy/d*step;}return d<=step+1;};
    if(a.name==='周网'){

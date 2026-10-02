@@ -3,6 +3,15 @@ const rock = (name: string, w: number, h: number): SpriteDef => ({
  id: `sky_${name}`, w, h, image: `art/sky/ch1/${name}.png`,
 });
 export const SKY_SPRITES: SpriteDef[] = [
+ ...Object.entries({
+   'terrace-left':[255,1020], 'terrace-right':[255,1020], bridge:[900,300],
+   'roof-a':[168,123], 'roof-b':[132,132],
+ }).map(([name,[w,h]])=>({id:`sky_low-${name}`,w,h,image:`art/sky/ch1-low/${name}.png`,imageFilter:'saturate(.55) contrast(.8) brightness(1.1)'})),
+ ...Object.entries({
+   'cannon-base':[104,104], 'cannon-barrel':[36,72], wreck:[100,82],
+ }).map(([name,[w,h]])=>({id:`low_${name}`,w,h,radius:30,image:`art/enemies/ch1/ground/${name}.png`,imageFilter:'saturate(.6) contrast(.85) brightness(1.12)',textureScale:2,
+   ...(name==='cannon-barrel'?{pivot:[0,21.75] as [number,number]}:{})})),
+ ...['ballista','eave-gunner'].map(name=>({id:`low_${name}`,w:104,h:104,radius:32,frames:2,textureScale:2,imageFilter:'saturate(.6) contrast(.85) brightness(1.12)',sheet:{image:`art/enemies/ch1/ground/${name}.png`,columns:2,rows:1,count:2,fps:1,mode:'once' as const}})),
  // 旧关卡挂点与炮台沿用这个 id，替换美术时保持原来的尺寸与位置。
  { id: 'sky_rock', w: 280, h: 240, image: 'art/sky/ch1/rock-medium-vine.png' },
  rock('rock-large-pine', 200, 300), rock('rock-large-root', 180, 270),

@@ -1,0 +1,178 @@
+{
+  "version": 1,
+  "assetVersion": "v1",
+  "image": "art/enemies/ch3/m_leigong/sheet.png",
+  "columns": 4,
+  "rows": 2,
+  "count": 8,
+  "fps": 8,
+  "mode": "loop",
+  "frameSize": [
+    640,
+    560
+  ],
+  "runtimeSize": [
+    320,
+    280
+  ],
+  "radius": 90,
+  "anchorPixel": [
+    320,
+    280
+  ],
+  "pivot": [
+    0,
+    0
+  ],
+  "anchors": {
+    "root": [
+      0,
+      0
+    ],
+    "hammerL": [
+      -128,
+      98
+    ],
+    "hammerR": [
+      128,
+      98
+    ],
+    "core": [
+      0,
+      -10
+    ]
+  },
+  "anchorPixels": {
+    "root": [
+      320,
+      280
+    ],
+    "hammerL": [
+      64,
+      476
+    ],
+    "hammerR": [
+      576,
+      476
+    ],
+    "core": [
+      320,
+      260
+    ]
+  },
+  "segments": {
+    "idle": {
+      "start": 0,
+      "count": 8,
+      "fps": 8,
+      "mode": "loop"
+    }
+  },
+  "frames": [
+    {
+      "index": 0,
+      "anchorPixel": [
+        320,
+        280
+      ],
+      "contentBounds": [
+        8,
+        9,
+        632,
+        550
+      ]
+    },
+    {
+      "index": 1,
+      "anchorPixel": [
+        320,
+        280
+      ],
+      "contentBounds": [
+        8,
+        9,
+        632,
+        550
+      ]
+    },
+    {
+      "index": 2,
+      "anchorPixel": [
+        320,
+        280
+      ],
+      "contentBounds": [
+        8,
+        9,
+        632,
+        550
+      ]
+    },
+    {
+      "index": 3,
+      "anchorPixel": [
+        320,
+        280
+      ],
+      "contentBounds": [
+        8,
+        9,
+        632,
+        550
+      ]
+    },
+    {
+      "index": 4,
+      "anchorPixel": [
+        320,
+        280
+      ],
+      "contentBounds": [
+        8,
+        9,
+        632,
+        550
+      ]
+    },
+    {
+      "index": 5,
+      "anchorPixel": [
+        320,
+        280
+      ],
+      "contentBounds": [
+        8,
+        9,
+        632,
+        550
+      ]
+    },
+    {
+      "index": 6,
+      "anchorPixel": [
+        320,
+        280
+      ],
+      "contentBounds": [
+        8,
+        9,
+        632,
+        550
+      ]
+    },
+    {
+      "index": 7,
+      "anchorPixel": [
+        320,
+        280
+      ],
+      "contentBounds": [
+        8,
+        9,
+        632,
+        550
+      ]
+    }
+  ],
+  "note": "正俯视雷部执法法器。2倍纹理；运行时320×280，三个玩法锚点保持。8帧待机只改变雷核明灭和鼓面紫白电弧，固定机体、双锤和灵核位置。"
+}

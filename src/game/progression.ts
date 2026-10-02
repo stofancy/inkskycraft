@@ -1,3 +1,4 @@
+import type { CannonCast } from './boss-caps';
 import type { Renderer } from '../gl/renderer';
 import { RS } from '../gl/ribbons';
 import { burnDraw, burnEmit } from './burn-fx';
@@ -9,19 +10,19 @@ import { auraLine, auraRing } from './aura';
 import { PLAY_W } from '../types';
 import type { DamageSource } from '../types';
 export type { DamageSource };
-export type CombatWorld = Omit<World,'damage'> & { damage(e:Enemy,amount:number,x?:number,y?:number,quiet?:boolean,source?:DamageSource,ink?:{tag?:'burn'}):void };
+export type CombatWorld = Omit<World,'damage'> & { damage(e:Enemy,amount:number,x?:number,y?:number,quiet?:boolean,source?:DamageSource,ink?:{tag?:'burn';castKey?:object}):void };
 export interface Talent { id:string; name:string; route:string; description:string; preview:string; icon:string; max:number }
 export interface ProgressionAction { kind:'hit'|'kill'|'graze'|'brushRelease'|'seal'|'bomb'|'focus'|'weaponChange'; source?:DamageSource; amount?:number; enemy?:Enemy; pts?:number[]; erased?:number; hits?:number }
 const talent=(id:string,name:string,route:string,description:string,asset=id):Talent=>({id,name,route,description,preview:id,icon:`/art/icons/talents/${asset}.png`,max:1});
 export const TALENTS: Talent[] = [
- talent('huoyu','火羽','朱','散射弹让目标燃烧 2 秒，再次命中刷新燃烧。'),
+ talent('huoyu','火羽','朱','凤火半径增大四分之一，圈内敌机再燃烧 2 秒。'),
  talent('liaoyuan','燎原','朱','朱色时击坠普通敌机爆开火圈，火圈可以连爆。'),
  talent('niepan','涅槃','护身','每章一次：死亡爆出火环，清普通敌弹并保住火力。','yuhuo'),
  talent('fenguang','分光','青','光束命中第一架大型机，向左右分出两道斜光。'),
  talent('hujian','护剑','青','四把飞剑每 3 秒挡下一颗碰到你的普通敌弹。','yujian'),
  talent('guanri','贯日','青','光束宽度增加一半，贯穿敌机时伤害不衰减。'),
  talent('liansuo','连锁','紫','电弧多跳 2 个目标。'),
- talent('tianlei','天雷','紫','持续电击 3 秒引来天雷，落点周围的敌机也受伤。','leiji'),
+ talent('tianlei','天雷','紫','雷印积满只需 0.8 秒，天雷多跳 1 个目标。','leiji'),
  talent('dianci','电磁','紫','每次放电，电弧沿途最多消掉 2 颗普通敌弹。'),
  talent('jifeng','疾风','翻滚','翻滚充能上限从 2 次增加到 3 次。'),
  talent('monang','墨囊','泼墨','泼墨上限加 1，立即补 1 颗；之后每章再补 1 颗。'),
@@ -37,12 +38,12 @@ export class Progression {
  private fields:Field[]=[];
  private choicesClaimed=new Set<string>();
  private signals=new Map<string,{timer:number;triggers:number}>();
- private burns=new Map<Enemy,{left:number;dps:number;ember:number;age:number}>();
+ private burns=new Map<Enemy,{cast?:CannonCast;left:number;dps:number;ember:number;age:number}>();
  private fireQueue:Enemy[]=[]; private exploding=false; private exploded=new WeakSet<Enemy>();
  private visuals:TalentFX[]=[]; private splits:SplitBeam[]=[];
  private time=0; private hitBudget=0;
  private rebornUsed=false; private swordCooldown=0;
- swordFlash=0; swordIndex=0; thunderTime=0;
+ swordFlash=0; swordIndex=0;
  constructor(readonly w:CombatWorld){}
  rank(id:string):number{return this.talents.get(id)??0;}
  has(id:string):boolean{return this.rank(id)>0;}
@@ -50,7 +51,7 @@ export class Progression {
  get brushMods(){return {minInk:.25,costScale:1,width:18,sealDuration:2.8,damageScale:1};}
  get bombMods(){return {duration:2.6,inkReturn:0,damageScale:(1+(this.bombLevel-1)*.1)};}
  resetRun():void{this.level=1;this.xp=0;this.brushLevel=this.bombLevel=1;this.brushXP=this.bombXP=0;this.pendingChoices=0;this.offers=[];this.talents.clear();this.choicesClaimed.clear();this.signals.clear();this.resetStage();}
- resetStage():void{for(const s of this.signals.values())s.timer=0;this.fields=[];this.burns.clear();this.fireQueue=[];this.exploded=new WeakSet();this.exploding=false;this.visuals=[];this.splits=[];this.hitBudget=0;this.rebornUsed=false;this.swordCooldown=this.swordFlash=this.thunderTime=0;}
+ resetStage():void{for(const s of this.signals.values())s.timer=0;this.fields=[];this.burns.clear();this.fireQueue=[];this.exploded=new WeakSet();this.exploding=false;this.visuals=[];this.splits=[];this.hitBudget=0;this.rebornUsed=false;this.swordCooldown=this.swordFlash=0;}
  /** 由章节入口在玩家复位之后调用一次；重生不补发。 */
  beginChapter():void{if(this.has('monang'))this.supplyInk();}
  private supplyInk():void{const p=this.w.player,old=p.bombs;p.bombs=Math.min(this.bombMax,p.bombs+1);if(p.bombs>old)this.trigger('monang',p.x,p.y);}
@@ -92,7 +93,8 @@ export class Progression {
  }
  onBrushRelease(pts:number[],hits=0,erased=0,sealed=0):void{const effective=hits+sealed+Math.min(8,erased*.15);if(effective>0)this.grant('brush',effective*2);}
  onBomb():void {const targets=this.w.enemies.filter(e=>this.w.targetable(e)).length,threats=this.w.bullets.list.filter(b=>!b.dead&&!b.hard).length;if(targets||threats)this.grant('bomb',Math.min(8,targets*2+threats*.08));}
- onRedHit(e:Enemy,damage:number):void{if(!this.has('huoyu')||e.dead||e.invulnerable)return;this.burns.set(e,{left:2,dps:damage,ember:0,age:this.burns.get(e)?.age??0});this.trigger('huoyu',e.x,e.y);}
+ /** 凤火炸开后调用：有火羽天赋则让目标再燃烧 2 秒。 */
+ ignite(e:Enemy,dps:number,cast?:CannonCast):void{if(!this.has('huoyu')||e.dead||e.invulnerable)return;this.burns.set(e,{cast,left:2,dps,ember:0,age:this.burns.get(e)?.age??0});this.trigger('huoyu',e.x,e.y);}
  isBossPart(e:Enemy):boolean{for(let p:Enemy|null=e;p;p=p.parent)if(p.def.boss||p.data.bossOwner)return true;return false;}
  isLarge(e:Enemy):boolean{return e.maxHp>=300||this.isBossPart(e);}
  private fireDeath(e:Enemy):void {
@@ -129,12 +131,6 @@ export class Progression {
   if(!arcs.length)for(const side of [-1,1])arcs.push([g.x,g.y,g.x+side*70,g.y-280]);
   let cleared=0;for(const b of this.w.bullets.list){if(b.dead||b.hard||b.delay>0)continue;if(arcs.some(a=>segDist2(b.x,b.y,...a)<=40**2)){b.dead=true;this.w.fx.gold(b.x,b.y);this.trigger('dianci',b.x,b.y);if(++cleared===2)break;}}
  }
- onElectricHit(dt:number,target:Enemy,dps:number):void{
-  if(!this.has('tianlei'))return;this.thunderTime+=dt;
-  if(this.thunderTime+1e-8<3)return;this.thunderTime-=3;this.trigger('tianlei',target.x,target.y);this.visual('tianlei',target.x,target.y,.6);
-  this.w.damage(target,dps*2,target.x,target.y,true,'purple');
-  for(const e of this.w.enemies)if(e!==target&&this.w.targetable(e)&&Math.hypot(e.x-target.x,e.y-target.y)<=60)this.w.damage(e,dps,e.x,e.y,true,'purple');
- }
  addField(x:number,y:number,r:number,duration:number,damage=0,clear=true,source:DamageSource='ink'):void{this.fields.push({x,y,r,t:duration,damage,clear,source});if(this.fields.length>24)this.fields.shift();}
  private visual(id:string,x:number,y:number,duration:number):void{this.visuals.push({id,x,y,left:duration,duration});if(this.visuals.length>80)this.visuals.shift();}
  draw(r:Renderer):void {
@@ -159,7 +155,7 @@ export class Progression {
   this.time+=dt;for(const s of this.signals.values())s.timer=Math.max(0,s.timer-dt);
   this.swordCooldown=Math.max(0,this.swordCooldown-dt);this.swordFlash=Math.max(0,this.swordFlash-dt);
   this.visuals=this.visuals.filter(f=>(f.left-=dt)>0);this.splits=this.splits.filter(s=>(s.left-=dt)>0);this.hitBudget=Math.max(0,this.hitBudget-dt*2);
-  for(const [e,burn]of this.burns){if(e.dead){this.burns.delete(e);continue;}const tick=Math.min(dt,burn.left);burn.left-=tick;this.w.damage(e,burn.dps*tick,e.x,e.y,true,'red',{tag:'burn'});burn.age+=dt;burnEmit(this.w,e,burn.age,dt);if(burn.left<=1e-8)this.burns.delete(e);}
+  for(const [e,burn]of this.burns){if(e.dead){this.burns.delete(e);continue;}const tick=Math.min(dt,burn.left);burn.left-=tick;this.w.damage(e,burn.dps*tick,e.x,e.y,true,'red',{tag:'burn',castKey:burn.cast});burn.age+=dt;burnEmit(this.w,e,burn.age,dt);if(burn.left<=1e-8)this.burns.delete(e);}
   for(const f of this.fields){f.t-=dt;if(f.damage)for(const e of this.w.enemies)if(this.w.targetable(e)&&Math.hypot(e.x-f.x,e.y-f.y)<f.r+e.radius)this.w.damage(e,f.damage*dt,e.x,e.y,true,f.source);if(f.clear)for(const b of this.w.bullets.list)if(!b.dead&&!b.hard&&Math.hypot(b.x-f.x,b.y-f.y)<f.r){b.dead=true;this.w.fx.gold(b.x,b.y);}}
   this.fields=this.fields.filter(f=>f.t>0);
  }

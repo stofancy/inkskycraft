@@ -1,5 +1,7 @@
+import { drawCh1Attack,chainHit,chainExtent,shieldBlocks } from '../stages/stage1_attacks';
 import type { FodderChapter } from '../stages/fodder1';
 import { drawSkyStones, drawFalls } from '../bg/sky-scene';
+import { drawLowPass } from '../stages/stage1_low';
 import { BossCombat } from './boss-combat';
 import { EscortShip } from './escort';
 import type { Chapter2 } from '../stages/stage2_air';
@@ -235,7 +237,7 @@ export class World implements G {
   allSkills=false;
   cheatGod=false;
   get skillCooldownScale(){return this.allSkills ? .25 : 1;}
-  enableAllSkills():void {if(!this.allSkills){for(const id of Object.keys(this.skills.cooldowns) as (keyof typeof this.skills.cooldowns)[])this.skills.cooldowns[id]*=.25;for(const s of this.companions.team)s.cooldown*=.25;}this.allSkills=true;this.player.missile=4;this.player.ink=1;this.player.bombs=this.progression.bombMax;this.inkScore.levels={red:3,blue:3,purple:3};this.skills.setUnlocked(['chaifa','tishen','zhongpao','shenying','bilei']);this.brushPower=3;this.brushForms=new Set(['横','竖']);}
+  enableAllSkills():void {if(!this.allSkills){for(const id of Object.keys(this.skills.cooldowns) as (keyof typeof this.skills.cooldowns)[])if(id!=='zhongpao')this.skills.cooldowns[id]*=.25;for(const s of this.companions.team)s.cooldown*=.25;}this.allSkills=true;this.player.missile=4;this.player.ink=1;this.player.bombs=this.progression.bombMax;this.inkScore.levels={red:3,blue:3,purple:3};this.skills.setUnlocked(['chaifa','tishen','zhongpao','shenying','bilei']);this.brushPower=3;this.brushForms=new Set(['横','竖']);}
   newGame(): void {
     this.allSkills=this.cheatGod=false;
     this.inkScore.resetRun();this.mantra.resetRun();
@@ -385,6 +387,7 @@ export class World implements G {
       if (e.def.ground && !e.parent && e.stunned <= 0) e.y += this.scrollV * dt;
       if (e.def.face === 'move' && (e.vx || e.vy) && !e.parent) e.angle = Math.atan2(e.vy, e.vx) - Math.PI / 2 + (e.def.faceUp ? Math.PI : 0);
       else if (e.def.face === 'player') e.angle = angleTo(e.x, e.y, p.x, p.y) - Math.PI / 2 + (e.def.faceUp ? Math.PI : 0);
+      this.companions.applyJointPosition(e);
       const animFps = e.def.anim || (SHEETED.has(e.info.id) ? 10 : 0);
       if(CH2_SHEETED.has(e.info.id))e.frame=ch2Frame(e);
       else if (!e.data.manualFrame && animFps && e.info.frames.length > 1) e.frame = Math.floor(e.age * animFps) % e.info.frames.length;
@@ -470,12 +473,12 @@ export class World implements G {
 
   /** 命中判定 = 碰撞圆 或 精灵遮罩。 */
   hitShape(e: Enemy, x: number, y: number, r: number): boolean {
-    return this.hitCircles(e, (cx, cy, cr) => (cx - x) ** 2 + (cy - y) ** 2 < (cr + r) ** 2) || this.hitMask(e, x, y, r);
+    return chainHit(e,x,y,r) || this.hitCircles(e, (cx, cy, cr) => (cx - x) ** 2 + (cy - y) ** 2 < (cr + r) ** 2) || this.hitMask(e, x, y, r);
   }
 
   /** 线段 a→b 加宽 r 是否碰到敌机（遮罩/圆），命中点（离 a 最近）写入 hitX/hitY。仅在粗筛圆内按 ≤4 步长采样。 */
   private rawHitSegment(e: Enemy, ax: number, ay: number, bx: number, by: number, r: number): boolean {
-    const ext = this.extent(e), R = ext + r;
+    const ext = Math.max(this.extent(e),chainExtent(e)), R = ext + r;
     const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy;
     if (L2 <= 0) return this.hitShape(e, ax, ay, r);
     const L = Math.sqrt(L2);
@@ -497,7 +500,10 @@ export class World implements G {
 
   private copperRay:{frame:number;key:string;target:Enemy|null;x:number;y:number}|null=null;
   hitSegment(e:Enemy,ax:number,ay:number,bx:number,by:number,r:number):boolean {
-    if(!e.data.copperPart)return this.rawHitSegment(e,ax,ay,bx,by,r);
+    if(!e.data.copperPart){
+      if(!this.rawHitSegment(e,ax,ay,bx,by,r))return false;
+      return !this.enemies.some(s=>s!==e&&shieldBlocks(s,ax,ay,this.hitX,this.hitY,r));
+    }
     const key=[ax,ay,bx,by,r].join(':');let ray=this.copperRay;
     if(!ray||ray.frame!==this.frameNo||ray.key!==key){
       let target:Enemy|null=null,x=0,y=0,distance=Infinity;
@@ -530,8 +536,9 @@ export class World implements G {
         if (!best || (e.data.copperPart&&best.data.copperPart&&distance<bestDistance-8) || (best.def.ground && !e.def.ground) || (!e.def.ground && (e.def.hitPriority ?? 0) > (best.def.hitPriority ?? 0))) { best = e;bestDistance=distance; this.hitX = hx; this.hitY = hy; }
       }
     }
-    // 铜雀实体部件消耗强化朱弹的贯穿次数。按 hits 集合定位当前弹，保持 Player 文件的并行改动独立。
-    if(best?.data.copperPart&&exclude){const shots=Reflect.get(this.player,'shots') as {hits?:ReadonlySet<number>;pierce?:number}[];const shot=shots.find(s=>s.hits===exclude);if(shot)shot.pierce=0;}
+    if(best){const shield=this.enemies.find(s=>s!==best&&shieldBlocks(s,px,py,this.hitX,this.hitY,r));if(shield){this.hitX=shield.x;this.hitY=shield.y;best=shield;}}
+    // 铜雀部件与铜盾消耗强化朱弹的贯穿次数。
+    if((best?.data.copperPart||best?.data.ch1Shield)&&exclude){const shots=Reflect.get(this.player,'shots') as {hits?:ReadonlySet<number>;pierce?:number}[];const shot=shots.find(s=>s.hits===exclude);if(shot)shot.pierce=0;}
     return best;
   }
 
@@ -597,19 +604,24 @@ export class World implements G {
     if (e.dead || e.data.dying || e.data.targetDisabled || e.data.densityQueued || e.def.decorative || amount <= 0) return 0;
     const target:Enemy=e.data.damageTarget??e;
     // 血量打空后的控制器仍挡住青光，封圈窗口中也保留实体终点。
-    if(source==='blue'&&e.data.copperPart)Reflect.set(this.player,'beamEndY',y);
+    if(source==='blue'&&(e.data.copperPart||e.data.ch1Shield))Reflect.set(this.player,'beamEndY',y);
     if(target.invulnerable||target.hp<=0)return 0;
     if (e.invulnerable || this.fodder?.canDamage(e,source)===false || this.chapter2?.damageAllowed(e,source)===false) { this.fx.onDamage(e, source, x, y, 0, true,ink.inkColor); return 0; }
-    amount*=this.chapter2?.damageScale(e,source,amount)??1;
+    const joint=this.companions.isJointCast(ink.castKey);
+    if(!(joint&&ink.unmodified))amount*=this.chapter2?.damageScale(e,source,amount)??1;
     const armor = e.def.armor ?? 1;
     const primary = source === 'red' || source === 'blue' || source === 'purple';
     const armorFactor=ink.armor==='ignore'?1:ink.armor==='half'?(1+armor)/2:armor;
     let actual = ink.unmodified||source==='qte'?amount:amount * armorFactor * (!ink.ignoreLoosen&&e.armorLoose>0?3:1) * (e.data.paperKnot&&source==='red'?2:e.data.weakWeapon === source ? 1.35 : 1) * (e.data.damageBonus??1) * this.companions.weaknessBonus(e) * (ink.ignoreSeal?1:this.brush.colors.vulnerability(e));
-    {const capBoss=this.bossCaps.bossOf(e);if(capBoss)actual=this.bossCaps.apply(capBoss,source,actual,ink);else if(ink.tag==='burn')actual*=.5;}
+    const cannon=this.bossCaps.isCannon(ink.castKey),capBoss=this.bossCaps.bossOf(e);
+    if(joint)actual=this.companions.jointLimit(e,actual,ink.castKey);
+    if(capBoss){if(!cannon&&!joint)actual=this.bossCaps.apply(capBoss,source,actual,ink);}else if(ink.tag==='burn')actual*=.5;
     if(actual<=0)return 0;
     const owner=this.bossCombat.owner(e);
     if(owner?.data.copperSimple&&owner.invulnerable)return 0;
     actual=Math.min(actual,Math.max(0,target.hp));actual=this.bossCombat.allow(e,actual,source);if(actual<=0)return 0;
+    if(cannon&&capBoss){actual=this.bossCaps.apply(capBoss,source,actual,ink);if(actual<=0){this.fx.onDamage(e,source,x,y,0,false);return 0;}}
+    if(joint)this.companions.jointSettled(e,actual,ink.castKey);
     if(owner&&owner!==target)owner.hp=Math.max(0,owner.hp-actual);
     this.bossCombat.record(e,actual,source);
     const wasAlive = target.hp > 0;
@@ -769,17 +781,9 @@ export class World implements G {
     r.moveTitles.player=[this.player.x,this.player.y];
     this.scenery = this.scenery.filter(s => !s.dead && !s.owner?.dead);
     if(this.stageIndex===1){
-      drawSkyStones(r, this.scroll, this.real);
+      if(!drawLowPass(this))drawSkyStones(r, this.scroll, this.real);
       // 炮台架在独立浮石上，随原敌机位置移动。
-      for(const e of this.enemies)if(!e.dead&&!e.data.densityQueued&&e.alpha>0&&(e.def.ground||e.def.sprite==='e_turret'||e.def.sprite==='e_turtle'||e.def.sprite==='e_mountainape'||e.def.sprite==='air_net-post'))r.ground.add('sky_rock',{x:e.x,y:e.y+30,sx:Math.max(.45,e.radius/90),sy:.45,alpha:e.alpha});
-      const dragon=this.enemies.find(e=>!e.dead&&e.data.paperEffects);
-      if(dragon){for(let j=0;j<4;j++){
-        const x=130+j*210+(dragon.x-450)*.25,y=175+Math.sin(this.real*.7+j)*13;
-        const body=dragon.data.rig.bodies[[0,1,3,4][j]] as Enemy;
-        const sx=body.x,sy=body.y;
-        r.ribbonMid.strip([sx,sy,(sx+x)*.5,(sy+y)*.5+35,x,y,x-30,-100],1.8,RS.Brush,.025,.03,.035,.85);
-        r.air.add('e_kite',{x,y,rot:Math.sin(this.real*.6+j)*.15,sx:.65,sy:.65,frame:Math.floor(this.real*10),alpha:.95});
-      }}
+      for(const e of this.enemies)if(!e.dead&&!e.data.densityQueued&&e.alpha>0&&!e.data.lowGround&&(e.def.ground||e.def.sprite==='e_turret'||e.def.sprite==='e_turtle'||e.def.sprite==='e_mountainape'||e.def.sprite==='air_net-post'))r.ground.add('sky_rock',{x:e.x,y:e.y+30,sx:Math.max(.45,e.radius/90),sy:.45,alpha:e.alpha});
     }
     for (const e of [...this.enemies].sort((a,b) => (a.def.drawOrder ?? 0) - (b.def.drawOrder ?? 0))) {
       if (e.dead||e.data.densityQueued) continue;
@@ -796,6 +800,7 @@ export class World implements G {
         r.air.add(e.info, d);
       }
       this.fx.drawDamage(e, this.real);
+      drawCh1Attack(e,r,this.t);
       // 阶段脚本提供操作位置与控制线状态，沿用已有ribbon管线。
       const guides: { x: number; y: number }[] = e.data.guides ?? (e.data.guide ? [e.data.guide] : []);
       for (const { x, y } of guides) {

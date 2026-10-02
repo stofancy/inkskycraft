@@ -1,6 +1,6 @@
 // 泼墨演出（朱色「离火·朱雀」）。按真实时间推进：
 //   0–0.15 起手  0.05–0.9 立绘笔触  0.15–0.95 逐字念咒  0.95–1.35 结印成朱雀
-//   1.35–1.45 蓄力  1.45–2.0 释放  1.45–3.0 全屏墨浪（V1/V2 原样移植）。
+//   1.35–1.45 蓄力  1.45–2.0 释放  0.15–3.0 全屏墨浪（V1/V2 原样移植）。
 // 触发、无敌、清弹、伤害与次数仍由 player.bomb() 和本类的 wave() 负责，这里只管演出与时间节奏。
 import { MantraBudget } from './mantra-budget';
 import { drawBagua, drawDragon, drawThunder, guaPos, type FormPose } from './mantra-forms';
@@ -18,7 +18,7 @@ const DROP = 0.11;                            // 字砸下用时
 const SHAKE = [3, 4, 5, 6, 12];               // 落定震屏（像素）
 const FLY0 = [0.95, 0.97, 0.99, 1.01, 1.0];  // 结印起飞
 const FLY = [0.34, 0.34, 0.34, 0.34, 0.35];
-const CHARGE = 1.35, RELEASE = 1.45, RELEASE_DUR = 0.35, WAVE0 = 1.45, TOTAL = 3.0;
+const CHARGE = 1.35, RELEASE = 1.45, RELEASE_DUR = 0.35, WAVE0 = 0.15, TOTAL = 3.0;
 const DRAGON_PATH: [number, number][] = [[.12, .62], [.22, .8], [.45, .84], [.72, .78], [.83, .62], [.6, .5], [.38, .42], [.3, .3], [.4, .18], [.62, .2], [.79, .24]];
 const DRAGON_R = 260, DRAGON_LEN = 1700;      // 青龙盘绕半径与身长
 const BURST = 1.28;                           // 红、青：神兽从字里炸出的时刻
@@ -224,10 +224,11 @@ export class Mantra {
     if (t <= BURST) return [cx, cy];
     if (t <= RELEASE) {
       const u = (t - BURST) / (RELEASE - BURST), th = -Math.PI + 2 * Math.PI * u, r = R * smoothstep(0, 0.28, u);
-      return [cx + Math.cos(th) * r, cy + Math.sin(th) * r];
+      const center = 1 - smoothstep(0.8, 1, u);
+      return [cx + Math.cos(th) * r * center, cy + Math.sin(th) * r * center];
     }
     const d = t - RELEASE;
-    return [cx - R, cy - 2600 * d - 0.5 * 16000 * d * d];
+    return [cx, cy - 2600 * d - 0.5 * 16000 * d * d];
   }
   /** 龙身脊线：沿龙头走过的轨迹按等弧长取点（头在前），叠加越近尾越大的横向摆动。 */
   private dragonSpine(fp: FormPose): { pts: [number, number][]; nx: number[]; ny: number[]; head: [number, number]; ang: number } {
@@ -300,6 +301,7 @@ export class Mantra {
     }
   }
   private formCenter(): [number, number] {
+    if(this.cast?.color==='blue')return [PLAY_W/2,PLAY_H/2];
     const p = this.w.player;
     return [clamp(p.x, 240, PLAY_W - 240), clamp(p.y, 300, PLAY_H - 240)];
   }
@@ -354,7 +356,6 @@ export class Mantra {
     const T = c.age;
     p.bombT = Math.max(0, TOTAL - T);
     this.wave(dt);
-    this.sweepHits(c, T);
 
     // 字落定
     for (let i = 0; i < 5; i++) if (!c.landed[i] && T >= LAND[i]) { c.landed[i] = true; c.level = i + 1; this.land(c, i); }
@@ -385,6 +386,7 @@ export class Mantra {
 
   /** 紫：八个卦位与正中各劈下一道粗雷，亮闪、震屏、落点迸电火花。 */
   private strike(c: Cast): void {
+    this.screenHits(c);
     const w = this.w, fp = this.formPose(STRIKE);
     c.strikePts = [...Array.from({ length: 8 }, (_, k) => guaPos(fp, k)), [fp.cx, fp.cy]] as [number, number][];
     c.strikePts = c.strikePts.map(([x, y]) => [clamp(x, 70, PLAY_W - 70), clamp(y, 150, PLAY_H - 150)] as [number, number]);
@@ -432,6 +434,7 @@ export class Mantra {
       for (let k = 0; k < 46; k++) { const a = rr(0, Math.PI * 2), sp = rr(180, 700); this.em({ x: pp.cx + Math.cos(a) * 40, y: pp.cy + Math.sin(a) * 40, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, drag: 2.4, life: rr(0.3, 0.6), size: rr(16, 34), sizeEnd: 4, r: 2.6, g: 1.6, b: 0.4, r1: 1.4, g1: 0.15, b1: 0.03, a: 0.9, kind: PK.Flame }); }
       w.fx.shake(0.5);
     }
+    if(c.color!=='purple')this.screenHits(c);
     const list = w.enemies.filter(e => w.targetable(e)).slice(0, 24);
     for (const e of list) {
       c.burning.set(e, c.age + 1.3);
@@ -439,7 +442,7 @@ export class Mantra {
     }
   }
 
-  /** 神兽碰到敌机：当场结算一次伤害，在敌机身上炸开并点燃。 */
+  /** 爆发伤害统一走既有额度；神兽轨迹只负责演出。 */
   private smash(c: Cast, e: Enemy, dmg: number): void {
     if (c.smashed.has(e)) return;
     c.smashed.add(e);
@@ -449,22 +452,8 @@ export class Mantra {
     for (let k = 0; k < 16; k++) { const a = rr(0, Math.PI * 2), sp = rr(120, 420); this.em({ x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, drag: 2.5, life: rr(0.25, 0.5), size: rr(10, 22), sizeEnd: 3, a: 0.85, ...this.th.fl, kind: PK.Flame }); }
     this.w.audio.sfx('explode_s');
   }
-  /** 朱雀扫过的敌机、青龙身子盘到与龙头撞到的敌机，在碰到的那一刻受伤。 */
-  private sweepHits(c: Cast, T: number): void {
-    const w = this.w;
-    if (c.color === 'red' && T >= RELEASE && T < RELEASE + 0.5) {
-      const b = this.birdPose(T), half = 330 * b.sx;
-      for (const e of w.enemies) if (w.targetable(e) && Math.abs(e.x - b.cx) < half && e.y > b.cy - 160) this.smash(c, e, 260);
-    } else if (c.color === 'blue' && T >= BURST && T < RELEASE + 0.5) {
-      const sp = this.dragonSpine(this.formPose(T));
-      const [hx, hy] = sp.head, k = 1 + 0.35 * Math.min(1, (T - RELEASE) / RELEASE_DUR);
-      for (const e of w.enemies) {
-        if (!w.targetable(e)) continue;
-        if (T >= RELEASE) { if (Math.abs(e.x - hx) < 240 && e.y > hy - 120) this.smash(c, e, 260); }
-        else if (Math.hypot(hx - e.x, hy - e.y) < 160 + e.radius) this.smash(c, e, 260);
-        else if (sp.pts.some(([x, y]) => Math.hypot(x - e.x, y - e.y) < 70 * k + e.radius)) this.smash(c, e, 150);
-      }
-    }
+  private screenHits(c: Cast): void {
+    for(const e of this.w.enemies)if(this.w.targetable(e))this.smash(c,e,260);
   }
 
   private emerge(c: Cast): void {
@@ -570,12 +559,12 @@ export class Mantra {
     }
   }
 
-  /** 全屏墨浪：原样移植 V1/V2 player.updateBomb（main/v2 相同）。u 按 2.6 秒基准，从释放（1.45s）起算；
+  /** 全屏墨浪：原样移植 V1/V2 player.updateBomb（main/v2 相同）。u 按 2.6 秒基准，从起手（0.15s）起算；
    *  墨浪自下而上扫 55% 行程，前 60% 时间每帧 9 团墨流体、墨滴。叶片与花瓣改用翻转叶形，数量取 V1 的零头。 */
   private wave(dt: number): void {
     const w = this.w, c = this.cast!;
     const T = c.age, u = (T - WAVE0) / V1_DUR;
-    if (T < 2.6) for (const e of w.enemies) if (w.targetable(e)) this.damage(e, (e.phaseLock ? 160 : 320) * dt);
+    if (T >= (c.color==='purple'?STRIKE:RELEASE) && T < 2.6) for (const e of w.enemies) if (w.targetable(e)) this.damage(e, (e.phaseLock ? 160 : 320) * dt);
     if (u < 0) return;
     const waveY = PLAY_H + 80 - Math.min(1, u / 0.55) * (PLAY_H + 300);
     if (u < 0.6) {

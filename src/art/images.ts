@@ -34,6 +34,8 @@ export function drawSprite(ctx: CanvasRenderingContext2D, def: SpriteDef, frame:
   const path = sheet?.image ?? (typeof def.image === 'string' ? def.image : def.image?.[frame % def.image.length]);
   const image = path ? images.get(path) : undefined;
   const scale = def.imageScale?.[frame] ?? 1;
+  ctx.save();
+  if (def.imageFilter) ctx.filter = def.imageFilter;
   if (image && sheet) {
     const index = ((Math.floor(frame) % sheet.count) + sheet.count) % sheet.count;
     const col = index % sheet.columns, row = Math.floor(index / sheet.columns);
@@ -48,6 +50,7 @@ export function drawSprite(ctx: CanvasRenderingContext2D, def: SpriteDef, frame:
     ctx.fillStyle = '#141414';
     ctx.fillRect(-def.w / 4, -def.h / 4, def.w / 2, def.h / 2);
   }
+  ctx.restore();
 }
 
 export function spriteFrames(def: SpriteDef): number {

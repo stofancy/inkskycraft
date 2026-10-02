@@ -1,6 +1,7 @@
 import { MATERIALS, MUSIC_FILES, MUSIC_CHAPTERS, MUSIC_RESIDENT, VOICE_EVENTS } from './materials';
 import { MUSIC_CUES } from './music-cues';
 import { focusCue, type Graph } from './engine';
+import { DialogueVoice } from './dialogue-voice';
 import type { MusicId } from '../types';
 
 /** 独立素材总线；状态用于开发工具验收，不暴露玩家界面。 */
@@ -28,9 +29,15 @@ export class SampleAudio {
   private musicVolume = .7;
   private duckUntil = 0;
   private duckDepth = 1;
+  private dialoguePlaying = false;
+  readonly dialogue: DialogueVoice;
   constructor(private G: Graph) {
     this.musicBus = G.ctx.createGain(); this.musicBus.connect(G.lp);
     this.voiceBus = G.ctx.createGain(); this.voiceBus.connect(G.lp);
+    this.dialogue = new DialogueVoice(G.ctx, this.voiceBus,
+      !(Number(new URLSearchParams(location.search).get('flowspeed') ?? 1) > 1),
+      playing => { this.dialoguePlaying = playing; this.applyMusicVolume(); },
+      (event, material) => this.record(event, material));
     this.volumes(.7, .9);
   }
   async load() {
@@ -60,6 +67,7 @@ export class SampleAudio {
     const group = MUSIC_CHAPTERS[chapter as keyof typeof MUSIC_CHAPTERS];
     if (!group) return Promise.resolve();
     if (this.chapter === chapter && this.allowedMusic.size) return this.chapterReady;
+    this.dialogue.stop(); this.dialogue.prefetch([]);
     this.chapter = chapter; const request = ++this.chapterRequest;
     this.allowedMusic = new Set([...MUSIC_RESIDENT, ...group.core, ...group.bosses].map(id => `music:${MUSIC_FILES[id]}`));
     this.releaseUnused();
@@ -89,13 +97,17 @@ export class SampleAudio {
     const seconds = music.reduce((n,[,b]) => n + b.duration, 0);
     return { ids: music.map(([id]) => id.slice(6)), seconds, mb48000: seconds * 48000 * 2 * 4 / 1e6 };
   }
-  volumes(music: number, sfx: number) {
+  volumes(music: number, voice: number) {
     this.musicVolume = music;
+    this.applyMusicVolume();
+    this.voiceBus.gain.setTargetAtTime(.85 * voice, this.G.ctx.currentTime, .03);
+  }
+  private applyMusicVolume() {
     const t = this.G.ctx.currentTime;
+    const dialogueDepth = this.dialoguePlaying ? Math.pow(10, -6 / 20) : 1;
     this.musicBus.gain.cancelAndHoldAtTime(t);
-    this.musicBus.gain.setTargetAtTime(.65 * music * (t < this.duckUntil ? this.duckDepth : 1), t, .03);
-    if (t < this.duckUntil) this.musicBus.gain.setTargetAtTime(.65 * music, this.duckUntil, .25);
-    this.voiceBus.gain.setTargetAtTime(.85 * sfx, t, .03);
+    this.musicBus.gain.setTargetAtTime(.65 * this.musicVolume * Math.min(dialogueDepth, t < this.duckUntil ? this.duckDepth : 1), t, this.dialoguePlaying ? .04 : .25);
+    if (t < this.duckUntil) this.musicBus.gain.setTargetAtTime(.65 * this.musicVolume * dialogueDepth, this.duckUntil, .25);
   }
   silence(event: string) { this.record(event, 'silence'); }
   fallback(event: string, material: string) { this.record(event, `synth:${material}`); }
@@ -103,9 +115,7 @@ export class SampleAudio {
     const t = this.G.ctx.currentTime;
     this.duckDepth = t < this.duckUntil ? Math.min(depth, this.duckDepth) : depth;
     this.duckUntil = Math.max(this.duckUntil, t + duration);
-    this.musicBus.gain.cancelAndHoldAtTime(t);
-    this.musicBus.gain.setTargetAtTime(.65 * this.musicVolume * this.duckDepth, t, .04);
-    this.musicBus.gain.setTargetAtTime(.65 * this.musicVolume, this.duckUntil, .25);
+    this.applyMusicVolume();
     focusCue(this.G, t, duration, depth);
   }
   private record(event: string, material: string) {
@@ -155,9 +165,14 @@ export class SampleAudio {
     source.start(t); this.track = track; this.record(`music:${id}`, `music:${file}`); this.onMusic?.(id, fade); return true;
   }
   get playing() { return this.track; }
+  playDialogue(id: string, text: string) {
+    if (this.voice) { this.voice.stop(); this.voice = null; }
+    return this.dialogue.play(id, text);
+  }
   sfx(id: string, opts?: { vol?: number; pan?: number; pitch?: number }): boolean {
     const voiceIds = VOICE_EVENTS[id];
     if (voiceIds) {
+      if (!this.dialogue.enabled || this.dialogue.active) return true;
       const t = this.G.ctx.currentTime;
       if (t - this.lastVoice < (id.startsWith('companion:') ? 3 : .3)) return true;
       const n = this.sequence[id] ?? 0, key = voiceIds[n % voiceIds.length], b = this.buffers.get(key);

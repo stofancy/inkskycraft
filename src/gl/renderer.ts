@@ -1,3 +1,4 @@
+import { ElementalVfx } from './elemental-vfx';
 import { MantraGlyphs } from './mantra-glyphs';
 import { SpellLayer } from './spell';
 // 渲染总调度：管理画布尺寸、游戏区视口、各渲染层与固定的绘制顺序。
@@ -18,6 +19,7 @@ import { RibbonBatch, RibbonRenderer, RS } from './ribbons';
 import { GpuTimer, Lights, Scene3D } from './scene3d';
 import { SpriteRenderer, type SpriteLayer } from './sprites';
 import { ThunderSystem } from './thunder';
+import { LeichiSystem } from './leichi';
 import { ImpactSystem } from './impact';
 import { InkBursts } from './ink-bursts';
 import { MoveTitles } from './move-titles';
@@ -57,10 +59,12 @@ export class Renderer {
   debris!: DebrisSystem;
   /** 带三维截面、前后扭折与受光面的雷弧。 */
   thunder!: ThunderSystem;
+  leichi!: LeichiSystem;
   impact!: ImpactSystem;
   inkBursts!: InkBursts;
   moveTitles!: MoveTitles;
   mantraGlyphs!:MantraGlyphs;
+  elemental!:ElementalVfx;
   /** 泼墨施法的屏幕层（暗角、字、立绘笔触、火墙）。 */
   spell!:SpellLayer;
   /** 泼墨墨浪期间让流体按真实时间推进。 */
@@ -83,6 +87,7 @@ export class Renderer {
   items!: SpriteLayer;
   top!: SpriteLayer;     // 印章等最上层
   ribbonPlayer = new RibbonBatch(); // 贴合机翼的表面辉光，位于玩家精灵与敌弹之间
+  ribbonGround = new RibbonBatch(); // 重炮驻留纹样，在空中敌机下方
   ribbonMid = new RibbonBatch();  // 激光、雷弧（在空中敌机之上）
   ribbonTop = new RibbonBatch();  // 一笔墨迹、敌方激光（最上层）
 
@@ -151,6 +156,7 @@ export class Renderer {
     this.fireballs = new FireballSystem(gl);
     this.debris = new DebrisSystem(gl);
     this.thunder = new ThunderSystem(gl);
+    this.leichi = new LeichiSystem(gl);
     this.impact = new ImpactSystem(gl);
     this.fireballs.quality = 1;
     this.fireballs.scale = 1;
@@ -165,6 +171,7 @@ export class Renderer {
     this.top = this.sprites.layer(64);
     this.inkBursts = new InkBursts(this.sprites.layer(128));
     this.mantraGlyphs=new MantraGlyphs(gl);
+    this.elemental=new ElementalVfx(gl);
     this.spell=new SpellLayer(gl);
     this.moveTitles = new MoveTitles(this.sprites.layer(1));
     this.mantraWash=new Program(gl,FS_TRI_VS,`#version 300 es
@@ -250,6 +257,7 @@ precision highp float;uniform float dim;out vec4 o;void main(){o=vec4(vec3(dim),
     };
     this.scene.resize(this.playPx.w, this.playPx.h);
     this.post.resize(this.playPx.w, this.playPx.h);
+    this.elemental?.resize(this.playPx.w,this.playPx.h);
     this.fireballs?.resize(this.playPx.w, this.playPx.h);
     this.lightBuf?.resize(this.playPx.w, this.playPx.h);
     this.resizeBg();
@@ -316,12 +324,15 @@ precision highp float;uniform float dim;out vec4 o;void main(){o=vec4(vec3(dim),
     this.fluid.composite(time, 1.6);
     this.partLow.draw();
     // 6. 空中敌机 → 7. 玩家子弹与光带 → 8. 玩家 → 9. 道具
+    this.ribbons.draw(this.ribbonGround, time);
+    this.elemental.draw(this.scene,true);
     S.draw(this.air);
     this.debris.draw(visualTime, this.scene);
     this.fireballs.draw(visualTime, this.scene);
     this.inkBursts.draw(visualTime);
     S.draw(this.inkBursts.layer);
     this.inkBursts.layer.clear();
+    this.elemental.draw(this.scene,false);
     S.draw(this.shotArt);
     S.draw(this.shots, 2);
     this.ribbons.draw(this.ribbonMid, time);
@@ -339,6 +350,7 @@ precision highp float;uniform float dim;out vec4 o;void main(){o=vec4(vec3(dim),
     this.moveTitles.draw(real);
     S.draw(this.moveTitles.layer);
     this.moveTitles.layer.clear();
+    this.leichi.draw();
     this.bullets.draw(time);
     this.ribbons.draw(this.ribbonTop, time);
     this.spell.drawTop(real);
@@ -359,10 +371,12 @@ precision highp float;uniform float dim;out vec4 o;void main(){o=vec4(vec3(dim),
     this.post.zoom=zoom;this.post.shake=shake;
 
     for (const l of [this.ground, this.shadows, this.air, this.shots, this.shotArt, this.player, this.items, this.top]) l.clear();
+    this.ribbonGround.clear();
     this.ribbonMid.clear();
     this.ribbonPlayer.clear();
     this.ribbonTop.clear();
     this.thunder.clear();
+    this.elemental.clear();
     this.impact.clear();
     this.bullets.clear();
     if (tm) { if (tm.only === 'frame') tm.end(); tm.poll(); }

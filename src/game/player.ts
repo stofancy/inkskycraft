@@ -90,10 +90,13 @@ export class Player {
   updateEcho(dt:number):void{this.fire(dt);this.updateShots(dt);}
   private primaryDamage(e:Enemy,amount:number,x:number,y:number,source:WeaponColor):void{
     const hit=this.w.targetable(e)&&amount>0;
-    if(hit&&source==='red')this.w.progression.onRedHit(e,amount);
-    this.w.damage(e,amount,x,y,this.echo,source);
+    // 三色平射伤害 +30%；Boss 战时长按既有预算走，不加成。
+    if(!this.w.progression.isBossPart(e))amount*=1.3;
+    if(hit&&!this.echo)this.w.aura.gun.onHit(e,source);
+    const bonus=this.w.companions.weaknessBonus(e);
+    const actual=this.w.damage(e,amount,x,y,this.echo,source);
+    if(!this.echo)this.w.companions.primaryHit(e,actual,bonus);
     if(hit)this.hitBurst(x,y,source,e.id);
-    if(hit&&!this.echo)this.w.skills.primaryHit(e.id,source);
   }
 
   get sprite(): SpriteInfo {
@@ -316,9 +319,7 @@ export class Player {
     if (this.weapon === 'purple' && this.firing) {
       const n = Math.max(1, this.thunderTargets.length);
       const per = (20 + (lv-1)*34/7) * (n === 1 ? 1 : 1.25 / n)*(w.skills.boosted?1.6:1);
-      let main:Enemy|null=null;
       for (const e of this.thunderTargets) {
-        if(!main&&w.targetable(e)&&!e.invulnerable)main=e;
         this.primaryDamage(e, per * dt, e.x, e.y + e.radius*.65,'purple');
 
       }
@@ -329,11 +330,10 @@ export class Player {
         for (const side of [-1, 1]) {
           const ex = g.x + side * 70, ey = g.y - 280;
           for (const e of w.enemies) {
-            if (!struck.has(e) && w.targetable(e,true) && w.hitSegment(e,g.x,g.y,ex,ey,18)) {struck.add(e);if(!main&&!e.invulnerable)main=e;this.primaryDamage(e,per*.6*dt,w.hitX,w.hitY,'purple');}
+            if (!struck.has(e) && w.targetable(e,true) && w.hitSegment(e,g.x,g.y,ex,ey,18)) {struck.add(e);this.primaryDamage(e,per*.6*dt,w.hitX,w.hitY,'purple');}
           }
         }
       }
-      if(main&&!this.echo)w.progression.onElectricHit(dt,main,this.thunderDps);
     }
   }
 
@@ -346,7 +346,7 @@ export class Player {
     this.bombs--;
     this.bombT = 3.0;
     this.invuln = Math.max(this.invuln, 3.4);
-    w.clearBullets(true, { x: this.x, y: this.y, r: 180 });
+    w.clearBullets(true);
     w.bombsUsed++;
     w.progression.onBomb();
     w.combos.record('bomb');
@@ -380,6 +380,7 @@ export class Player {
   hit(): void {
     const w = this.w;
     if (!this.alive || this.invuln > 0 || w.brush.protected) return;
+    if(w.companions.absorbHit())return;
     const boss=w.enemies.find(e=>e.data.bossCombat&&!e.dead);if(boss)boss.data.playerHits=(boss.data.playerHits??0)+1;
     w.noMiss = false;
     this.armor--;
@@ -446,14 +447,17 @@ export class Player {
     if (this.sprite.frames.length === 16) { // 正式分镜：待机 0-3 循环，左倾 4-7、右倾 12-15 保持末帧
       frame = this.bank < -.35 ? 4 + Math.min(3, Math.floor((-this.bank - .35) * 6)) : this.bank > .35 ? 12 + Math.min(3, Math.floor((this.bank - .35) * 6)) : Math.floor(time * 10) % 4;
     }
-    const blink = !this.echo && w.roll.protectionRemaining<=0 && this.invuln > 0 && Math.floor(time * 20) % 2 === 0;
+    const ward=this.echo?0:w.companions.talismanProtection;
+    const blink = !ward && !this.echo && w.roll.protectionRemaining<=0 && this.invuln > 0 && Math.floor(time * 20) % 2 === 0;
     const inkBody=!this.echo&&w.brush.protected,restore=inkBody?1-clamp(w.brush.protectionRemaining/.3,0,1):1;
     const alpha = this.echo?(w.skills.mirrorFlash>0?.9:.45):inkBody ? .55+.45*restore : blink ? .35 : 1;
     if(inkBody)r.player.add(this.sprite,{x:this.x,y:this.y,frame,sx:1.09,sy:1.09,r:.12,g:.18,b:.17,alpha:.28*(1-restore),glow:0});
     r.shadows.add(this.sprite, { x: this.x, y: this.y, frame, alpha });
     const tint=inkBody?.18+.82*restore:1;
     const mix=clamp((w.presentationTime-this.colorChangedAt)/.15,0,1);
-    const body={x:this.x,y:this.y,frame,sx:this.echo?1+Math.sin(time*9)*.018:w.roll.scaleX,sy:this.echo?1+Math.cos(time*8)*.018:1,flash:this.echo?w.skills.mirrorFlash*5:Math.max(w.roll.flash,clamp(1-(w.real-this.hurtAt)/.2,0,1)*3),r:tint,g:tint*(!this.echo&&w.skills.boosted?.4:1),b:tint*(!this.echo&&w.skills.boosted?.2:1),glow:inkBody?restore*(.7+this.weaponLevel*.045):.7+this.weaponLevel*.045};
+    const recoil=this.echo?0:w.skills.cannon.recoil;
+    const body={x:this.x,y:this.y+recoil,frame,sx:this.echo?1+Math.sin(time*9)*.018:w.roll.scaleX,sy:this.echo?1+Math.cos(time*8)*.018:1-recoil*.008,flash:this.echo?w.skills.mirrorFlash*5:Math.max(ward*.3,w.roll.flash,clamp(1-(w.real-this.hurtAt)/.2,0,1)*3),r:tint,g:tint*(!this.echo&&w.skills.boosted?.4:1),b:tint*(!this.echo&&w.skills.boosted?.2:1),glow:inkBody?restore*(.7+this.weaponLevel*.045):.7+this.weaponLevel*.045};
+    if(ward)r.player.add(this.sprite,{...body,sx:body.sx*1.045,sy:body.sy*1.045,flash:3,alpha:ward*.8});
     if(mix<1)r.player.add(r.atlas.get(`player_body_${this.previousColor}`),{...body,alpha:alpha*(1-mix)});
     r.player.add(!this.echo&&w.skills.boosted?'player_body_red':this.sprite,{...body,alpha:alpha*mix});
     if(!this.echo)r.impact.armor(this.x,this.y,this.weaponLevel,this.weapon,this.bank,inkBody?alpha*restore:alpha);

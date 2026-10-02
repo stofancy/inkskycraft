@@ -351,11 +351,11 @@ export function createUI(): GameUI & PresentationUI {
         const row=R.skills.querySelector(slot.key==='Shift'||/^[1-5]$/.test(slot.key??'')?'[data-row="1"]':'[data-row="2"]')!;
         const el=h('div','skill-slot',`<span class="skill-key">${esc(slot.key??'')}</span><div class="skill-icon">${slot.icon?`<img src="${esc(slot.icon)}" alt="">`:""}<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" pathLength="100"/></svg><b class="skill-seconds"></b></div><span class="skill-name">${esc(slot.name)}</span><small class="skill-value"></small><i class="skill-fill"></i>`,row);
         el.dataset.skill=slot.id;
-        if(slot.id==='zhongpao')el.querySelector('.skill-icon')!.appendChild(el.querySelector('.skill-value')!);
       }
     }
     for(const slot of slots){
       const el=R.skills.querySelector<HTMLElement>(`[data-skill="${slot.id}"]`)!;
+      const name=el.querySelector('.skill-name')!;if(name.textContent!==slot.name)name.textContent=slot.name;
       if(slot.ready&&!el.classList.contains('ready')){el.classList.remove('ready-pulse');void el.offsetWidth;el.classList.add('ready-pulse');}el.classList.toggle('ready',slot.ready);el.classList.toggle('active',(slot.active??0)>0);el.classList.toggle('unlocking',!!slot.unlocking);
       el.querySelector('circle')!.style.strokeDashoffset=String(100*(1-Math.min(1,slot.cooldown/Math.max(.001,slot.cooldownMax))));
       el.querySelector('.skill-seconds')!.textContent=slot.cooldown>0?String(Math.ceil(slot.cooldown)):'';
@@ -616,9 +616,9 @@ export function createUI(): GameUI & PresentationUI {
     say(name, '平静', text, duration);
   }
 
-  function resetCommunications(){story.reset();communicationHistory=[];missionEl.hidden=true;clearTimeout(capTimer);clearInterval(typeTimer);clearLayer(capL);clearLayer(noticeL);clearHero();}
+  function resetCommunications(){story.reset();ev.onDialogueStop?.();communicationHistory=[];missionEl.hidden=true;clearTimeout(capTimer);clearInterval(typeTimer);clearLayer(capL);clearLayer(noticeL);clearHero();}
   function chapterSay(actor:DialogueActor,expression:string,text:string,id:string,memory:boolean,options?:{pause:boolean;onDone:()=>void;onSkip:()=>void}){
-    clearTimeout(capTimer);clearInterval(typeTimer);clearLayer(capL);
+    ev.onDialogueStop?.();clearTimeout(capTimer);clearInterval(typeTimer);clearLayer(capL);
     if(!text){refreshPresentation();return;}
     communicationHistory.push({id,speaker:actor.name,identity:actor.identity,text,memory});
     if(options?.pause){story.show(actor,expression,text,id,memory,options.onDone,options.onSkip);refreshPresentation();return;}
@@ -630,8 +630,8 @@ export function createUI(): GameUI & PresentationUI {
   }
   function missionBrief(id:number){
     const titles=['护送云梭','闯过查封','截下雷石','冲过铜雀关'];
-    const targets=['青石屿的三架云梭','纸龙（风筝帮的查封机）','空中堡垒','铜雀（守关机）'];
-    const purposes=['护送云梭队前往高天','它扣下了浮石林里所有经过的飞船','风筝帮运走的雷石能让青石屿多浮些日子','让三架云梭通过铜雀关'];
+    const targets=['青石屿的一架云梭','纸龙（风筝帮的查封机）','空中堡垒','铜雀（守关机）'];
+    const purposes=['护送云梭前往高天','它扣下了浮石林里所有经过的云梭','风筝帮运走的雷石能让青石屿多浮些日子','让一架云梭通过铜雀关'];
     missionEl.hidden=false;missionEl.dataset.mission=String(id);missionEl.innerHTML=`<div class="brief-title"><small>任务${CN[id]}</small><b>${titles[id-1]}</b></div><div>目标：${targets[id-1]}</div><p>${purposes[id-1]}</p>`;
     missionEl.style.animation='none';void missionEl.offsetWidth;missionEl.style.animation='mission-air 3.65s both';
     missionEl.onanimationend=()=>{missionEl.hidden=true;};
@@ -931,7 +931,7 @@ export function createUI(): GameUI & PresentationUI {
     const p = h('div', 'panel', '<div class="ph1">设 置</div><div class="pline"></div>', scr);
     const menu = h('div', 'menu', '', p);
     const emit = () => ev.onSettingsChange({ ...settings });
-    const slider = (label: string, key: 'renderScale' | 'masterVol' | 'musicVol' | 'sfxVol', min: number, max: number, step: number, f: (v: number) => string): Row => {
+    const slider = (label: string, key: 'renderScale' | 'masterVol' | 'musicVol' | 'sfxVol' | 'voiceVol', min: number, max: number, step: number, f: (v: number) => string): Row => {
       const el = h('div', 'mi st', `<i class="mk"></i><span class="ml">${label}</span><div class="sl"><div class="sl-f"></div><div class="sl-k"></div></div><span class="sv"></span>`);
       const sl = el.querySelector('.sl') as HTMLElement, fl = el.querySelector('.sl-f') as HTMLElement, kn = el.querySelector('.sl-k') as HTMLElement, sv = el.querySelector('.sv') as HTMLElement;
       const paint = () => { const t = (settings[key] - min) / (max - min); fl.style.width = t * 100 + '%'; kn.style.left = t * 100 + '%'; sv.textContent = f(settings[key]); };
@@ -963,6 +963,7 @@ export function createUI(): GameUI & PresentationUI {
       slider('主音量', 'masterVol', 0, 1, 0.05, (v) => Math.round(v * 100) + '%'),
       slider('音乐', 'musicVol', 0, 1, 0.05, (v) => Math.round(v * 100) + '%'),
       slider('音效', 'sfxVol', 0, 1, 0.05, (v) => Math.round(v * 100) + '%'),
+      slider('语音', 'voiceVol', 0, 1, 0.05, (v) => Math.round(v * 100) + '%'),
       tog('显示帧率', () => settings.showFps, (v) => { settings.showFps = v; }, '开', '关'),
       item('返 回', () => backToBase()),
     ];
@@ -1197,7 +1198,7 @@ ${L('r', '一笔封天')}${L('b', '完')}${fs !== undefined ? L('s', '最终得�
     missionEl=h('div','mission-brief','',play);missionEl.hidden=true;
     shipLabel=h('div','ship-label','云梭',play);shipLabel.hidden=true;
     openingHint=h('div','opening-controls','',play);openingHint.hidden=true;
-    story=createDialogue(play,()=>ev.onDialogueSound?.());
+    story=createDialogue(play,()=>ev.onDialogueSound?.(),()=>ev.onDialogueStop?.());
     scr = h('div', 'scr', '', play);
     buildHud();
     loadMenuLettering().then(() => applyMenuLettering(scr)).catch(error => console.warn(error.message));

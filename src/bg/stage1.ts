@@ -69,6 +69,8 @@ void main() {
   // 两侧提饱和，中路保持柔和
   float lum = dot(col, vec3(.2126, .7152, .0722));
   col = mix(vec3(lum), col, 1.0 + .15 * side);
+  // uP2.x：两秒俯冲；云下亮度柔和过渡，保留云海明部。
+  col = mix(col, mix(col, hexc(0xd8e0e5), .22) * 1.08, uP2.x);
   fragColor = vec4(col, 1.0);
 }
 `,
@@ -77,7 +79,18 @@ void main() {
   vec2 base = vUv * vec2(PLAY_W, PLAY_H);
   vec4 wx = skyWeather(base, hexc(0xe4ebf3), hexc(0x3a4c66), 0.0, 0.0);
   vec4 rays = skyRays(base);
-  fragColor = vec4(wx.rgb * (1.0 - rays.a) + rays.rgb, wx.a + rays.a * (1.0 - wx.a));
+  vec4 layer = vec4(wx.rgb * (1.0 - rays.a) + rays.rgb, wx.a + rays.a * (1.0 - wx.a));
+  float dive = uP2.x;
+  if (dive > 0.0 && dive < 1.0) {
+    // 中央云团沿两侧掀开，露出下方崖台；战斗对象保持在云层之上。
+    float edge = abs(base.x - 450.0) - dive * 660.0;
+    float billow = fbm(vec2(abs(base.x - 450.0) - dive * 700.0, base.y + dive * 520.0) * .008, 3);
+    float cover = smoothstep(-150.0, 30.0, edge + billow * 170.0);
+    cover *= smoothstep(0.0, .13, dive) * (1.0 - smoothstep(.8, 1.0, dive));
+    vec3 cloud = mix(hexc(0xb3c9df), hexc(0xfff8e9), billow);
+    layer = vec4(mix(layer.rgb, cloud, cover), layer.a + cover * (1.0-layer.a));
+  }
+  fragColor = layer;
 }
 `,
 };

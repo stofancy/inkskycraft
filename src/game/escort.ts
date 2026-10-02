@@ -17,8 +17,8 @@ export class EscortShip {
  chiyanPad:Scenery|null=null;chiyanEngine=false;
  readonly vessels:Scenery[]=[];
  hooks:import('./enemy').Enemy[]=[];
- // 跟随模式：三船按主角约 0.35 秒一档的轨迹排成尾队；order 为尾队顺序，pull 为额外位移（纸龙锁链），lag 为额外滞后。
- follow=false;order=[0,1,2];readonly pull=[{x:0,y:0},{x:0,y:0},{x:0,y:0}];readonly extraLag=[0,0,0];shipScale=.33;
+ // 跟随模式：云梭按主角约 0.35 秒前的轨迹跟随；order 为跟随顺序，pull 为额外位移（纸龙锁链），lag 为额外滞后。
+ follow=false;order=[0];readonly pull=[{x:0,y:0}];readonly extraLag=[0];shipScale=.33;
  protected trail:{t:number;x:number;y:number}[]=[];protected clock=0;protected placed=false;
  protected trailAt(t:number){const a=this.trail;if(!a.length)return {x:this.w.player.x,y:this.w.player.y};if(t<=a[0].t)return a[0];for(let i=a.length-1;i>0;i--)if(a[i-1].t<=t){const k=(t-a[i-1].t)/Math.max(1e-6,a[i].t-a[i-1].t);return {x:a[i-1].x+(a[i].x-a[i-1].x)*k,y:a[i-1].y+(a[i].y-a[i-1].y)*k};}return a[a.length-1];}
  protected followUpdate(dt:number):void{
@@ -38,8 +38,8 @@ export class EscortShip {
  readonly born:number;
  constructor(readonly w:World,migration=true){
   this.born=w.real;this.scene=w.scene(migration?'sky_migration-ship':CH1_AIR_ART.ship.atlas,450,860);this.scene.layer='ground';
-  if(migration){this.vessels.push(w.scene('sky_migration-ship',270,720),this.scene,w.scene('sky_migration-ship',630,1000));this.vessels.forEach(s=>{s.layer="ground";s.sx=s.sy=.33;});}
-  // 第一章三船使用同一精灵；第二章沿用自己的三船状态图集。
+  if(migration){this.vessels.push(this.scene);this.vessels.forEach(s=>{s.layer="ground";s.sx=s.sy=.33;});}
+  // 两章各护送一架云梭；第二章沿用自己的状态图集。
  }
  get bottom(){return this.scene.y+80;}
  get state(){return this.sinking?'sinking':this.durability<30?'leak':this.durability<60?'smoke':'healthy';}
@@ -55,7 +55,7 @@ export class EscortShip {
  update(dt:number):void{
   if(this.scene.dead){this.vessels.forEach(s=>s.dead=true);return;}
   if(this.follow&&this.vessels.length){this.followUpdate(dt);if(!this.protected)this.absorbBullets(85*this.shipScale/.85,115*this.shipScale/.85);this.finishUpdate(dt);return;}
-  for(let i=0;i<this.vessels.length;i++){const s=this.vessels[i];s.sx=s.sy=this.shipScale;if(s!==this.scene){s.x=Math.max(105,Math.min(795,this.scene.x+(i-1)*180+Math.sin(this.w.real*.5+i)*8));s.y=this.scene.y+(i-1)*140+Math.cos(this.w.real*.4+i)*6;if(this.scene.y<=1000)s.y=Math.min(1060,s.y);}s.rot=Math.sin(this.w.real*.35+i)*.018;}
+  this.scene.sx=this.scene.sy=this.shipScale;this.scene.rot=Math.sin(this.w.real*.35)*.018;
   if(!this.protected)this.absorbBullets(85,115);
   this.warnings=this.warnings.filter(v=>!v.dead);
   if(this.warnings.length&&!this.rescuing){const nearby=this.warnings.find(v=>Math.hypot(v.x-this.scene.x,v.y-this.scene.y)<180);if(nearby)this.scene.x=Math.max(140,Math.min(760,this.scene.x+(nearby.x>=this.scene.x?-1:1)*60*dt));}

@@ -1,0 +1,148 @@
+{
+  "version": 1,
+  "assetVersion": "ART-25",
+  "image": "art/enemies/ch3/e_sunwheel/sheet.png",
+  "columns": 4,
+  "rows": 2,
+  "count": 8,
+  "fps": 10,
+  "mode": "loop",
+  "frameSize": [
+    220,
+    200
+  ],
+  "runtimeSize": [
+    110,
+    100
+  ],
+  "radius": 22,
+  "anchorPixel": [
+    110.0,
+    100.0
+  ],
+  "pivot": [
+    0,
+    0
+  ],
+  "anchors": {},
+  "anchorPixels": {},
+  "segments": {
+    "flight": {
+      "start": 0,
+      "count": 8,
+      "fps": 10,
+      "mode": "loop"
+    }
+  },
+  "source": "studio/art/ART-25/e_sunwheel-base-source.png",
+  "orientation": "nose-down",
+  "lighting": "upper-left",
+  "approval": "已接入；待制作人审图",
+  "frames": [
+    {
+      "index": 0,
+      "anchorPixel": [
+        110.0,
+        100.0
+      ],
+      "contentBounds": [
+        16,
+        11,
+        204,
+        189
+      ]
+    },
+    {
+      "index": 1,
+      "anchorPixel": [
+        110.0,
+        100.0
+      ],
+      "contentBounds": [
+        15,
+        11,
+        204,
+        189
+      ]
+    },
+    {
+      "index": 2,
+      "anchorPixel": [
+        110.0,
+        100.0
+      ],
+      "contentBounds": [
+        16,
+        11,
+        204,
+        189
+      ]
+    },
+    {
+      "index": 3,
+      "anchorPixel": [
+        110.0,
+        100.0
+      ],
+      "contentBounds": [
+        16,
+        11,
+        203,
+        189
+      ]
+    },
+    {
+      "index": 4,
+      "anchorPixel": [
+        110.0,
+        100.0
+      ],
+      "contentBounds": [
+        16,
+        11,
+        204,
+        189
+      ]
+    },
+    {
+      "index": 5,
+      "anchorPixel": [
+        110.0,
+        100.0
+      ],
+      "contentBounds": [
+        17,
+        11,
+        204,
+        189
+      ]
+    },
+    {
+      "index": 6,
+      "anchorPixel": [
+        110.0,
+        100.0
+      ],
+      "contentBounds": [
+        16,
+        11,
+        204,
+        189
+      ]
+    },
+    {
+      "index": 7,
+      "anchorPixel": [
+        110.0,
+        100.0
+      ],
+      "contentBounds": [
+        16,
+        11,
+        205,
+        189
+      ]
+    }
+  ],
+  "note": "ART-04 固定枢轴派生；保留原尺寸、碰撞遮罩和挂点。当前游戏固定第0帧，循环帧供后续实体动画接入。"
+}

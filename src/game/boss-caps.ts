@@ -1,22 +1,41 @@
 // Boss 伤害限额：子弹是主要伤害来源，技能每次封顶，破绽窗口内放宽一次。统一在 World.damage 结算。
 import type { World } from './world';
 import type { Enemy } from './enemy';
-import type { DamageSource } from '../types';
+import { PLAY_W, type WeaponColor, type DamageSource } from '../types';
 import { RS } from '../gl/ribbons';
 
 /** 占当前段满血的比例；暂定数值。 */
 export const BOSS_CAP={ink:.06,bomb:.10,skill:.06,companion:.03,burnPerSec:.005,weak:.25,weakSeconds:4};
-interface State{phase:unknown;casts:Map<unknown,{used:number;cap:number}>;burn:{level:number;at:number};group:Map<string,{key:object;last:number}>;weaks:number}
+export interface CannonCast {color:WeaponColor;level:1|2|3;bosses:Map<Enemy,unknown>;interrupted:Set<Enemy>;limited:Set<Enemy>}
+interface State{cannonUsed:number;phase:unknown;casts:Map<unknown,{used:number;cap:number}>;burn:{level:number;at:number};group:Map<string,{key:object;last:number}>;weaks:number}
 export class BossCaps {
+ private cannonCasts=new WeakSet<object>();
+ createCannon(color:WeaponColor,level:1|2|3):CannonCast {
+  const cast:CannonCast={color,level,bosses:new Map(),interrupted:new Set(),limited:new Set()};
+  for(const e of this.w.enemies){const boss=this.bossOf(e);if(boss)cast.bosses.set(boss,boss.data.phase??0);}
+  this.cannonCasts.add(cast);return cast;
+ }
+ isCannon(key?:object):boolean{return !!key&&this.cannonCasts.has(key);}
+ cannonValid(e:Enemy,cast:CannonCast):boolean {const boss=this.bossOf(e);return !boss||(cast.bosses.has(boss)&&cast.bosses.get(boss)===(boss.data.phase??0));}
  private states=new WeakMap<Enemy,State>();
  constructor(readonly w:World){}
  bossOf(e:Enemy):Enemy|null{let root=e;while(root.parent)root=root.parent;const c=(e.data.bossOwner??root.data.bossOwner??root) as Enemy;return c.def?.boss?c:null;}
  private state(boss:Enemy):State{let s=this.states.get(boss);const phase=boss.data.phase??0;
-  if(!s||s.phase!==phase){s={phase,casts:new Map(),burn:{level:boss.maxHp*BOSS_CAP.burnPerSec,at:this.w.real},group:new Map(),weaks:0};this.states.set(boss,s);}return s;}
+  if(!s||s.phase!==phase){s={cannonUsed:0,phase,casts:new Map(),burn:{level:boss.maxHp*BOSS_CAP.burnPerSec,at:this.w.real},group:new Map(),weaks:0};this.states.set(boss,s);}return s;}
  /** 返回允许的伤害；amount 已含护甲与易伤倍率。 */
  apply(boss:Enemy,source:DamageSource,amount:number,opts:{tag?:string;castKey?:object}):number{
   if(source==='qte')return amount;
   const now=this.w.real,max=boss.maxHp,s=this.state(boss);
+  if(opts.castKey&&this.cannonCasts.has(opts.castKey)){
+   const cast=opts.castKey as CannonCast;
+   if(!this.cannonValid(boss,cast))return 0;
+   let c=s.casts.get(cast);
+   if(!c){c={used:0,cap:max*(cast.color==='blue'?[.03,.045,.06]:[.02,.03,.04])[cast.level-1]};s.casts.set(cast,c);}
+   const a=Math.max(0,Math.min(amount,c.cap-c.used,max*.10-s.cannonUsed,boss.hp-max*.15));
+   c.used+=a;s.cannonUsed+=a;
+   if(a<amount&&!cast.limited.has(boss)){cast.limited.add(boss);boss.data.cannonLimitedUntil=now+1.2;}
+   return a;
+  }
   if(opts.tag==='burn'){const b=s.burn,rate=max*BOSS_CAP.burnPerSec;b.level=Math.min(rate,b.level+rate*(now-b.at));b.at=now;const a=Math.min(amount,b.level);b.level-=a;return a;}
   const kind=source==='ink'?'ink':source==='bomb'?'bomb':source==='companion'?'companion':source==='neutral'?'skill':null;
   if(!kind)return amount;
@@ -42,6 +61,7 @@ export class BossCaps {
  }
  draw():void{
   const r=this.w.r,now=this.w.real;
+  for(const e of this.w.enemies)if(!e.dead&&now<(e.data.cannonLimitedUntil??0)){const x=PLAY_W-30,y=38;r.ribbonTop.line(x-10,y,x+10,y,4,RS.Brush,.4,.4,.4,.8);r.ribbonTop.line(x,y,x,y-13,3,RS.Brush,.4,.4,.4,.8);}
   // 没有自定义破绽条件的 Boss：每段血量降到 65% 和 30% 时各开一次。
   for(const e of this.w.enemies){if(!e.def.boss||e.dead||e.data.weakCustom||e.maxHp<=0||e.hp<=0)continue;const s=this.state(e),f=e.hp/e.maxHp;if((s.weaks===0&&f<=.65)||(s.weaks===1&&f<=.3)){s.weaks++;this.openWeak(e);}}
   for(const e of this.w.enemies){const weak=e.data.weak as {until:number;claimed?:boolean}|undefined;if(!weak||e.dead||now>=weak.until)continue;

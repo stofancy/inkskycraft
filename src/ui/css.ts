@@ -14,9 +14,6 @@ const RAW = /* css */ `
 .skill-seconds{position:absolute;inset:0;display:grid;place-items:center;font:16h var(--font-number);color:#fff;line-height:1;text-shadow:0 1px 3px #000,1px 0 3px #000}
 .skill-name{font-size:12h;white-space:nowrap}.skill-value{font:11h var(--font-number);color:var(--gold);min-height:12h}
 .skill-fill{position:absolute;bottom:0;left:0;width:100%;height:2h;background:var(--gold);transform-origin:left}
-.skill-slot[data-skill="zhongpao"] .skill-value{position:absolute;bottom:0;left:0;right:0;text-align:center;min-height:0;background:#16120cd9;font-size:10h;line-height:1.2;text-shadow:0 1px 2px #000}
-.host.c .skill-slot[data-skill="zhongpao"] .skill-value{font-size:10u;min-height:0}
-.skill-slot[data-skill="zhongpao"] .skill-fill{display:none}
 .host.c .skillbar{position:absolute;top:620u;right:14u;width:280u;gap:8u;background:#081215b8;padding:8u;border:1px solid #bfa46745}
 .host.c .skill-row{min-height:64u;gap:6u}.host.c .skill-key,.host.c .skill-name{font-size:12u}.host.c .skill-value{font-size:11u;min-height:12u}.host.c .skill-icon{width:36u;height:36u}.host.c .skill-seconds{font-size:16u}
 .host.c .passive-dock{top:780u}

@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "image": "jade-talisman-shard.png",
+  "atlasSize": [
+    96,
+    64
+  ],
+  "textureScale": 2,
+  "coordinateSystem": "纹理像素；原点在左上，x向右，y向下。rect=[x,y,width,height]；anchor为矩形内局部坐标。运行时坐标与锚点除以textureScale。",
+  "parts": [
+    {
+      "id": "shard-1",
+      "rect": [
+        4,
+        8,
+        24,
+        16
+      ],
+      "anchor": [
+        12.0,
+        8.0
+      ]
+    },
+    {
+      "id": "shard-2",
+      "rect": [
+        36,
+        4,
+        24,
+        23
+      ],
+      "anchor": [
+        12.0,
+        11.5
+      ]
+    },
+    {
+      "id": "shard-3",
+      "rect": [
+        68,
+        4,
+        23,
+        24
+      ],
+      "anchor": [
+        11.5,
+        12.0
+      ]
+    },
+    {
+      "id": "shard-4",
+      "rect": [
+        4,
+        37,
+        24,
+        22
+      ],
+      "anchor": [
+        12.0,
+        11.0
+      ]
+    },
+    {
+      "id": "shard-5",
+      "rect": [
+        38,
+        36,
+        19,
+        24
+      ],
+      "anchor": [
+        9.5,
+        12.0
+      ]
+    },
+    {
+      "id": "shard-6",
+      "rect": [
+        68,
+        41,
+        24,
+        13
+      ],
+      "anchor": [
+        12.0,
+        6.5
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "rock-large-pine": [
+    { "top": [533, 552], "bottom": [513, 1380], "width": 62 }
+  ],
+  "rock-large-root": [
+    { "top": [689, 520], "bottom": [650, 1367], "width": 74 }
+  ],
+  "cliff-left": [
+    { "top": [974, 538], "bottom": [1004, 1028], "width": 64 },
+    { "top": [1272, 202], "bottom": [1293, 860], "width": 57 }
+  ],
+  "cliff-right": [
+    { "top": [381, 252], "bottom": [409, 1029], "width": 84 },
+    { "top": [946, 426], "bottom": [957, 914], "width": 52 }
+  ]
+}

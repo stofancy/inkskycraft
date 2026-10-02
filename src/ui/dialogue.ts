@@ -1,6 +1,6 @@
 // 暂停对白：逻辑帧驱动打字与输入，窗口尺寸决定分页；句读完整保留。
 import type { DialogueActor, InputState } from '../types';
-export function createDialogue(parent:HTMLElement,onAdvance:()=>void) {
+export function createDialogue(parent:HTMLElement,onAdvance:()=>void,onPage:()=>void) {
  const layer=document.createElement('div');layer.className='story-dialogue';layer.hidden=true;parent.appendChild(layer);
  layer.innerHTML='<div class="story-shade"></div><div class="story-faces"></div><div class="story-box"><div class="story-speaker"></div><div class="story-text"></div><div class="story-footer"><span class="story-page"></span><span class="story-next"></span><span class="story-skip">按住 Esc 跳过本段</span></div></div>';
  const faces=layer.querySelector<HTMLElement>('.story-faces')!,speaker=layer.querySelector<HTMLElement>('.story-speaker')!,textEl=layer.querySelector<HTMLElement>('.story-text')!,pageEl=layer.querySelector<HTMLElement>('.story-page')!,nextEl=layer.querySelector<HTMLElement>('.story-next')!,skipEl=layer.querySelector<HTMLElement>('.story-skip')!;
@@ -17,16 +17,16 @@ export function createDialogue(parent:HTMLElement,onAdvance:()=>void) {
  }
  function paint(){const chars=Array.from(pages[page]??'');textEl.textContent=chars.slice(0,typed).join('');textEl.classList.toggle('overflowing',textEl.scrollHeight>textEl.clientHeight+1);if(textEl.classList.contains('overflowing'))textEl.scrollTop=textEl.scrollHeight;pageEl.textContent=`${page+1} / ${pages.length}`;nextEl.textContent=typed>=chars.length?'▼ 点击 / 回车':'点击补全文字';layer.dataset.page=String(page);layer.dataset.complete=String(typed>=chars.length);}
  function finish(){layer.hidden=true;const callback=done;done=()=>{};callback();}
- function advance(){if(layer.hidden)return;const length=Array.from(pages[page]).length;if(typed<length){typed=length;paint();}else if(page+1<pages.length){page++;typed=0;elapsed=0;textEl.scrollTop=0;paint();}else finish();}
+ function advance(){if(layer.hidden)return;onPage();const length=Array.from(pages[page]).length;if(typed<length){typed=length;paint();}else if(page+1<pages.length){page++;typed=0;elapsed=0;textEl.scrollTop=0;paint();}else finish();}
  function manualAdvance(){if(layer.hidden)return;onAdvance();advance();}
- function skipSegment(){if(layer.hidden)return;layer.hidden=true;portraits=[];const callback=skip;done=skip=()=>{};callback();}
+ function skipSegment(){if(layer.hidden)return;onPage();layer.hidden=true;portraits=[];const callback=skip;done=skip=()=>{};callback();}
  layer.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();e.stopPropagation();manualAdvance();});
  layer.addEventListener('contextmenu',e=>e.preventDefault());
  return {
   state,advance,skip:skipSegment,
-  reset(){layer.hidden=true;portraits=[];pages=[];done=skip=()=>{};},
+  reset(){onPage();layer.hidden=true;portraits=[];pages=[];done=skip=()=>{};},
   show(actor:DialogueActor,expression:string,text:string,lineId:string,memory:boolean,onDone:()=>void,onSkip:()=>void){
-   const wasActive=!layer.hidden;layer.hidden=false;id=lineId;original=text;done=onDone;skip=onSkip;page=typed=elapsed=skipHeld=0;
+   const wasActive=!layer.hidden;if(wasActive)onPage();layer.hidden=false;id=lineId;original=text;done=onDone;skip=onSkip;page=typed=elapsed=skipHeld=0;
    layer.dataset.id=id;layer.classList.toggle('memory',memory);skipEl.textContent='按住 Esc 跳过本段';
    const url=actor.expressions?.[expression]??actor.portrait??'';
    let face=portraits.find(p=>p.name===actor.name);
@@ -40,7 +40,7 @@ export function createDialogue(parent:HTMLElement,onAdvance:()=>void) {
   },
   resize(){if(layer.hidden)return;const read=pages.slice(0,page).join('').length;pages=paginate(original);let count=0;page=0;while(page+1<pages.length&&count+pages[page].length<=read)count+=pages[page++].length;typed=Math.min(typed,Array.from(pages[page]).length);paint();},
   tick(dt:number,input:InputState){if(layer.hidden)return;
-   if(input.down('pause')){skipHeld+=dt;skipEl.textContent=`跳过本段 ${Math.min(100,Math.round(skipHeld*100))}%`;if(skipHeld+1e-8>=1){skipSegment();return;}}else{skipHeld=0;skipEl.textContent='按住 Esc 跳过本段';}
+   if(input.down('pause')){if(skipHeld===0)onPage();skipHeld+=dt;skipEl.textContent=`跳过本段 ${Math.min(100,Math.round(skipHeld*100))}%`;if(skipHeld+1e-8>=1){skipSegment();return;}}else{skipHeld=0;skipEl.textContent='按住 Esc 跳过本段';}
    if(input.pressed('confirm')){input.consume?.('confirm');manualAdvance();return;}
    elapsed+=dt;const count=Math.floor(elapsed*30);if(count>typed){typed=Math.min(count,Array.from(pages[page]).length);paint();}
   }

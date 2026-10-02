@@ -392,161 +392,38 @@ export const CH1_BOSS_SPRITES: SpriteDef[] = [
     },
     "radius": 0
   },
-  {
-    "id": "pd-head",
-    "w": 90,
-    "h": 110,
-    "image": "art/bosses/ch1/zhilong/head.png",
-    "pivot": [
-      0.0,
-      1.891
-    ],
-    "anchors": {
-      "root": [
-        0.0,
-        0.0
-      ],
-      "neck": [
-        0.0,
-        -43.012
-      ],
-      "eye": [
-        0.0,
-        -9.453
-      ],
-      "mouth": [
-        0.0,
-        39.703
-      ]
-    },
-    "radius": 0
-  },
-  {
-    "id": "pd-eye-lid",
-    "w": 55,
-    "h": 40,
-    "image": "art/bosses/ch1/zhilong/eye-lid.png",
-    "pivot": [
-      0.0,
-      -6.224
-    ],
-    "anchors": {
-      "root": [
-        0.0,
-        0.0
-      ]
-    },
-    "radius": 0
-  },
-  {
-    "id": "pd-body",
-    "w": 64,
-    "h": 82,
-    "image": "art/bosses/ch1/zhilong/body.png",
-    "pivot": [
-      0.0,
-      0.0
-    ],
-    "anchors": {
-      "root": [
-        0.0,
-        0.0
-      ],
-      "jointIn": [
-        0.0,
-        -32.416
-      ],
-      "jointOut": [
-        0.0,
-        32.416
-      ],
-      "register": [
-        0.0,
-        0.0
-      ],
-      "stampSocket": [
-        0.0,
-        12.684
-      ],
-      "tail": [
-        0.0,
-        32.416
-      ]
-    },
-    "radius": 0
-  },
-  {
-    "id": "pd-hinge",
-    "w": 24,
-    "h": 24,
-    "image": "art/bosses/ch1/zhilong/hinge.png",
-    "pivot": [
-      -0.023,
-      0.0
-    ],
-    "anchors": {
-      "root": [
-        0.0,
-        0.0
-      ]
-    },
-    "radius": 0
-  },
-  {
-    "id": "pd-register",
-    "w": 46,
-    "h": 44,
-    "image": "art/bosses/ch1/zhilong/register.png",
-    "pivot": [
-      0.0,
-      0.0
-    ],
-    "anchors": {
-      "root": [
-        0.0,
-        0.0
-      ],
-      "mouth": [
-        0.0,
-        8.549
-      ]
-    },
-    "radius": 0
-  },
-  {
-    "id": "pd-stamp",
-    "w": 46,
-    "h": 56,
-    "image": "art/bosses/ch1/zhilong/stamp.png",
-    "pivot": [
-      0.0,
-      -18.287
-    ],
-    "anchors": {
-      "root": [
-        0.0,
-        0.0
-      ]
-    },
-    "radius": 0
-  },
-  {
-    "id": "pd-tail",
-    "w": 90,
-    "h": 75,
-    "image": "art/bosses/ch1/zhilong/tail.png",
-    "pivot": [
-      0.0,
-      -24.495
-    ],
-    "anchors": {
-      "root": [
-        0.0,
-        0.0
-      ]
-    },
-    "radius": 0
-  }
+  // 纸扎龙灯分件：启动时统一烘焙，运行中只切帧、缩放与镜像。
+  { id: 'pd-head', w: 128, h: 139, textureScale: 3,
+    image: ['head-closed', 'head-turn', 'head-open'].map(name => `art/bosses/ch1/zhilong3/${name}.png`),
+    anchors: { root: [0, 0], neck: [0, -48], eye: [0, 35], mouth: [0, 57] }, radius: 0 },
+  // 扫描沿用独立判定点，外观由张口龙头承担。
+  { id: 'pd-eye', w: 1, h: 1, draw() {}, radius: 0 },
+  { id: 'pd-body', w: 90, h: 132, textureScale: 3,
+    image: ['body-closed', 'body-open'].map(name => `art/bosses/ch1/zhilong3/${name}.png`),
+    anchors: { root: [0, 0], jointIn: [0, -39], jointOut: [0, 39], clawL: [-27, 0], clawR: [27, 0], tail: [0, 44] }, radius: 0,
+    glow(ctx, frame) {
+      if (!frame) return;
+      const light = ctx.createRadialGradient(0, 0, 2, 0, 0, 35);
+      light.addColorStop(0, '#ffffff'); light.addColorStop(.28, '#fff6d9');
+      light.addColorStop(.65, '#b89548'); light.addColorStop(1, '#000000');
+      ctx.fillStyle = light; ctx.fillRect(-35, -40, 70, 80);
+    } },
+  { id: 'pd-claw', w: 80, h: 96, textureScale: 3,
+    image: 'art/bosses/ch1/zhilong3/claw.png',
+    anchors: { root: [12, -36] }, radius: 0 },
+  { id: 'pd-tail', w: 95, h: 109, textureScale: 3,
+    image: 'art/bosses/ch1/zhilong3/tail.png',
+    pivot: [0, -42], anchors: { root: [0, 0] }, radius: 0 },
+  // 清单判定沿用原尺寸，清单由 paperRegisterSvg 绘制。
+  { id: 'pd-register', w: 46, h: 44, draw() {}, radius: 0 },
+  { id: 'pd-stamp', w: 46, h: 56, pivot: [0, -18.287], radius: 0,
+    draw(ctx) {
+      ctx.fillStyle = '#3e291b'; ctx.strokeStyle = '#d6ac59'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.roundRect(-12, -25, 24, 17, 5); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#873726'; ctx.fillRect(-21, -10, 42, 32); ctx.strokeRect(-21, -10, 42, 32);
+      ctx.fillStyle = '#efcc87'; ctx.font = 'bold 26px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('封', 0, 7);
+    } }
+
 ];
 
 // 无判定扫描提示：灰色半角25度、长500，根在扇顶。

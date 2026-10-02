@@ -1,4 +1,4 @@
-// 纸龙第三段专用画面；判定与生命仍由关卡中的四个部件负责。
+// 纸龙第三段专用画面；判定与生命仍由关卡中的条目部件负责。
 const asset = (name: string) => `${import.meta.env.BASE_URL}art/bosses/ch1/register/${name}.png`;
 export interface RegisterTag {
  x: number; y: number; name: string; hp: number; hpFrac: number; burnedAt: number;

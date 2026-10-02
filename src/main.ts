@@ -1,6 +1,7 @@
 // 入口：创建渲染器、音频、UI、输入，烘焙精灵后进入主循环。
 // 调试参数：?stage=0|1|2|3 直接开始某关（0 为引擎测试关）  god=1 无敌  power=1..4
 //   weapon=red|blue|purple  autofire=1 自动射击  bot=1 自动移动  skip=秒 快进关卡脚本
+//   flowspeed=1..32 固定步长全局倍速（仅当前 URL 生效）
 //   diff=easy|normal|hard 覆盖难度（默认读 localStorage，缺省为普通）
 import { createAudio } from './audio/index';
 import { Input } from './core/input';
@@ -48,6 +49,7 @@ async function boot(): Promise<void> {
     onDifficultyChange: (d: 'easy' | 'normal' | 'hard') => game?.onDifficultyChange(d),
     onSettingsChange: (s: typeof settings) => game?.onSettingsChange(s),
     onDialogueSound: () => game?.onDialogueSound(),
+    onDialogueStop: () => audio.stopDialogue(),
     onMenuSound: (k: 'move' | 'ok' | 'back') => game?.onMenuSound(k),
   };
   ui.mount(uiRoot, events);
@@ -103,6 +105,9 @@ async function boot(): Promise<void> {
     }
   }
 
+  const requestedSpeed = Number(q.get('flowspeed') ?? 1);
+  const flowSpeed = Number.isFinite(requestedSpeed) ? Math.max(1, Math.min(32, requestedSpeed)) : 1;
+  const maxSteps = Math.ceil(4 * flowSpeed);
   const STEP = 1 / 60;
   let acc = 0;
   let last = performance.now();
@@ -114,15 +119,15 @@ async function boot(): Promise<void> {
     fpsAcc += dt; fpsN++;
     if (fpsAcc >= 0.5) { game!.fps = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; }
     if (Math.abs(dt - STEP) < 0.0015) dt = STEP; // 60Hz 显示器上锁步，避免抖动
-    acc += dt;
+    acc += dt * flowSpeed;
     let n = 0;
-    while (acc >= STEP - 1e-6 && n < 4) {
+    while (acc >= STEP - 1e-6 && n < maxSteps) {
       input.poll();
       game!.update(STEP);
       acc -= STEP;
       n++;
     }
-    if (n === 4) acc = 0;
+    if (n === maxSteps) acc = 0;
     game!.render();
     requestAnimationFrame(frame);
   };

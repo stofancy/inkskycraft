@@ -13,7 +13,7 @@ export const beeShot=(side:-1|1,delay=0):Go=>g=>{for(let i=0;i<cnt(g,1);i++)mk(g
 /** 中型敌人的只数：简单档 n 只，普通档 1.5n，困难档约 2.2n（cnt 是小型敌人的口径，中型用这个）。 */
 const cntM=(g:G,n:number)=>Math.max(1,Math.round(n*g.difficulty.quantity/1.8));
 /** 纸鹤整排压下：简单 3 只、普通 5 只、困难 7 只。 */
-export const craneRow:Go=g=>{const n=cntM(g,3);for(let i=0;i<n;i++){const x=n===1?450:130+i*(640/(n-1));mk(g,RouteCrane,x,-65,{row:true,slot:i,tx:x});}};
+export const craneRow:Go=g=>{const n=cntM(g,3);for(let i=0;i<n;i++){const x=n===1?450:130+i*(640/(n-1));mk(g,RouteCrane,x,-65,{row:true,slot:i,tx:x,attack:i===0?'blade':i===n-1?'mine':undefined});}};
 /** 蜂机走走停停：从 side 侧切入，沿「左中右」三个停靠点各停一次放弹，再向外飞走。 */
 export const stopGo=(side:-1|1,y0=120):Go=>g=>{const n=cnt(g,1);for(let i=0;i<n;i++){const s=side,pts:[number,number][]=[[450+s*260,y0+70+i*30],[450,y0+160+i*20],[450-s*260,y0+90+i*30]];mk(g,RouteHornet,side<0?-60:960,y0+i*40,{stopgo:true,delay:i*.5,pts});}};
 /** 铜龟：落到浮石林中央放弹，最后缩壳撞来。 */
@@ -39,3 +39,6 @@ export const sweepSide=(side:-1|1,n:number,y0=80,gap=.3):Go=>sweep(n,i=>[side<0?
 export const chaseBehind=(n:number,gap=.35):Go=>sweep(n,(i,m)=>[120+(m<2?.5:i/(m-1))*660,1300],-Math.PI/2,0,gap,260);
 /** 横扫激光：从左或右屏边出发，预警后转过半屏。 */
 export const sweepLaser=(side:-1|1,y=250):Go=>g=>{g.laser(side<0?-20:920,y,side<0?.05:Math.PI-.05,{warn:1.2,duration:2.6,width:12,color:'amber',sweep:side<0?.33:-.33,length:1300});};
+
+/** 一对纸鸢共用横线，替换一波杂鱼；两侧各保留至少180像素。 */
+export const kitePair:Go=g=>{const left=mk(g,RouteKite,260,-60,{lineX:260,lineLead:true}),right=mk(g,RouteKite,620,-60,{lineX:620});left.data.linePartner=right;right.data.linePartner=left;};

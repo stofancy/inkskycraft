@@ -11,7 +11,7 @@ import { STAGE2_ENEMIES } from './stage2_enemies';
 import { Mirage } from './stage2_boss';
 import { beaconWave } from './stage2_beacon';
 const PI=Math.PI;
-const names=['灯河夜航','护船下游','打灭假航灯','屿长说来历','闸楼炮大场面','镜鱼突袭','急行横扫','云闸前九灯','蜃','章末'];
+const names=['灯河夜航','护送云梭·下游','打灭假航灯','屿长说来历','闸楼炮大场面','镜鱼突袭','急行横扫','云闸前九灯','蜃','章末'];
 export const C2_PARTS=names.map((label,i)=>({id:`C2.P${i+1}`,label}));
 function clear(w:World){for(const e of [...w.enemies])w.remove(e);w.clearBullets(false);}
 function* untilPart(c:Chapter2,start:number,seconds:number):Co{while(c.w.real-start<seconds)yield;}
@@ -33,7 +33,7 @@ function* part(c:Chapter2,n:number):Co{const w=c.w,start=w.real;c.part=n;
  yield* batch(c,'umbrellaguest',3,i=>[200+i*250,-60]);yield* batch(c,'lampboat',2,i=>[300+i*300,-80]);yield* batch(c,'rotor',3,i=>[750-i*280,-60]);
  while(towers.some(t=>!t.dead)&&w.real-start<60)yield;for(const tower of towers)if(!tower.dead){w.damage(tower,10000,tower.x,tower.y,true,'companion');c.log('gate.chiyanAssist');}
  yield* c.wait(1.5);for(const tower of towers)if(tower.data.wreck)tower.data.wreck.dead=true;yield* c.conversation('C2.P6.bellSilence');c.leave('chiyan');yield* c.wait(.8);break;}
- case 6:{w.scrollSpeed(150,1.5);const cave=w.scene('c2_cliff-cave',810,520);cave.layer='ground';c.short(17);yield* batch(c,'mirrorfish',7,i=>[120+i*100,-60-Math.abs(3-i)*60]);yield* batch(c,'tideshuttle',4,i=>[180+i*180,-70]);yield* untilPart(c,start,15);spawn(c,'mirrorfish',840,520,{flank:-1});c.join('moyuan',{x:900,y:520});yield* c.conversation('C2.moyuanJoin');for(let i=1;i<Math.round(7*w.difficulty.quantity);i++){spawn(c,'mirrorfish',750-i*100,-60-Math.abs(3-i)*60);yield* c.wait(.45);}while(w.real-start<45&&w.enemies.some(e=>!e.dead&&e.def.sprite==='e_mirrorfish'))yield;yield* c.conversation('C2.moyuanIntro');yield* untilPart(c,start,50);cave.dead=true;break;}
+ case 6:{w.scrollSpeed(150,1.5);c.short(17);yield* batch(c,'mirrorfish',7,i=>[120+i*100,-60-Math.abs(3-i)*60]);yield* batch(c,'tideshuttle',4,i=>[180+i*180,-70]);yield* untilPart(c,start,15);spawn(c,'mirrorfish',840,520,{flank:-1});c.join('moyuan',{x:900,y:520});yield* c.conversation('C2.moyuanJoin');for(let i=1;i<Math.round(7*w.difficulty.quantity);i++){spawn(c,'mirrorfish',750-i*100,-60-Math.abs(3-i)*60);yield* c.wait(.45);}while(w.real-start<45&&w.enemies.some(e=>!e.dead&&e.def.sprite==='e_mirrorfish'))yield;yield* c.conversation('C2.moyuanIntro');yield* untilPart(c,start,50);break;}
  case 7:{w.scrollSpeed(160,1.5);c.short(15);
  w.fork((function*():Co{for(let i=0;i<5;i++){yield* c.wait(6);const left=i%2===0;w.laser(left?40:860,60,left?PI/2-.7:PI/2+.7,{warn:1,duration:2.6,width:30,color:'amber',sweep:left?.55:-.55});}})());
  yield* batch(c,'umbrellaguest',4,i=>[180+i*160,180+i*150]);yield* batch(c,'mirrorfish',6,i=>[200+(i%3)*200,140+Math.floor(i/3)*300]);yield* batch(c,'moth',3,i=>[200+i*250,-80]);yield* batch(c,'netspider',2,i=>[700-i*500,330+i*250]);yield* untilPart(c,start,45);break;}
@@ -44,7 +44,7 @@ function* part(c:Chapter2,n:number):Co{const w=c.w,start=w.real;c.part=n;
  yield* c.wait(6);yield* c.conversation('C2.end.thunderCall');const end=w.real;while(w.real-end<8){const k=(w.real-end)/8;c.endScene.x=730+k*180;c.endScene.y=260-k*180;c.endScene.sx=c.endScene.sy=1-k*.6;c.endScene.alpha=1-k;c.lockedBird.x=c.endScene.x;c.lockedBird.y=c.endScene.y+86.19*(1-k*.6);c.lockedBird.alpha=1-k;yield;}c.endScene.dead=c.lockedBird.dead=true;const mo=w.companions.team.find(s=>s.kind==='moyuan'),flight=w.real,ox=w.player.x,oy=w.player.y;if(mo){mo.penFlight=true;mo.angle=0;}while(w.real-start<45){const k=Math.min(1,(w.real-flight)/Math.max(.1,45-(flight-start)));w.player.x=ox+(450-ox)*k;w.player.y=oy+(-90-oy)*k;if(mo){mo.x=w.player.x+82;mo.y=w.player.y-60;}yield;}break;
  }
 }
-export const STAGE2:StageDef={index:2,title:'第二章 · 蜃海',subtitle:'认清真灯，穿过云海',name:'蜃海',bg:'stage2',music:'stage2',
+export const STAGE2:StageDef={index:2,title:'第二章 · 拆开太平画',subtitle:'认清真灯，揭开云里的小镇',name:'蜃海',bg:'stage2',music:'stage2',
  content:{baselineBodies:0,normalBodies:135,baselineTypes:13,enemyTypes:[...Object.keys(STAGE2_ENEMIES),'gatetower'],encounters:10,chapters:names},
  *script(g:G):Co{const w=g as World;w.chapterDialogue=new ChapterDialogue(w,CH2_LINES);const c=w.chapter2=new Chapter2(w);w.sceneState=c;c.roster(['chiyan','laodun']);
  if(!g.seekingCheckpoint){g.card(this.title,this.subtitle);yield* c.wait(3);}if(w.checkpointTarget&&/^C2.P(?:[6-9]|10)$|MIRAGE/.test(w.checkpointTarget)){c.roster(['laodun','moyuan']);}if(w.checkpointTarget&&/^C2.P(?:[3-9]|10)$|MIRAGE/.test(w.checkpointTarget)){c.fleet.visible=true;c.fleet.protected=false;}

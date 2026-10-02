@@ -26,6 +26,8 @@ export interface SpriteDef {
   frames?: number;
   /** 同源 public/art 路径；数组为序列帧。加载失败时使用 draw。 */
   image?: string | string[];
+  /** 启动烘焙时的调色，运行时复用图集。 */
+  imageFilter?: string;
   /** 单张分镜，等格按行播放。可用 sheet.mjs 输出的对齐图和元数据。 */
   sheet?: SpriteSheet;
   /** 图片每帧在矩形内的缩放，默认 1。 */

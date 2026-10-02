@@ -27,3 +27,11 @@ for (const def of companionSprites) {
  def.frames=meta.count;delete def.image;delete def.imageScale;
  def.pivot=[(meta.anchorPixel[0]/meta.frameSize[0]-.5)*def.w,(meta.anchorPixel[1]/meta.frameSize[1]-.5)*def.h];
 }
+
+// 护命符与三对合击法宝随启动图集一次烘焙，draw 只引用图集条目。
+for(const [id,w,h] of [
+ ['jade-talisman',30,12],['gate-pillar',40,110],['fire-feather-blade',270,54],
+ ['seal-plate',135,62],['array-corner',24,24],['pin-spike',12,20],
+ ['mirror-half',39,105],['jade-chip',18,8],
+] as const)companionSprites.push({id:`joint_${id}`,w,h,image:`art/skills/joint/${id}.png`});
+companionSprites.push({id:'joint_shards',w:16,h:16,sheet:{image:'art/skills/joint/jade-talisman-shard.png',columns:3,rows:2,count:6,fps:1,mode:'loop'}});

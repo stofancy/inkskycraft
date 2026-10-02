@@ -10,7 +10,7 @@ export function spawnBeacon(g:World,x:number,y:number,master=false):Enemy{
  const n=g.spawn({...BeaconLight,hp:(master?60:18)/g.difficulty.hp},x,y,e=>{e.data.contentRole='part';e.data.noSupplementFire=true;e.data.c2Beacon=!master;e.data.c2Master=master;e.data.weakWeapon=master?'blue':undefined;e.data.weakLabel=master?undefined:'假航灯';e.data.manualFrame=true;});
  if(master)n.scaleX=n.scaleY=1.6;return n;
 }
-/** 假灯拉动云梭：跟随模式拉三架云梭的偏移；停泊模式直接拉船位。dir 为 -1 左、1 右。 */
+/** 假灯拉动云梭：跟随模式拉云梭的偏移；停泊模式直接拉船位。dir 为 -1 左、1 右。 */
 export function pullFleet(g:World,lights:Enemy[]):void{
  const fleet=g.chapter2!.fleet,live=lights.filter(n=>!n.dead);if(!live.length)return;
  const dir=live.reduce((s,n)=>s+(n.x<450?-1:1)*(n.data.c2Master?70:40),0);

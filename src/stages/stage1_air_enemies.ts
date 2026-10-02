@@ -1,3 +1,4 @@
+import { oilAttack,rocketAttack } from './stage1_attacks';
 // 第一章空战新增敌人；友方目标只通过 EscortShip 获取。
 import type { Enemy,EnemyDef } from '../game/enemy';
 import type { Co,G } from '../game/api';
@@ -35,7 +36,8 @@ export const AirBomb:EnemyDef={name:'轰炸机炸弹',sprite:CH1_AIR_ART.bomb.at
   log.explodeAt=g.real;warning.dead=true;ship.explode(x,y);g.remove(e);}finally{warning.dead=true;}
  },onDeath(e){e.data.warning&&(e.data.warning.dead=true);if(e.data.bombLog)e.data.bombLog.destroyed=true;}};
 export const Bomber:EnemyDef={name:'浮石林轰炸机',sprite:CH1_AIR_ART.bomber.atlas,hp:170,score:900,
- *ai(e,g){const ship=(g as World).escort!,art=CH1_AIR_ART.bomber;e.data.noSupplementFire=true;e.data.manualFrame=true;e.vy=90;
+ *ai(e,g){const ship=(g as World).escort!,art=CH1_AIR_ART.bomber;
+  if(e.data.attack){e.data.noSupplementFire=true;e.data.manualFrame=true;const fly=new SpritePlayback(art.segments.flight);e.run((function*():Co{for(;;){fly.update(g.dt);e.frame=art.segments.flight.start+fly.frame;yield;}})());yield* e.moveTo(e.x,310,2.5);for(let i=0;i<2;i++){if(e.data.attack==='oil')yield* oilAttack(e,g);else yield* rocketAttack(e,g);yield* g.wait(4);}yield* e.moveTo(e.x<450?-180:1080,200,2);g.remove(e);return;}e.data.noSupplementFire=true;e.data.manualFrame=true;e.vy=90;
   const flight=new SpritePlayback(art.segments.flight);
   // 机炮：每 2.4 秒朝玩家放 3 发扇形；玩家贴到机身下方 170 以内时，亮光 0.6 秒后近身炸一圈（冷却 5 秒）。
   let gun=1.5,burst=0;const guns=function*():Co{gun-=g.dt;burst-=g.dt;
