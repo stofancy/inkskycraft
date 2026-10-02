@@ -3,6 +3,7 @@
 import { director } from './dialogue1';
 import { BOSS1_BALANCE } from './boss1_balance';
 import { paperRegisterSvg } from '../art/paper-register';
+import { burnEmit } from '../game/burn-fx';
 import type { World } from '../game/world';
 import type { Co, G } from '../game/api';
 import { Scope } from '../core/tasks';
@@ -156,77 +157,107 @@ export const Sparrow: EnemyDef = {
 
 // 纸龙沿用铜雀的受击、单血条、段名、顿帧和碎片通道。
 const PAPER_SCALE = 2.18;/* 放大约 1.5 倍 */
-const PAPER_SEG = 180;/* 放大后节间距也要拉开，从 123 改到 180 */
+const PAPER_SCAN = { swing: .30, halfWidth: .10, sweep: 2, warning: 1, firstWarning: 2, rest: 3, length: 1600 };
 interface PaperClaw { part:Enemy; broken:boolean; at:number; x:number; y:number }
 interface PaperRow { part:Enemy; name:string; burnedAt:number; ship:number }
 interface PaperChain { claw:PaperClaw; nodes:Enemy[]; ship:number; warnUntil:number; cut:boolean; nextHit:number }
-interface PaperBurn { part:Enemy; x:number; y:number; until:number; next:number }
+interface PaperBurn { part:Enemy; x:number; y:number; at:number; until:number; next:number }
 interface PaperRig {
  bodies:Enemy[]; hinges:Enemy[]; lid:Enemy; eye:Enemy; tail:Enemy; stamp:Enemy;
  claws:PaperClaw[]; rows:PaperRow[]; burns:PaperBurn[]; chains:PaperChain[];
  // 共用表现读取 wings；纸爪小血条由纸龙自身绘制，沿用同样的宽度/颜色。
  wings:Wing[]; core:Enemy; readonly controller:Enemy;
- open:boolean; scanAngle:number; scanAge:number; bare:number; stampProgress:number;
+ open:boolean; scanAngle:number; scanAge:number; scanWarning:number; scanDirection:number; bare:number; stampProgress:number;
  seal:{active:boolean;row:number;x:number;y:number;start:number;lit:number}; sealed:boolean[]; taught:boolean; stampHp:number; stampH:number; lockShip:{i:number;x:number;y:number}|null; struggleAt:number;
  shipOffsets:{x:number;y:number}[]; shipHp:number[];
- fly:{on:boolean;T:number;mode:number;off:{x:number;y:number};hist:{x:number;y:number}[];prev:{x:number;y:number}|null;hd:number;mirror:boolean};
+ fly:{on:boolean;T:number;mode:number;off:{x:number;y:number};hist:{x:number;y:number}[];hd:number;mirror:boolean};
 }
 function paperRig(e:Enemy,g:G):PaperRig {
  const surface=(sprite:string,order=0,priority=0):EnemyDef=>({sprite,hp:1e9,radius:0,drawOrder:order,hitPriority:priority});
  const bodies=Array.from({length:5},()=>g.spawn(surface('pd-body',-3),450,300));
  const hinges=bodies.map(b=>g.attach(b,surface('pd-hinge',1),'jointIn'));
  const lid=g.attach(e,surface('pd-eye-lid',5,30),'eye');
- const eye=g.attach(e,surface('pd-hinge',4,25),'eye');eye.radius=17*1.3;eye.offY=55;
+ const eye=g.attach(e,surface('pd-hinge',4,25),'eye');eye.radius=17*1.3;
  const tail=g.attach(bodies[4],surface('pd-tail',-2),'tail');
  const stamp=g.spawn({...decorative('pd-stamp',7)},450,160);stamp.scaleX=stamp.scaleY=4.2;stamp.alpha=0;
  const claws=[0,1].map(i=>({part:g.attach(bodies[i?3:1],surface('pd-register',6,20),'register',{followRot:false}),broken:false,at:0,x:0,y:0}));
- const r:PaperRig={bodies,hinges,lid,eye,tail,stamp,claws,rows:[],burns:[],chains:[],wings:[],core:eye,get controller(){return this.rows.find(a=>a.part.hp>0)?.part??e;},open:false,scanAngle:PI/2,scanAge:0,bare:0,stampProgress:0,seal:{active:false,row:-1,x:450,y:900,start:0,lit:-1},sealed:[false,false,false,false],taught:false,stampHp:1,stampH:1,lockShip:null,struggleAt:-9,fly:{on:false,T:0,mode:0,off:{x:0,y:0},hist:[],prev:null,hd:PI,mirror:false},shipOffsets:Array.from({length:3},()=>({x:0,y:0})),shipHp:[100,100,100]};
+ const r:PaperRig={bodies,hinges,lid,eye,tail,stamp,claws,rows:[],burns:[],chains:[],wings:[],core:eye,get controller(){return this.rows.find(a=>a.part.hp>0)?.part??e;},open:false,scanAngle:PI/2,scanAge:0,scanWarning:2,scanDirection:1,bare:0,stampProgress:0,seal:{active:false,row:-1,x:450,y:900,start:0,lit:-1},sealed:[false,false,false,false],taught:false,stampHp:1,stampH:1,lockShip:null,struggleAt:-9,fly:{on:false,T:0,mode:0,off:{x:0,y:0},hist:[],hd:PI,mirror:false},shipOffsets:Array.from({length:3},()=>({x:0,y:0})),shipHp:[100,100,100]};
  for(const p of [e,...bodies,...hinges,lid,eye,tail,...claws.map(a=>a.part)]){
   p.scaleX=p.scaleY=PAPER_SCALE;
   p.phaseLock=true;p.data.contentRole='part';p.data.bossOwner=e;p.data.copperPart=true;p.data.damageTarget=e;p.data.damageBonus=1;p.data.hitArmor=true;p.data.noSupplementFire=true;
   p.def.onHit=(part,_g,x,y,source)=>{
    if(source!=='red'||part===eye||r.bare>=1||e.invulnerable)return;
-   const dx=x-part.x,dy=y-part.y,c=Math.cos(part.angle),s=Math.sin(part.angle),local={x:(dx*c+dy*s)/part.scaleX,y:(-dx*s+dy*c)/part.scaleY},old=r.burns.find(b=>b.part===part&&Math.hypot(b.x-local.x,b.y-local.y)<24);
-   if(old)old.until=clock(g)+3;else {r.burns.push({part,x:local.x,y:local.y,until:clock(g)+3,next:clock(g)+.5});if(r.burns.length>24)r.burns.shift();}
+   const dx=x-part.x,dy=y-part.y,c=Math.cos(part.angle),s=Math.sin(part.angle),local={x:(dx*c+dy*s)/(part.scaleX*(part.mirror?-1:1)),y:(-dx*s+dy*c)/part.scaleY},old=r.burns.find(b=>b.part===part&&Math.hypot(b.x-local.x,b.y-local.y)<24);
+   if(old)old.until=clock(g)+3;else {r.burns.push({part,x:local.x,y:local.y,at:clock(g),until:clock(g)+3,next:clock(g)+.5});if(r.burns.length>24)r.burns.shift();}
   };
  }
  for(const a of claws){a.part.data.targetDisabled=true;a.part.alpha=0;}
  eye.data.hitArmor=false;eye.data.damageBonus=2;eye.data.targetDisabled=true;
  return r;
 }
-/** 纸龙头的飞行路线：第 1、2 段在上半屏游 S 形并周期俯冲，第 3 段在清单后方（上方）缓慢盘旋。 */
+/** 宽弧回转容纳刚性龙节；最小转弯半径约 128，避免折返时相邻纸甲叠在一起。 */
 function paperPath(mode:number,T:number):{x:number;y:number}{
- if(mode===3)return {x:450+200*Math.sin(.3*T),y:150+50*Math.sin(.6*T)};
+ if(mode===3)return {x:450+200*Math.sin(.3*T),y:150+160*Math.cos(.3*T)};
  // 钩船段龙爪是要被打的目标，移动放缓、不俯冲，保证火力追得上。
- if(mode===2)return {x:450+170*Math.sin(.28*T),y:250+40*Math.sin(.56*T)};
- const u=((T-10)%16)/3.5,dive=T>10&&u<1?230*Math.sin(PI*u)**2:0;
- return {x:450+250*Math.sin(.42*T-1.37),y:240+70*Math.sin(.84*T+.6)+dive};
+ if(mode===2)return {x:450+170*Math.sin(.28*T),y:250+160*Math.cos(.28*T)};
+ const a=.42*T-1.37;
+ return {x:450+250*Math.sin(a),y:270+180*Math.cos(a)};
 }
 function* paperPose(e:Enemy,g:G,r:PaperRig):Co {
  let previous=g.presentationTime;
  for(;;){
   const dt=world(g).dialoguePaused?0:Math.min(.05,g.presentationTime-previous);previous=g.presentationTime;
-  const impact=Math.max(0,1-(g.presentationTime-(e.data.staggerAt??-100))/.6);
-  const shake=Math.sin(g.presentationTime*35)*impact;
-  if(!r.fly.hist.length)for(let k=700;k>=0;k-=12)r.fly.hist.push({x:e.x+k,y:e.y});
-  if(r.fly.on&&dt>0){
-   const f=r.fly,mode=e.data.phaseIndex===3?3:e.data.phaseIndex===2?2:1,T=f.T+=dt;
+  const f=r.fly,h=f.hist;
+  // 入场先铺足整条龙的路径；睁眼期间保留姿态与路径时钟。
+  if(!f.on){
+   const mode=e.data.startPhase??1,rate=mode===3?.3:mode===2?.28:.42,base=paperPath(mode,0);
+   h.length=0;for(let t=-2*PI/rate;t<0;t+=.08){const p=paperPath(mode,t);h.push({x:p.x+e.x-base.x,y:p.y+e.y-base.y});}
+   h.push({x:e.x,y:e.y});
+  }
+  if(f.on&&!r.open&&dt>0){
+   const mode=e.data.phaseIndex===3?3:e.data.phaseIndex===2?2:1,T=f.T+=dt;
    const tg=paperPath(mode,T);
    if(f.mode!==mode){f.off={x:e.x-tg.x,y:e.y-tg.y};f.mode=mode;}
    const k=Math.exp(-dt*1.4);f.off.x*=k;f.off.y*=k;
    e.x=tg.x+f.off.x;e.y=tg.y+f.off.y;
-   if(f.prev){const vx=e.x-f.prev.x,vy=e.y-f.prev.y;if(vx*vx+vy*vy>.04){const a=Math.atan2(vy,vx),d=Math.atan2(Math.sin(a-f.hd),Math.cos(a-f.hd));f.hd+=d*Math.min(1,dt*4);}}
-   f.prev={x:e.x,y:e.y};
-   const c=Math.cos(f.hd);if(c>.2)f.mirror=true;else if(c<-.2)f.mirror=false;
-   e.mirror=f.mirror;e.angle=(f.mirror?f.hd:f.hd-PI)+shake*.085;
-  }else e.angle=shake*.085;
-  {const h=r.fly.hist,last=h[h.length-1];if(!last||Math.hypot(e.x-last.x,e.y-last.y)>3)h.push({x:e.x,y:e.y});else{last.x=e.x;last.y=e.y;}
-   // 龙身沿龙头走过的路径等弧长跟随；历史只保留够用的长度。
-   let acc=0,need=PAPER_SEG*(r.bodies.length+1),i=h.length-1;const at=(d:number)=>{let a=0,j=h.length-1;while(j>0){const seg=Math.hypot(h[j].x-h[j-1].x,h[j].y-h[j-1].y);if(a+seg>=d){const u=(d-a)/(seg||1);return {x:h[j].x+(h[j-1].x-h[j].x)*u,y:h[j].y+(h[j-1].y-h[j].y)*u,ax:h[j].x-h[j-1].x,ay:h[j].y-h[j-1].y};}a+=seg;j--;}return {x:h[0].x,y:h[0].y,ax:-1,ay:0};};
-   r.bodies.forEach((b,n)=>{const p=at(PAPER_SEG*(n+1)),q=at(PAPER_SEG*(n+1)-30);b.x=p.x+shake*14;b.y=p.y;b.angle=Math.atan2(q.y-p.y,q.x-p.x)+PI/2;b.syncToParent();});
-   while(i>0&&acc<need+200){acc+=Math.hypot(h[i].x-h[i-1].x,h[i].y-h[i-1].y);i--;}if(i>1)h.splice(0,i-1);
   }
-  r.lid.offY=r.open?-46:55;r.lid.offRot=r.open?-.8:0;r.eye.alpha=r.open?1:0;r.eye.glow=r.open?2:0;
+  {const last=h[h.length-1];
+   // 已采样点不覆盖，小位移持续累积到下一采样点；最新龙头单独参与求解。
+   if(Math.hypot(e.x-last.x,e.y-last.y)>=3)h.push({x:e.x,y:e.y});
+   let i=h.length-1,cursor={x:e.x,y:e.y};
+   // 沿同一历史折线找定长弦的尾端，让刚性部件的两个挂点都落在路径上。
+   const back=(from:{x:number;y:number},length:number)=>{
+    while(i>=0){const end=h[i],dx=end.x-cursor.x,dy=end.y-cursor.y;
+     if(Math.hypot(end.x-from.x,end.y-from.y)>=length){
+      const ox=cursor.x-from.x,oy=cursor.y-from.y,A=dx*dx+dy*dy,B=ox*dx+oy*dy,C=ox*ox+oy*oy-length*length;
+      const u=(-B+Math.sqrt(Math.max(0,B*B-A*C)))/A;
+      cursor={x:cursor.x+dx*u,y:cursor.y+dy*u};return cursor;
+     }
+     cursor=end;i--;
+    }
+    // 阶段换路时沿最早一段延长，保持尾节分开。
+    const a=h[0],b=h[1],dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy)||1;
+    cursor={x:from.x+dx/d*length,y:from.y+dy/d*length};return cursor;
+   };
+   let joint=back({x:e.x,y:e.y},-e.info.anchors.neck[1]*e.scaleY);
+   f.hd=Math.atan2(e.y-joint.y,e.x-joint.x);
+   const c=Math.cos(f.hd);if(c>.2)f.mirror=true;else if(c<-.2)f.mirror=false;
+   // 龙头原图朝下；镜像只翻横轴，朝向连续，整条共用镜像状态。
+   e.mirror=f.mirror;e.angle=f.hd-PI/2;
+   r.bodies.forEach((b,n)=>{
+    const top=b.info.anchors.jointIn,bottom=b.info.anchors.jointOut;
+    const end=back(joint,(bottom[1]-top[1])*b.scaleY);
+    b.mirror=f.mirror;b.angle=Math.atan2(end.y-joint.y,end.x-joint.x)-PI/2;
+    b.x=joint.x;b.y=joint.y;const root=b.local(...top);b.x+=joint.x-root.x;b.y+=joint.y-root.y;
+    // 铰节中心对齐共用挂点；独立龙身没有 parent，直接同步它的挂载件。
+    r.hinges[n].mirror=f.mirror;r.hinges[n].syncToParent();joint=end;
+   });
+   // 保留实际尾端后方的余量，裁剪与本帧使用的路径位置一致。
+   let margin=0;while(i>0&&margin<200){margin+=Math.hypot(h[i].x-h[i-1].x,h[i].y-h[i-1].y);i--;}
+   if(i>1)h.splice(0,i-1);
+   for(const p of [r.lid,r.eye,r.tail])p.mirror=f.mirror;
+  }
+  r.lid.offY=e.info.anchors.eye[1]-(r.open?22:0);r.lid.offRot=r.open?-.8:0;r.eye.alpha=r.open?1:0;r.eye.glow=r.open?2:0;
   for(const a of r.claws){if(!a.broken){a.part.offY=85;a.part.glow=e.data.phaseIndex===2?1.7:0;}else{const t=g.presentationTime-a.at;a.part.x=a.x+(a.x<450?-1:1)*100*t;a.part.y=a.y+90*t+300*t*t;a.part.angle=t*2;a.part.alpha=Math.max(0,1-t/2.2);}}
   const ships=world(g).escort?.vessels;
   if(e.data.phaseIndex===2)for(const c of r.chains)if(!c.cut){
@@ -283,10 +314,17 @@ function sealSvg(e:Enemy,g:G,r:PaperRig):string {
 }
 function paperSvg(e:Enemy,g:G,r:PaperRig):string {
  let out='';const ships=world(g).escort?.vessels;
- if(e.data.phaseIndex===1&&r.open){out+=`<circle cx="${r.eye.x}" cy="${r.eye.y}" r="24" fill="#cc6f3630" stroke="#ffe89c" stroke-width="3"/><circle cx="${r.eye.x}" cy="${r.eye.y}" r="8" fill="#341b15"/>`;const a=r.scanAngle,x=r.eye.x,y=r.eye.y,spread=.15,len=1050;
-  out+=`<path d="M${x} ${y}L${x+Math.cos(a-spread)*len} ${y+Math.sin(a-spread)*len}L${x+Math.cos(a+spread)*len} ${y+Math.sin(a+spread)*len}Z" fill="${r.scanAge<1?'#fff2be16':'#efba4850'}" stroke="#ffe5a0" stroke-width="${r.scanAge<1?1:3}" stroke-dasharray="${r.scanAge<1?'12 9':'0'}"/>`;
+ if(e.data.phaseIndex===1&&r.open){out+=`<circle cx="${r.eye.x}" cy="${r.eye.y}" r="24" fill="#cc6f3630" stroke="#ffe89c" stroke-width="3"/><circle cx="${r.eye.x}" cy="${r.eye.y}" r="8" fill="#341b15"/>`;
+  const warning=r.scanAge<r.scanWarning,spread=warning?PAPER_SCAN.swing+PAPER_SCAN.halfWidth:PAPER_SCAN.halfWidth;
+  const pts=paperScanFan(r,warning?PI/2:r.scanAngle,spread);
+  const fan=`M${pts[0]} ${pts[1]}L${pts[2]} ${pts[3]}L${pts[4]} ${pts[5]}Z`;
+  out+=`<path d="${fan}" fill="${warning?'#fff2be16':'#efba4850'}"/>`;
+  if(warning){
+   const x=r.eye.x,y=r.eye.y,len=300,start=PI/2-r.scanDirection*PAPER_SCAN.swing,end=PI/2+r.scanDirection*PAPER_SCAN.swing;
+   const ex=x+Math.cos(end)*len,ey=y+Math.sin(end)*len,tangent=end+r.scanDirection*PI/2;
+   out+=`<path d="${fan}" fill="none" stroke="#ffe5a060" stroke-width="1" stroke-dasharray="12 9"/><path d="M${x+Math.cos(start)*len} ${y+Math.sin(start)*len}A${len} ${len} 0 0 ${r.scanDirection>0?1:0} ${ex} ${ey}M${ex-20*Math.cos(tangent-.5)} ${ey-20*Math.sin(tangent-.5)}L${ex} ${ey}L${ex-20*Math.cos(tangent+.5)} ${ey-20*Math.sin(tangent+.5)}" fill="none" stroke="#ffe5a0" stroke-width="4"/>`;
+  }
  }
- for(const b of r.burns){const p=b.part.local(b.x,b.y),pulse=2*Math.sin(g.presentationTime*17);out+=`<ellipse cx="${p.x}" cy="${p.y}" rx="19" ry="14" fill="#25120c" stroke="#ef7d2c" stroke-width="${3+pulse}"/><path d="M${p.x-15} ${p.y}q-6 -23 2 -29q1 13 12 16q9 -14 5 -28q23 18 8 43Z" fill="#ffb34a" opacity=".85"/>`;}
  for(const c of r.chains)if(!c.cut){const s=ships?.[c.ship],warning=clock(g)<c.warnUntil;if(s)out+=`<path d="M${c.claw.part.x} ${c.claw.part.y}L${s.x} ${s.y}" stroke="${warning?'#f6bc63':'#e0c98a'}" stroke-width="${warning?4:9}" stroke-dasharray="${warning?'18 10':'14 5'}"/>`;}
  if(e.data.phaseIndex===2)for(const a of r.claws)if(!a.broken){const p=a.part;out+=`<rect x="${p.x-49}" y="${p.y-65}" width="98" height="6" fill="#20232a"/><rect x="${p.x-49}" y="${p.y-65}" width="${98*p.hpFrac}" height="6" fill="#de6049"/>`;}
  for(const a of r.claws)if(a.broken&&a.part.alpha>.01){const p=a.part;out+=`<path d="M${p.x-25} ${p.y}q-15 -35 5 -55q0 28 18 25q18 -18 10 -45q40 40 13 75Z" fill="#ff9e3b" opacity="${p.alpha}"/>`;}
@@ -305,6 +343,11 @@ function paperSvg(e:Enemy,g:G,r:PaperRig):string {
  }
  return out;
 }
+// 光束绘制和伤害共用同一个有限三角形。
+function paperScanFan(r:PaperRig,angle:number,spread:number):number[]{
+ const x=r.eye.x,y=r.eye.y,len=PAPER_SCAN.length;
+ return [x,y,x+Math.cos(angle-spread)*len,y+Math.sin(angle-spread)*len,x+Math.cos(angle+spread)*len,y+Math.sin(angle+spread)*len];
+}
 function* paper(e:Enemy,g:G):Co {
  const w=world(g),r=paperRig(e,g);e.data.rig=r;e.data.bossCombat=true;e.data.copperSimple=true;e.data.paperSimple=true;e.data.weakCustom=true;
  e.data.paperEffects={svg:()=>paperSvg(e,g,r),stats:{rows:4,chainShipHits:0,stampHits:0}};
@@ -314,7 +357,12 @@ function* paper(e:Enemy,g:G):Co {
  const start=Math.min(3,e.data.startPhase??1),surfaces=[e,...r.bodies,...r.hinges,r.lid,r.tail];
  const begin=(index:number,name:string)=>{e.data.phaseIndex=index;e.data.phaseStartedClock=clock(g);e.data.phaseTitle=name;e.data.phaseTitleUntil=g.real+1.2;e.data.action=name;event(e,`phase-${index}`,g);mode(g,name,'打血时间');};
  const route=(target:Enemy)=>{for(const p of surfaces)p.data.damageTarget=target;};
- const burnTick=()=>{for(const b of r.burns){if(clock(g)>=b.next&&clock(g)<b.until){b.next=clock(g)+.5;const p=b.part.local(b.x,b.y);w.damage(b.part,3,p.x,p.y,true,'neutral',{tag:'burn'});w.r.debris.spawn(w.r.partHigh.time,p.x,p.y,.4,2,.3,'fire');}}r.burns=r.burns.filter(b=>clock(g)<b.until);};
+ let burnAt=clock(g);
+ const burnTick=()=>{const now=clock(g),dt=Math.min(.05,now-burnAt);burnAt=now;
+  for(const b of r.burns)if(now<b.until){const p=b.part.local(b.x,b.y);burnEmit(w,b.part,now-b.at,dt,p);
+   if(now>=b.next){b.next=now+.5;w.damage(b.part,3,p.x,p.y,true,'neutral',{tag:'burn'});}
+  }r.burns=r.burns.filter(b=>now<b.until);
+ };
  const transition=function*(bare=false):Co{
   e.invulnerable=true;g.clearBullets(false);r.open=false;r.eye.data.targetDisabled=true;r.burns=[];
   for(const p of [e,...r.bodies])copperBreak(e,g,p);
@@ -327,8 +375,13 @@ function* paper(e:Enemy,g:G):Co {
   if(start<=1){begin(1,'巡检');route(e);
    yield* g.phase(e,{hp:BOSS1_BALANCE.paper[0].hp/.85,time:Infinity,clock:'boss',transitionTime:0,complete:()=>e.hp<=0},function*(){
     const at=clock(g);let next=g.t,weaks=0,weakAt=0,sprayNext=g.t;
-    for(;;){const t=(clock(g)-at)%6;r.open=t<3;r.scanAge=t;r.eye.data.targetDisabled=!r.open;r.scanAngle=PI/2+.48*Math.sin(Math.max(0,t-1)*PI);
-     if(r.open&&t>=1){const dx=g.player.x-r.eye.x,dy=g.player.y-r.eye.y,a=Math.atan2(dy,dx);if(Math.abs(Math.atan2(Math.sin(a-r.scanAngle),Math.cos(a-r.scanAngle)))<.15&&w.player.invuln<=0&&!w.brush.protected){w.player.die();event(e,'scanner-hit',g);}}
+    for(;;){const elapsed=clock(g)-at,firstCycle=PAPER_SCAN.firstWarning+PAPER_SCAN.sweep+PAPER_SCAN.rest,cycle=PAPER_SCAN.warning+PAPER_SCAN.sweep+PAPER_SCAN.rest;
+     const round=elapsed<firstCycle?0:1+Math.floor((elapsed-firstCycle)/cycle),t=round===0?elapsed:(elapsed-firstCycle)%cycle;
+     r.scanWarning=round===0?PAPER_SCAN.firstWarning:PAPER_SCAN.warning;r.scanDirection=round%2===0?1:-1;
+     r.open=t<r.scanWarning+PAPER_SCAN.sweep;r.scanAge=t;r.eye.data.targetDisabled=!r.open;
+     const progress=clamp((t-r.scanWarning)/PAPER_SCAN.sweep,0,1);
+     r.scanAngle=PI/2+r.scanDirection*PAPER_SCAN.swing*(2*progress-1);
+     if(r.open&&t>=r.scanWarning&&pointInPoly(g.player.x,g.player.y,paperScanFan(r,r.scanAngle,PAPER_SCAN.halfWidth))&&w.player.invuln<=0&&!w.brush.protected){w.player.die();event(e,'scanner-hit',g);}
      burnTick();if(r.burns.length>=5&&weaks<2&&clock(g)>=weakAt){weaks++;weakAt=clock(g)+12;w.bossCaps.openWeak(e,'纸甲烧透');}if(g.t>=next){volley(g,[{x:e.x,y:e.y+60,n:4,angle:PI/2,spread:.5}],40,speed(g,140),4,'rice','gold');next=g.t+1.8;}
      // 近身攻击：朱雀靠近龙头或龙尾，喷纸片
      if(g.t>=sprayNext){const hd={x:e.x,y:e.y},tl=r.bodies[4]?{x:r.bodies[4].x,y:r.bodies[4].y}:hd;const dh=Math.hypot(g.player.x-hd.x,g.player.y-hd.y),dt=Math.hypot(g.player.x-tl.x,g.player.y-tl.y);if(dh<220||dt<220){const src=dh<dt?hd:tl,ang=Math.atan2(g.player.y-src.y,g.player.x-src.x);volley(g,[{x:src.x,y:src.y,n:7,angle:ang,spread:1.1}],35,speed(g,190),3,'rice','gold');sprayNext=g.t+2.4;}}
