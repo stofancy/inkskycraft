@@ -1,20 +1,28 @@
 // 第一章空战新增敌人；友方目标只通过 EscortShip 获取。
-import type { EnemyDef } from '../game/enemy';
-import type { Co } from '../game/api';
+import type { Enemy,EnemyDef } from '../game/enemy';
+import type { Co,G } from '../game/api';
 import type { World } from '../game/world';
 import { CH1_AIR_ART } from '../game/escort';
 import { SpritePlayback } from '../art/playback';
+/** 固定炮位的近身散射：玩家进到 170 以内且炮可被打时，炮口亮 0.5 秒，向四周撒一圈 10 发短射程快弹（飞约 220 就消失），冷却 4 秒。 */
+export function closeBurst(e:Enemy,g:G):void{
+ const k=e.data.contentRole==='normal'?.42:.7;
+ e.run((function*():Co{for(;;){
+  const p=g.player;if(e.invulnerable||e.alpha<=0||Math.hypot(p.x-e.x,p.y-e.y)>170){yield;continue;}
+  g.fx.charge(e.x,e.y,26,.5,[1.5,.7,.2]);yield* g.wait(.5);
+  g.ring(e.x,e.y,Math.round(10/k),300,{shape:'rice',color:'amber',life:220/(300*g.difficulty.speed)});yield* g.wait(4);}})());
+}
 export const NetPost:EnemyDef={name:'浮石林网桩',sprite:CH1_AIR_ART.post.atlas,hp:200,score:500,noCollide:true,onHit(e){e.frame=CH1_AIR_ART.post.segments.damaged.start;},*ai(e){e.stop();e.data.manualFrame=true;for(;;){e.frame=e.hp<e.maxHp?CH1_AIR_ART.post.segments.damaged.start:CH1_AIR_ART.post.segments.intact.start;yield;}},
  onDeath(e,g){const remains=g.scene(CH1_AIR_ART.post.atlas,e.x,e.y);remains.frame=CH1_AIR_ART.post.segments.destroyed.start;e.data.remains=remains;}};
 export const BridgeTurret:EnemyDef={name:'浮石炮塔',sprite:'e_turret',hp:110,score:1000,noCollide:true,
  onHit(e,_g,x,y,source){if(e.charging&&['red','blue','purple','companion'].includes(source)&&Math.hypot(x-e.x,y-(e.y+20))<=40)e.interrupt(.4);},
- *ai(e,g){e.stop();let volley=0;e.onInterrupt=()=>{e.data.interrupted=true;};
+ *ai(e,g){closeBurst(e,g);e.stop();let volley=0;e.onInterrupt=()=>{e.data.interrupted=true;};
   for(;;){const ship=(g as World).escort;const atShip=volley++%2===0&&ship&&!ship.protected;e.data.target=atShip?'ship':'player';
    const target=atShip?ship.scene:g.player;const a=Math.atan2(target.y-e.y,target.x-e.x);e.charging=true;e.data.interrupted=false;g.fx.charge(e.x,e.y,28,4,[1.5,.7,.2]);yield* g.wait(4);
    if(e.charging){for(let i=0;i<3&&e.charging;i++){g.shoot(e.x,e.y+20,a,190,{shape:'crystal',color:'amber'});yield* g.wait(.15);}e.charging=false;}yield* g.wait(2);
   }
  }};
-export const ShoreCannon:EnemyDef={...BridgeTurret,name:'两岸山炮',hp:65,score:700,*ai(e,g){e.stop();let volley=0;
+export const ShoreCannon:EnemyDef={...BridgeTurret,name:'两岸山炮',hp:65,score:700,*ai(e,g){closeBurst(e,g);e.stop();let volley=0;
  for(;;){const ship=(g as World).escort;const atShip=volley++%2===1&&ship&&!ship.protected;const p=atShip?ship.scene:g.player;
   const a=Math.atan2(p.y-e.y,p.x-e.x);e.data.target=atShip?'ship':'player';e.data.aimLocked=true;e.data.lockedAngle=a;e.charging=true;g.fx.charge(e.x,e.y,22,1.2,[1.5,.7,.2]);yield* g.wait(1.2);
   if(e.charging){g.fan(e.x,e.y,a,Math.round(2/g.difficulty.count),.12,190,{shape:'rice',color:'amber'});e.charging=false;e.data.firedAt=g.real;}yield* g.wait(2);

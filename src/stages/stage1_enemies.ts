@@ -3,6 +3,7 @@
 import type { Enemy,EnemyDef } from '../game/enemy';
 import type { Co,G } from '../game/api';
 import type { World } from '../game/world';
+import { closeBurst } from './stage1_air_enemies';
 
 const PI = Math.PI;
 /** fan / ring 的实发数 = 名义数 × 难度 count 0.7 × 普通敌 fire 0.6；预乘回来，普通难度实发 n 发，其他档同比例升降。 */
@@ -106,7 +107,7 @@ export const LiftingArm:EnemyDef={name:'浮石吊臂',sprite:'e_mountainape',hp:
 
 /** 云哨：躲在浮石后的弩手。露头 1.6 秒：红眼亮、瞄准线 1 秒后放一轮（第 1 轮单发快弹，第 2 轮 3 发扇形，第 3 轮 5 发宽扇），再缩回浮石（缩回时无敌）并换到另一块石头。data.atShip=true 瞄船。 */
 export const RouteScout:EnemyDef={name:'云哨',sprite:'e_turret',hp:60,score:600,noCollide:true,
- *ai(e,g){const d=e.data,ship=(g as World).escort,home=e.x;
+ *ai(e,g){closeBurst(e,g);const d=e.data,ship=(g as World).escort,home=e.x;
   const rock=g.scene('sky_rock',e.x,e.y+10);rock.layer='ground';rock.sx=rock.sy=.55;rock.owner=e;
   const hide=(on:boolean)=>{e.invulnerable=on;e.alpha=on?0:1;};
   hide(true);yield* g.wait(d.delay??.6);

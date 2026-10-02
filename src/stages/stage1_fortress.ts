@@ -4,6 +4,7 @@ import type { Co,G } from '../game/api';
 import type { Enemy,EnemyDef } from '../game/enemy';
 import type { Scenery } from '../game/scenery';
 import type { World } from '../game/world';
+import { closeBurst } from './stage1_air_enemies';
 
 /** 暂定数值（普通难度）。 */
 export const FORTRESS={arriveAt:9,restY:330,driftX:90,driftPeriod:18,turretHp:90,clampHp:150,clampSlam:{first:5,gap:7,warn:1.3,hold:.8},fire:{inner:3.4,outer:4.2,charge:1.1},leaveAfterOpen:3};
@@ -28,7 +29,7 @@ export function startFortress(g:G,seconds:number):Fortress{
  const bay=g.scene('story_fortress-bay-open',450,f.y);bay.layer='air';bay.alpha=0;
  const marks:Scenery[]=[];
  const turrets=TURRETS.map(t=>{const e=g.spawn(FortressTurret,450+t.ox,f.y+t.oy,e=>{e.data.contentRole='part';e.data.noSupplementFire=true;e.hp=e.maxHp=FORTRESS.turretHp/g.difficulty.hp;e.invulnerable=true;});
-  const ov=g.scene('story_fortress-turret-charge',e.x,e.y);ov.layer='air';ov.alpha=0;return {t,e,ov,next:t.phase+FORTRESS.arriveAt+2};});
+  closeBurst(e,g);const ov=g.scene('story_fortress-turret-charge',e.x,e.y);ov.layer='air';ov.alpha=0;return {t,e,ov,next:t.phase+FORTRESS.arriveAt+2};});
  const clamps=CLAMPS.map(c=>{const e=g.spawn(c.side<0?FortressClamp:FortressClampR,450+c.ox,f.y+c.oy,e=>{e.data.contentRole='part';e.data.noSupplementFire=true;e.data.fortressClamp=true;e.hp=e.maxHp=FORTRESS.clampHp/g.difficulty.hp;e.invulnerable=true;});
   const ring=g.scene('story_warning',e.x,e.y);ring.layer='air';ring.alpha=0;ring.sx=ring.sy=.7;marks.push(ring);return {c,e,ring,next:FORTRESS.clampSlam.first+(c.side>0?FORTRESS.clampSlam.gap/2:0)};});
  const t0=g.t;let prompted=false,openAt=-1,leaving=false;
