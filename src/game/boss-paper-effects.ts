@@ -30,11 +30,11 @@ export class PaperEffects {
  update(dt:number):void {const w=this.w,p=w.player;if(w.bossCombat.freeze)return;this.tagHint=Math.max(0,this.tagHint-dt);
   if(this.tag){if(w.roll.frameActive){this.tag=false;this.stats.tagRolls++;}else {this.burn=p.weapon==='red'&&p.firing?this.burn+dt:0;if(this.burn>=1.5){this.tag=false;this.stats.tagBurns++;}}}
   for(const wall of this.walls){wall.oldY=wall.y;wall.y+=wall.speed*dt;for(const e of wall.nodes)if(!e.dead)e.y=wall.y;
-   const open=(x:number)=>wall.holes.some(h=>Math.abs(x-h)<=70);if(!open(p.x)&&p.y>=wall.oldY-18&&p.y<=wall.y+18&&p.invuln<=0)p.die();
+   const open=(x:number)=>wall.holes.some(h=>Math.abs(x-h)<=70);if(!open(p.x)&&p.y>=wall.oldY-18&&p.y<=wall.y+18&&p.invuln<=0)p.hit();
    const ship=w.escort?.scene;if(ship&&!wall.shipHit&&wall.y>=ship.y-135){wall.shipHit=true;if(!open(ship.x)){w.escort!.durability=Math.max(1,w.escort!.durability-2);this.stats.wallShipHits++;}}
   }for(const wall of this.walls.filter(v=>v.y>1300))for(const e of wall.nodes)if(!e.dead)w.remove(e);this.walls=this.walls.filter(v=>v.y<=1300);
   const c=this.chain;if(c&&!c.cut){if(c.node.hp<=0||c.node.dead)this.cutChain(false);else{const ship=w.escort?.scene;if(ship){ship.y-=30*dt;c.node.x=(ship.x+c.clip.x)/2;c.node.y=(ship.y+c.clip.y)/2;if(ship.y<=this.stationY+260){w.escort!.durability=Math.max(1,w.escort!.durability-8);this.stats.chainShipHits++;this.cutChain(false);}}}}
-  for(const row of this.rows){row.left-=dt;for(const e of row.glyphs)if(!e.dead){if(!row.self){e.y+=90*dt;if(Math.hypot(e.x-p.x,e.y-p.y)<=21&&p.invuln<=0)p.die();}if(row.left<=0){if(row.self&&!e.dead)w.fx.burst(e.x,e.y,6,90,[.9,.75,.5]);w.remove(e);}}}
+  for(const row of this.rows){row.left-=dt;for(const e of row.glyphs)if(!e.dead){if(!row.self){e.y+=90*dt;if(Math.hypot(e.x-p.x,e.y-p.y)<=21&&p.invuln<=0)p.hit();}if(row.left<=0){if(row.self&&!e.dead)w.fx.burst(e.x,e.y,6,90,[.9,.75,.5]);w.remove(e);}}}
   this.rows=this.rows.filter(v=>v.left>0);
  }
  page(x:number,y:number,angle:number,split=false):void {const tag=this.tag,w=this.w;let divided=false;w.shoot(x,y,angle,110/w.difficulty.speed,{shape:'rice',color:'gold',life:9,homing:tag,update:(b,dt)=>{

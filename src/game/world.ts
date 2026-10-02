@@ -556,7 +556,7 @@ export class World implements G {
         if (p.invuln <= 0 && !this.brush.protected) {
           if(!b.hard&&this.progression.blockBullet()){b.dead=true;continue;}
           b.dead = true;
-          p.die();
+          p.hit();
           return;
         }
       } else if (!this.roll.frameActive && !b.grazed && d2 < (b.radius + gr) ** 2) {
@@ -584,7 +584,7 @@ export class World implements G {
       const ex = l.x + Math.cos(l.angle) * l.o.length, ey = l.y + Math.sin(l.angle) * l.o.length;
       const ramp = Math.min(1, (l.t - l.o.warn) / 0.12);
       if (segDist2(p.x, p.y, l.x, l.y, ex, ey) < (l.o.width * 0.6 * ramp + hr) ** 2) {
-        p.die();
+        p.hit();
         return;
       }
     }
@@ -905,7 +905,7 @@ export class World implements G {
     }
     return {
       ship:this.escort?{durability:this.escort.durability,x:this.escort.scene.x,y:this.escort.scene.y,label:this.real-this.escort.born<5,state:this.escort.state}:undefined,
-      score: this.score, hiScore: this.hiScore, lives: Math.max(0, p.lives), bombs: p.bombs,
+      score: this.score, hiScore: this.hiScore, lives: Math.max(0, p.lives), lifeMax: Math.max(p.startLives, p.lives), armor: Math.max(0, p.armor), hurtSeq: p.hurtSeq, bombs: p.bombs,
       ink: p.ink, inkReady: p.ink >= this.progression.brushMods.minInk, power: p.power, weapon: p.weapon, missile: p.missile,
       multiplier: this.multiplier, graze: this.graze, medalValue: Math.max(200, ...this.items.list.filter(it => it.kind === 'medal' && !it.dead).map(it => medalScore(it.elapsed))),
       stage: this.stageIndex, stageName: this.stageName,

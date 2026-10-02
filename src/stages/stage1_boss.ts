@@ -381,7 +381,7 @@ function* paper(e:Enemy,g:G):Co {
      r.open=t<r.scanWarning+PAPER_SCAN.sweep;r.scanAge=t;r.eye.data.targetDisabled=!r.open;
      const progress=clamp((t-r.scanWarning)/PAPER_SCAN.sweep,0,1);
      r.scanAngle=PI/2+r.scanDirection*PAPER_SCAN.swing*(2*progress-1);
-     if(r.open&&t>=r.scanWarning&&pointInPoly(g.player.x,g.player.y,paperScanFan(r,r.scanAngle,PAPER_SCAN.halfWidth))&&w.player.invuln<=0&&!w.brush.protected){w.player.die();event(e,'scanner-hit',g);}
+     if(r.open&&t>=r.scanWarning&&pointInPoly(g.player.x,g.player.y,paperScanFan(r,r.scanAngle,PAPER_SCAN.halfWidth))&&w.player.invuln<=0&&!w.brush.protected){w.player.hit();event(e,'scanner-hit',g);}
      burnTick();if(r.burns.length>=5&&weaks<2&&clock(g)>=weakAt){weaks++;weakAt=clock(g)+12;w.bossCaps.openWeak(e,'纸甲烧透');}if(g.t>=next){volley(g,[{x:e.x,y:e.y+60,n:4,angle:PI/2,spread:.5}],40,speed(g,140),4,'rice','gold');next=g.t+1.8;}
      // 近身攻击：朱雀靠近龙头或龙尾，喷纸片
      if(g.t>=sprayNext){const hd={x:e.x,y:e.y},tl=r.bodies[4]?{x:r.bodies[4].x,y:r.bodies[4].y}:hd;const dh=Math.hypot(g.player.x-hd.x,g.player.y-hd.y),dt=Math.hypot(g.player.x-tl.x,g.player.y-tl.y);if(dh<220||dt<220){const src=dh<dt?hd:tl,ang=Math.atan2(g.player.y-src.y,g.player.x-src.x);volley(g,[{x:src.x,y:src.y,n:7,angle:ang,spread:1.1}],35,speed(g,190),3,'rice','gold');sprayNext=g.t+2.4;}}
@@ -441,7 +441,7 @@ function* paper(e:Enemy,g:G):Co {
       if(ts>=.18){
        g.fx.burst(sl.x,sl.y,22,200,[1.6,.5,.2]);g.fx.shake(.25);w.hitstop(.04);
        if(tgt<3){if(esc)esc.durability=Math.max(1,esc.durability-25);r.shipHp[tgt]=Math.max(0,r.shipHp[tgt]-25);g.fx.explosion(at.x,at.y,'m','fire');}
-       else if(w.player.invuln<=0&&!w.brush.protected)w.player.die();
+       else if(w.player.invuln<=0&&!w.brush.protected)w.player.hit();
        e.data.paperEffects.stats.stampHits++;event(e,'stamp-landed',g);
        unlock();st='rest';t0=clock(g);r.stampProgress=0;
       }

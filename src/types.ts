@@ -79,6 +79,12 @@ export interface HudState {
   score: number;
   hiScore: number;
   lives: number;
+  /** 本局残机上限，用于显示已失去的命。 */
+  lifeMax?: number;
+  /** 当前命剩余羽甲 0..3。 */
+  armor?: number;
+  /** 累计受击次数，界面据此触发边缘淡红闪。 */
+  hurtSeq?: number;
   bombs: number;
   /** 墨量 0..1。 */
   ink: number;

@@ -73,7 +73,7 @@ export class EscortShip {
  explode(x:number,y:number):void{
   const w=this.w;w.audio.sfx('bomb_land');w.fx.explosion(x,y,'s','fire');
   if(this.vessels.some(s=>Math.hypot(x-s.x,y-s.y)<=95))this.hit(8);
-  if(Math.hypot(x-w.player.x,y-w.player.y)<=60&&w.player.alive&&w.player.invuln<=0&&!w.brush.protected)w.player.die();
+  if(Math.hypot(x-w.player.x,y-w.player.y)<=60&&w.player.alive&&w.player.invuln<=0&&!w.brush.protected)w.player.hit();
  }
  draw():void{
   const w=this.w,r=w.r,s=this.scene;

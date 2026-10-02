@@ -40,6 +40,12 @@ export class Player {
   invuln = 0;
   respawnT = 0;
   lives = 3;
+  /** 当前命的羽甲格数，掉光才掉命。 */
+  armor = 3;
+  /** 最近一次受击的时间戳（real 时钟），用于机身闪白。 */
+  hurtAt = -9;
+  /** 累计受击次数，界面据此触发边缘淡红闪。 */
+  hurtSeq = 0;
   bombs = 3;
   /** 新游戏的初始残机 / 炸弹（由难度决定）。 */
   startLives = 3;
@@ -105,6 +111,7 @@ export class Player {
     this.alive = true;
     this.entering = 0;
     this.invuln = 2;
+    this.armor = 3;
     this.colorChangedAt=-1;this.previousColor=this.color;this.bombT = 0;if(!this.echo)this.w.roll?.reset();
     this.shots = [];
     this.primaryHits = [];
@@ -352,6 +359,8 @@ export class Player {
   collideWith(enemy: Enemy): void {
     const w = this.w;
     if (!this.alive || this.invuln > 0 || w.brush.protected) return;
+    this.hit();
+    if (!this.alive) return;
     const x = this.x, y = this.y;
     let dx = x - enemy.x, dy = y - enemy.y;
     const length = Math.hypot(dx, dy);
@@ -361,7 +370,6 @@ export class Player {
     this.power = this.power - 1;
     this.x = clamp(x + dx * 60, 26, PLAY_W - 26);
     this.y = clamp(y + dy * 60, 50, PLAY_H - 36);
-    this.invuln = 1;
     let body = enemy;
     while (body.parent) body = body.parent;
     if (!body.def.boss && !enemy.phaseLock) w.damage(enemy, 50, x, y, false, 'neutral');
@@ -370,14 +378,28 @@ export class Player {
     w.ui.popup(this.x, this.y - 40, lostPower ? '撞机 · 火力降低' : '撞机 · 弹开', 'info');
   }
 
-  die(): void {
+  /** 所有致死入口（弹幕、激光、撞机、Boss 机制判死）统一走这里：扣 1 格羽甲，掉光才掉命。 */
+  hit(): void {
     const w = this.w;
     if (!this.alive || this.invuln > 0 || w.brush.protected) return;
     const boss=w.enemies.find(e=>e.data.bossCombat&&!e.dead);if(boss)boss.data.playerHits=(boss.data.playerHits??0)+1;
+    w.noMiss = false;
+    this.armor--;
+    this.hurtAt = w.real;
+    this.hurtSeq++;
+    if (this.armor <= 0) { this.lose(); return; }
+    this.invuln = 1.5;
+    w.fx.flash(0.12, [1, 0.25, 0.2]);
+    w.fx.shake(0.2);
+    w.fx.burst(this.x, this.y, 10, 120, [1, 0.9, 0.8], 0.4);
+    w.audio.sfx('graze', { vol: 0.8 });
+  }
+
+  private lose(): void {
+    const w = this.w;
     this.alive = false;
     this.lives--;
     this.respawnT = 1.4;
-    w.noMiss = false;
     w.fx.explosion(this.x, this.y, 'l', 'fire');
     w.fx.flash(0.6, [1, 0.3, 0.2]);
     w.fx.aberration(1);
@@ -397,6 +419,7 @@ export class Player {
     this.y = PLAY_H + 60;
     this.entering = 0.9;
     this.invuln = 3.2;
+    this.armor = 3;
     this.bombs = Math.max(this.bombs, 3);
     this.bank = 0;
   }
@@ -432,7 +455,7 @@ export class Player {
     r.shadows.add(this.sprite, { x: this.x, y: this.y, frame, alpha });
     const tint=inkBody?.18+.82*restore:1;
     const mix=clamp((w.presentationTime-this.colorChangedAt)/.15,0,1);
-    const body={x:this.x,y:this.y,frame,sx:this.echo?1+Math.sin(time*9)*.018:w.roll.scaleX,sy:this.echo?1+Math.cos(time*8)*.018:1,flash:this.echo?w.skills.mirrorFlash*5:w.roll.flash,r:tint,g:tint*(!this.echo&&w.skills.boosted?.4:1),b:tint*(!this.echo&&w.skills.boosted?.2:1),glow:inkBody?restore*(.7+this.weaponLevel*.045):.7+this.weaponLevel*.045};
+    const body={x:this.x,y:this.y,frame,sx:this.echo?1+Math.sin(time*9)*.018:w.roll.scaleX,sy:this.echo?1+Math.cos(time*8)*.018:1,flash:this.echo?w.skills.mirrorFlash*5:Math.max(w.roll.flash,clamp(1-(w.real-this.hurtAt)/.2,0,1)*3),r:tint,g:tint*(!this.echo&&w.skills.boosted?.4:1),b:tint*(!this.echo&&w.skills.boosted?.2:1),glow:inkBody?restore*(.7+this.weaponLevel*.045):.7+this.weaponLevel*.045};
     if(mix<1)r.player.add(r.atlas.get(`player_body_${this.previousColor}`),{...body,alpha:alpha*(1-mix)});
     r.player.add(!this.echo&&w.skills.boosted?'player_body_red':this.sprite,{...body,alpha:alpha*mix});
     if(!this.echo)r.impact.armor(this.x,this.y,this.weaponLevel,this.weapon,this.bank,inkBody?alpha*restore:alpha);

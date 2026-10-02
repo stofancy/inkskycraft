@@ -50,26 +50,12 @@ const DEFS = `<svg class="defs" xmlns="http://www.w3.org/2000/svg"><defs>
 </filter>
 </defs></svg>`;
 
-const ICON_LIFE = '<svg viewBox="0 0 24 24"><path d="M12 1.5 14 9l8.5 7-8-1.6L12 22.5 9.5 14.400 1.500 16 10 9z" fill="#d8382a" stroke="#dcb75e" stroke-width="1.2" stroke-linejoin="round"/><path d="M12 5v9" stroke="#0b0908" stroke-width="1.6"/></svg>';
 const ICON_BOMB = '<img src="/art/icons/skills/ink-bomb.png" width="24" height="24" alt="泼墨">';
 const ICON_COIN = '<img src="/art/icons/items/gold-seal.png" width="34" height="34" alt="金印">';
 
-// 毛笔形墨槽（笔杆 + 金箍 + 笔肚 + 笔锋）
-const BRUSH_D = 'M35 4Q43 0 51 4L52 50Q66 70 70 112C73 160 58 222 43 296C28 222 13 160 16 112Q20 70 34 50Z';
-const INK_SVG = `<svg viewBox="0 0 86 300"><defs>
-<clipPath id="ik-bc"><path d="${BRUSH_D}"/></clipPath>
-<linearGradient id="ik-g0" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1a1310"/><stop offset=".5" stop-color="#4a3a30"/><stop offset="1" stop-color="#1a1310"/></linearGradient>
-<linearGradient id="ik-g1" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8a1a12"/><stop offset=".45" stop-color="#ff5a3a"/><stop offset="1" stop-color="#a9241a"/></linearGradient>
-<linearGradient id="ik-g2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8d6a1c"/><stop offset=".5" stop-color="#ffe08a"/><stop offset="1" stop-color="#a9791f"/></linearGradient>
-</defs>
-<path d="${BRUSH_D}" fill="#0a0807" fill-opacity=".72"/>
-<g clip-path="url(#ik-bc)">
- <rect class="fill" id="ik-fill" x="0" y="0" width="86" height="300" fill="url(#ik-g0)" style="transform:translateY(300px)"/>
- <path d="M0 75H86M0 150H86M0 225H86" stroke="#ffffff" stroke-opacity=".16" stroke-width="1" stroke-dasharray="3 5"/>
-</g>
-<rect x="31" y="46" width="24" height="9" rx="2" fill="url(#ik-g2)" stroke="#3a2a08" stroke-width=".8"/>
-<path d="${BRUSH_D}" fill="none" stroke="#dcb75e" stroke-width="2" stroke-linejoin="round"/>
-</svg><div class="il">墨</div>`;
+// 竖立毛笔墨槽：空笔 + 墨量裁切 + 可执笔高亮，三张图一次性建好
+const HUD_ART = '/art/ui/hud/';
+const INK_SVG = `<img class="b-empty" src="${HUD_ART}brush-empty.png" alt=""><div class="b-clip" data-k="inkclip"><img src="${HUD_ART}brush-ink.png" alt=""></div><img class="b-ready" src="${HUD_ART}brush-ready.png" alt=""><div class="il">墨</div>`;
 
 // 按键表：[动作, 键盘, 手柄]，图例、标题、暂停共用
 const KEYS: [string, string, string][] = [
@@ -120,7 +106,7 @@ export function createUI(): GameUI & PresentationUI {
   let ev: UIEvents;
   let ik: HTMLElement;
   let play: HTMLElement;
-  let hostL: HTMLElement, hostR: HTMLElement;
+  let hostL: HTMLElement, hostR: HTMLElement, hurtEl: HTMLElement;
   let challengeEl: HTMLElement, comboEl: HTMLElement;
   let overclockEl:HTMLElement;
   let dock: HTMLElement, noticeL: HTMLElement;
@@ -165,16 +151,17 @@ export function createUI(): GameUI & PresentationUI {
  <div class="fps" data-k="fps"></div><div class="combat-status"><div data-k="protection"></div><div data-k="armor"></div></div></div>`;
     hostR.innerHTML = `<div class="hud">
  <div class="stage"><div class="sn" data-k="stageNo"></div><div class="sm" data-k="stageName"></div><div class="dn" data-k="diff"></div></div>
- <div class="blk"><div class="lbl">剩余战机<i>LIFE</i></div><div class="icons" data-k="lives"></div></div>
+ <div class="blk"><div class="lbl">涅槃<i>LIFE</i></div><div class="icons" data-k="lives"></div><div class="icons armor" data-k="armor-row"></div></div>
  <div class="blk"><div class="lbl">泼墨<i>INK BOMB</i></div><div class="icons" data-k="bombs"></div></div>
+ <div class="blk"><div class="lbl">墨谱</div><div class="ink-score-dots" data-k="inkdots"></div><div class="ink-hint">击败首领后选一色，强化该色泼墨</div></div>
  <div class="inkrow"><div class="ink" data-k="ink">${INK_SVG}</div>
-  <div class="wp"><div class="wseal w-red" data-k="wseal">朱</div><div class="lat" data-k="lat">${'<i></i>'.repeat(4)}</div>
-   <div class="mis"><span>矢</span><b data-k="missiles">0 / 4</b></div></div></div>
+  <div class="wp"><div class="wseal w-red" data-k="wseal">${['red','blue','purple'].map(c=>`<img class="seal-${c}" src="${HUD_ART}seal-${c}.png" alt="">`).join('')}</div><div class="lat" data-k="lat">${'<i></i>'.repeat(4)}</div>
+   <div class="mis"><span>矢</span><div class="arrows" data-k="missiles">${'<i></i>'.repeat(4)}</div></div></div></div>
  <div class="blk ship-durability" data-k="ship"></div>
  <div class="growth-mini" data-k="growth"></div>
  <div class="partners" data-k="partners"></div><div class="skillbar" data-k="skills"><div class="skill-row" data-row="1"></div><div class="skill-row" data-row="2"></div></div></div>`;
     for (const e of ik.querySelectorAll<HTMLElement>('[data-k]')) R[e.dataset.k!] = e;
-    R.fill = ik.querySelector('#ik-fill') as HTMLElement;
+    hurtEl = h('div', 'hurt-edge', '', ik);
     keysEl = h('div', 'keyhost off', '<div class="keys"><div class="kh">操作</div><div class="kl"></div></div>', ik);
     R.keyl = keysEl.querySelector('.kl') as HTMLElement;
     renderKeys();
@@ -194,11 +181,12 @@ export function createUI(): GameUI & PresentationUI {
   function setText(k: string, v: string) {
     if (prev[k] !== v) { prev[k] = v; R[k].textContent = v; }
   }
-  function iconRow(k: string, n: number, svg: string) {
-    if (prev[k] === n && prev[k+'svg'] === svg) return;
-    prev[k] = n;prev[k+'svg']=svg;
+  function iconRow(k: string, n: number, svg: string, off = 0, offSvg = '') {
+    const key = `${n}/${off}`;
+    if (prev[k] === key && prev[k+'svg'] === svg) return;
+    prev[k] = key;prev[k+'svg']=svg;
     const shown = Math.min(n, 8);
-    R[k].innerHTML = svg.repeat(Math.max(0, shown)) + (n > 8 ? `<b>×${n}</b>` : '') + (n <= 0 ? '<b style="opacity:.4">—</b>' : '');
+    R[k].innerHTML = svg.repeat(Math.max(0, shown)) + offSvg.repeat(Math.max(0, Math.min(off, 8 - shown))) + (n > 8 ? `<b>×${n}</b>` : '') + (n <= 0 && !off ? '<b style="opacity:.4">—</b>' : '');
   }
   function toggle(k: string, el: HTMLElement, cls: string, on: boolean) {
     const key = k + cls;
@@ -239,21 +227,22 @@ export function createUI(): GameUI & PresentationUI {
     setText('stageNo', sn);
     setText('stageName', s.stageName);
     if (stageNoPrev !== sn) stageNoPrev = sn;
-    iconRow('lives', s.lives, '<img src="/art/player/zhuque/life.png" width="24" height="24" alt="朱雀">');
+    if (prev.hurtSeq !== s.hurtSeq) { if (prev.hurtSeq !== undefined) { hurtEl.classList.remove('on'); void hurtEl.offsetWidth; hurtEl.classList.add('on'); } prev.hurtSeq = s.hurtSeq; }
+    iconRow('lives', s.lives, `<img src="${HUD_ART}life.png" width="24" height="24" alt="朱雀">`, Math.max(0, (s.lifeMax ?? s.lives) - s.lives), `<img src="${HUD_ART}life-off.png" width="24" height="24" alt="">`);
+    iconRow('armor-row', s.armor ?? 3, `<img src="${HUD_ART}armor-on.png" width="16" height="16" alt="羽甲">`, 3 - (s.armor ?? 3), `<img src="${HUD_ART}armor-off.png" width="16" height="16" alt="">`);
     iconRow('bombs', s.bombs, ICON_BOMB);
     R.bombs.style.setProperty('--bomb-color',{red:'#f06b43',blue:'#6ce2eb',purple:'#c79bef'}[s.weapon]);R.bombs.querySelectorAll('svg').forEach(svg=>svg.style.color=R.bombs.style.getPropertyValue('--bomb-color'));
-    let inkDots=R.bombs.parentElement!.querySelector<HTMLElement>('.ink-score-dots');if(!inkDots)inkDots=h('div','ink-score-dots','',R.bombs.parentElement!);const dots=INK_COLORS.map(c=>`<span class="${c}">${INK_NAMES[c]} ${'●'.repeat(s.inkScore?.[c]??0)}${'○'.repeat(3-(s.inkScore?.[c]??0))}</span>`).join('');if(inkDots.innerHTML!==dots)inkDots.innerHTML=dots;
+    const dots = INK_COLORS.map(c=>`<span class="${c}">${INK_NAMES[c]} ${'●'.repeat(s.inkScore?.[c]??0)}${'○'.repeat(3-(s.inkScore?.[c]??0))}</span>`).join('');if(prev.inkdots!==dots){prev.inkdots=dots;R.inkdots.innerHTML=dots;}
     const bombLabel=R.bombs?.previousElementSibling;
     if(bombLabel)bombLabel.textContent='泼墨';
     // 墨槽
-    const inkY = `translateY(${((1 - Math.min(1, Math.max(0, s.ink))) * 288 + 6).toFixed(1)}px)`;
-    if (prev.ink !== inkY) { prev.ink = inkY; R.fill.style.transform = inkY; }
+    const inkY = `inset(${((1 - Math.min(1, Math.max(0, s.ink))) * 100).toFixed(1)}% 0 0 0)`;
+    if (prev.ink !== inkY) { prev.ink = inkY; R.inkclip.style.clipPath = inkY; }
     const readyKey = s.brushActive ? 2 : s.inkReady ? 1 : 0;
     if (prev.inkstate !== readyKey) {
       prev.inkstate = readyKey;
       R.ink.classList.toggle('ready', readyKey === 1);
       R.ink.classList.toggle('brush', readyKey === 2);
-      R.fill.setAttribute('fill', readyKey === 2 ? 'url(#ik-g2)' : readyKey === 1 ? 'url(#ik-g1)' : 'url(#ik-g0)');
       (R.ink.querySelector('.il') as HTMLElement).textContent = readyKey === 2 ? '书' : '墨';
     }
     // 武器
@@ -261,12 +250,7 @@ export function createUI(): GameUI & PresentationUI {
       const first = prev.weapon === undefined;
       prev.weapon = s.weapon;
       const w: Record<WeaponColor, string> = { red: '朱', blue: '青', purple: '紫' };
-      R.wseal.textContent = w[s.weapon];
       R.wseal.setAttribute('aria-label',w[s.weapon]);
-      if(s.weapon==='purple'){
-        const glyph=new Image();glyph.src='/art/lettering/weapon-purple-paper-v2.png';glyph.alt='紫';glyph.className='weapon-glyph';
-        glyph.onerror=()=>{R.wseal.textContent='紫';};R.wseal.replaceChildren(glyph);
-      }
       R.wseal.className = `wseal w-${s.weapon}`;
       R.lat.className = `lat w-${s.weapon}`;
       if (!first) motion.stamp(R.wseal);
@@ -276,7 +260,7 @@ export function createUI(): GameUI & PresentationUI {
       const dots = R.lat.children;
       for (let i = 0; i < 4; i++) dots[i].classList.toggle('on', i < s.power);
     }
-    setText('missiles', `${s.missile ?? 0} / 4`);
+    if (prev.missile !== (s.missile ?? 0)) { prev.missile = s.missile ?? 0; for (let i = 0; i < 4; i++) R.missiles.children[i].classList.toggle('on', i < (s.missile ?? 0)); }
     setText('fps', settings.showFps && s.fps > 0 ? `${Math.round(s.fps)} FPS` : '');
     const growth = s.growth;
     setText('growth', growth ? `笔力 ${growth.brush} · 天赋 ${growth.talents}\n已学笔法：${['斩', '封', ...filterBrushForms(s.brushMethods)].join('、')}` : '');
@@ -286,7 +270,7 @@ export function createUI(): GameUI & PresentationUI {
     const partnerKey = partners.map(p => `${p.name}:${Math.ceil(p.active??0)}:${p.count??0}`).join('|');
     if (prev.partners !== partnerKey) {
       prev.partners = partnerKey;
-      R.partners.innerHTML = partners.map((p,i)=>`<div class="partner p${i} ${(p.active??0)>0?'effect-on':''}" data-companion="${esc(p.kind??'')}"><span class="partner-seal">${esc(p.name.slice(0,1))}</span><div class="partner-info"><div>${esc(p.name)} <b>${esc(p.role??'')}</b></div><small>${(p.active??0)>0?`生效 ${Math.ceil(p.active!)}秒${p.role==='挡弹'?` · ${p.count??0}/6`:''}`:'自动协同'}</small></div></div>`).join('');
+      R.partners.innerHTML = partners.map((p,i)=>`<div class="partner p${i} ${(p.active??0)>0?'effect-on':''}" data-companion="${esc(p.kind??'')}"><span class="partner-seal">${esc(p.name==='老盾'?'盾':p.name.slice(0,1))}</span><div class="partner-info"><div>${esc(p.name)} <b>${esc(p.role??'')}</b></div><small>${(p.active??0)>0?`生效 ${Math.ceil(p.active!)}秒${p.role==='挡弹'?` · ${p.count??0}/6`:''}`:'自动协同'}</small></div></div>`).join('');
     }
     let passiveDock=R.partners.parentElement!.querySelector<HTMLElement>('.passive-dock');
     if(!passiveDock)passiveDock=h('div','passive-dock','',R.partners.parentElement!);
