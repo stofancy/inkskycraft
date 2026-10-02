@@ -1,0 +1,37 @@
+{
+  "image": "art/player/shots/primary-atlas.webp",
+  "cell": [
+    192,
+    192
+  ],
+  "columns": 3,
+  "rows": 3,
+  "shotPixels": [
+    64,
+    192
+  ],
+  "shotFrames": {
+    "purple": 0,
+    "blue": 1,
+    "red": 2
+  },
+  "hitFrames": {
+    "purple": [
+      3,
+      4
+    ],
+    "blue": [
+      5,
+      6
+    ],
+    "red": [
+      7,
+      8
+    ]
+  },
+  "hitSeconds": [
+    0.06,
+    0.1
+  ],
+  "blend": "additive"
+}

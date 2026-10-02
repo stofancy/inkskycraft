@@ -159,35 +159,13 @@ const player: SpriteDef = {
   },
 };
 
-// ---- 朱砂火羽弹 16x40（朝上） ----
-const shotRed: SpriteDef = {
-  id: 'player_shot_red', w: 16, h: 40, radius: 4,
-  draw(ctx) {
-    const p = pathFrom([[0, -19], [3.2, -8], [4, 6], [1.6, 17], [0, 19], [-1.6, 17], [-4, 6], [-3.2, -8]], true, true);
-    ctx.fillStyle = PAL.cinnabar; ctx.fill(p);
-    ctx.save(); ctx.clip(p);
-    ctx.fillStyle = PAL.cinnabar3; ctx.fillRect(0, -20, 6, 40);
-    ctx.restore();
-    line(ctx, [[0, -17], [0, 17]], '#ffcf8a', 0.8);
-  },
-  glow(ctx) {
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    const g = ctx.createLinearGradient(0, -19, 0, 19);
-    g.addColorStop(0, '#ffe2b0'); g.addColorStop(0.3, '#ff9a4a'); g.addColorStop(0.7, '#d8391f'); g.addColorStop(1, 'rgba(110,20,9,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.moveTo(0, -19); ctx.quadraticCurveTo(5.6, -6, 3.6, 8); ctx.quadraticCurveTo(2.4, 15, 0, 19); ctx.quadraticCurveTo(-2.4, 15, -3.6, 8); ctx.quadraticCurveTo(-5.6, -6, 0, -19); ctx.fill();
-    // 羽枝
-    ctx.strokeStyle = 'rgba(255,225,170,0.6)'; ctx.lineCap = 'round';
-    for (let i = 0; i < 5; i++) {
-      const y = -10 + i * 5.5, w = 3.6 - Math.abs(i - 1.5) * 0.35;
-      ctx.lineWidth = 0.7;
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(-w, y + 4); ctx.moveTo(0, y); ctx.lineTo(w, y + 4); ctx.stroke();
-    }
-    ctx.lineWidth = 1; ctx.strokeStyle = '#ffe9c0';
-    ctx.beginPath(); ctx.moveTo(0, -16); ctx.lineTo(0, 12); ctx.stroke();
-    ctx.restore();
-  },
+// 制作人原画：前三格为朝上的紫、青、朱弹，后六格为各色两帧命中。
+// 同一 WebP 只在 Atlas.build 初始化时加载、烘焙一次；命中走纯加色层。
+export const PRIMARY_SHOT_FRAME = { purple: 0, blue: 1, red: 2 };
+export const PRIMARY_HIT_FRAME = { purple: 3, blue: 5, red: 7 };
+const primaryArt: SpriteDef = {
+  id: 'player_primary_art', w: 72, h: 72, textureScale: 192 / 72,
+  sheet: { image: 'art/player/shots/primary-atlas.webp', columns: 3, rows: 3, count: 9, fps: 10, mode: 'once' },
 };
 
 // ---- 墨矢 12x36（朝上） ----
@@ -226,4 +204,4 @@ const missile: SpriteDef = {
   },
 };
 
-export const PLAYER_SPRITES: SpriteDef[] = [player, shotRed, missile];
+export const PLAYER_SPRITES: SpriteDef[] = [player, primaryArt, missile];

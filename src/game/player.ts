@@ -9,6 +9,7 @@ import { PLAY_H, PLAY_W, type WeaponColor } from '../types';
 import type { Enemy } from './enemy';
 import type { World } from './world';
 import { MAX_POWER } from './items';
+import { PRIMARY_SHOT_FRAME, PRIMARY_HIT_FRAME } from '../art/sprites_player';
 
 interface Shot {
   x: number; y: number; vx: number; vy: number;
@@ -22,6 +23,7 @@ interface Shot {
 
 /** 放电几何与其端点共存；重选目标不会改变缓存链条的拓扑。 */
 interface ThunderBolt extends Bolt { from: Enemy | null; to: Enemy | null }
+interface PrimaryHit { x: number; y: number; color: WeaponColor; target: number; age: number; size: number }
 
 // 显示四级火力，主武器沿用旧八级表的 1、3、6、8 级。
 const WEAPON_LEVEL = [1, 3, 6, 8];
@@ -61,6 +63,7 @@ export class Player {
   readonly hitR = 3.2;
   readonly grazeR = 26;
   private shots: Shot[] = [];
+  private primaryHits: PrimaryHit[] = [];
   private fireCd = 0;
   private missileCd = 0;
   private sfxCd = 0;
@@ -83,6 +86,7 @@ export class Player {
     const hit=this.w.targetable(e)&&amount>0;
     if(hit&&source==='red')this.w.progression.onRedHit(e,amount*(this.echo?.6:1));
     this.w.damage(e,amount*(this.echo?.6:1),x,y,this.echo,source);
+    if(hit)this.hitBurst(x,y,source,e.id);
     if(hit&&!this.echo)this.w.skills.primaryHit(e.id,source);
   }
 
@@ -103,6 +107,7 @@ export class Player {
     this.invuln = 2;
     this.colorChangedAt=-1;this.previousColor=this.color;this.bombT = 0;if(!this.echo)this.w.roll?.reset();
     this.shots = [];
+    this.primaryHits = [];
     this.missileCd = 0;
     this.thunderTargets = [];
     this.focusCharge=0;this.laserOn=0;this.beamTilt=0;this.beamEndY=-40;this.fireCd=0;this.thunderRetarget=0;this.bolts=[];
@@ -216,20 +221,21 @@ export class Player {
     }
   }
 
-  /** 子弹命中：朱弹炸一小团火，紫弹迸电火花。 */
-  private hitBurst(x:number,y:number,c:'red'|'purple'):void{
-    const fx=this.w.fx;
-    if(c==='red'){
-      fx.emit({x,y,vy:-40,life:.22,size:20,sizeEnd:5,r:2,g:.5,b:.06,a:.8,r1:.8,g1:.05,b1:.01,kind:PK.Flame});
-      for(let i=0;i<3;i++){const a=Math.random()*6.28,sp=120+Math.random()*180;fx.emit({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-60,drag:3,life:.3,size:2.6,r:2.6,g:1.2,b:.25,r1:1.2,g1:.1,b1:.02,kind:PK.Spark});}
-    }else{
-      for(let i=0;i<4;i++){const a=Math.random()*6.28,sp=160+Math.random()*240;fx.emit({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,drag:4,life:.22,size:3,r:2.4,g:1.5,b:3,r1:.9,g1:.2,b1:1.8,kind:PK.Spark});}
-    }
+  /** 实际主炮命中点。分身共用主机池；持续伤害等本轮两帧播完再起下一轮。 */
+  private hitBurst(x:number,y:number,color:WeaponColor,target:number):void{
+    const hits=this.w.player.primaryHits;
+    if(hits.length>=12)return;
+    if(color!=='red'&&hits.some(h=>h.target===target&&h.color===color))return;
+    hits.push({x,y,color,target,age:0,size:this.w.skills.boosted?1.65:1});
   }
 
   private updateShots(dt: number): void {
     const w = this.w;
     const lv = this.weaponLevel;
+    if(!this.echo){
+      for(const hit of this.primaryHits)hit.age+=dt;
+      this.primaryHits=this.primaryHits.filter(hit=>hit.age<.16);
+    }
     for (const s of this.shots) {
       s.age += dt;
       if (s.missile) {
@@ -267,7 +273,6 @@ export class Player {
       }
       if(s.visual){
         if(s.target && (s.target.dead||Math.hypot(s.x-s.target.x,s.y-s.target.y)<35||s.y<s.target.y))s.dead=true;
-        if(s.dead&&s.color==='purple'&&s.target)this.hitBurst(s.x,s.y,'purple');
         if(s.color==='blue'&&s.y<this.beamEndY)s.dead=true;
         continue;
       }
@@ -278,7 +283,6 @@ export class Player {
         s.hits?.add(hit.id);
         if((s.pierce??0)>0&&!hit.invulnerable)s.pierce!--;
         else{s.x=w.hitX;s.y=w.hitY;s.dead=true;}
-        if(s.dead)this.hitBurst(s.x,s.y,'red');
       }
     }
     this.shots = this.shots.filter((s) => !s.dead);
@@ -408,16 +412,13 @@ export class Player {
       }
       const speed=Math.hypot(s.vx,s.vy),dx=s.vx/speed,dy=s.vy/speed;
       const size=w.skills.boosted?1.65:1;
-      if(s.color==='red'){ // 泪滴：头半径 R，总长 3.3R
-        const R=10*size;
-        r.ribbonMid.line(s.x-dx*3.3*R,s.y-dy*3.3*R,s.x,s.y,R,RS.TearBullet,1,1,1,.78);
-      }else if(s.color==='purple'){
-        const seed=(Math.sin(s.vx*12.9898+s.dmg*78.233)*43758.5453)%1,L=30*size;
-        r.ribbonMid.line(s.x-dx*L,s.y-dy*L,s.x,s.y,11*size,RS.ArcBullet,Math.abs(seed),1,1,.78);
-      }else{
-        const length=48*size,col=[.08,1.6,1.9];
-        r.ribbonMid.line(s.x-dx*length,s.y-dy*length,s.x,s.y,11*size,RS.WaterShot,col[0],col[1],col[2],.72);
-      }
+      r.shots.add('player_primary_art',{x:s.x-dx*21*size,y:s.y-dy*21*size,
+        rot:Math.atan2(s.vy,s.vx)+Math.PI/2,frame:PRIMARY_SHOT_FRAME[s.color],sx:42/72*size,sy:42/72*size,glow:0});
+    }
+    if(!this.echo)for(const hit of this.primaryHits){
+      const spread=clamp((hit.age-.06)/.1,0,1),size=hit.size*(1+spread*.55);
+      r.shots.add('player_primary_art',{x:hit.x,y:hit.y,frame:PRIMARY_HIT_FRAME[hit.color]+(hit.age>=.06?1:0),
+        sx:size,sy:size,alpha:1-spread,glow:0});
     }
     if (!this.alive) return;
     let frame = clamp(Math.round((this.bank + 1) * 2), 0, 4);
