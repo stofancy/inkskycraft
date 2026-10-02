@@ -12,8 +12,8 @@ const FALLS = falls as Record<string, { top: number[]; bottom: number[]; width: 
 const fract = (v: number): number => v - Math.floor(v);
 
 // 在石头上画瀑布流水：亮纹沿水道下滑，底端三团水雾膨胀淡出。只改精灵绘制参数，无新建资源。
-export function drawFalls(r: Renderer, name: string, x: number, y: number, sx: number, sy: number, alpha: number, time: number, seed: number): void {
-  const list = FALLS[name], dim = FALL_DIMS[name];
+export function drawFalls(r: Renderer, name: string, x: number, y: number, sx: number, sy: number, alpha: number, time: number, seed: number, profile?: { dim: number[]; falls: { top: number[]; bottom: number[]; width: number }[] }): void {
+  const list = profile?.falls ?? FALLS[name], dim = profile?.dim ?? FALL_DIMS[name];
   if (!list || !dim) return;
   const kx = dim[0] / dim[2] * sx, ky = dim[1] / dim[3] * sy;
   list.forEach((f, n) => {

@@ -10,7 +10,7 @@ import { segDist2 } from '../core/math';
 import { storyFrame } from '../art/ch2_story_assets';
 import { CH2_BRIEFS,CH2_BUBBLES,CH2_NAME } from './dialogue2_data';
 import { director } from './dialogue1';
-import { drawScrollTown } from '../bg/stage2-scroll';
+import { drawCloudTown } from '../bg/stage2-scroll';
 
 export class BatteryFleet extends EscortShip {
  visible=false;clamped=false;approach=0;laserHits=new Map<object,number>();
@@ -70,7 +70,8 @@ export class Chapter2 {
   const k=Math.min(1,Math.max(0,(this.w.t-this.bgAt)/2));
   const reveal=(this.oldBg==='cloud-town-real'?1-k:0)+(this.background==='cloud-town-real'?k:0);
   this.w.r.bgParams[0][0]=reveal;
-  drawScrollTown(this.w.r,this.w.scroll,reveal);
+  const mirage=(this.oldBg==='cloud-town-false'?1-k:0)+(this.background==='cloud-town-false'?k:0);
+  drawCloudTown(this.w.r,this.w.scroll,this.w.real,reveal,Math.max(mirage,this.part===3||this.part===7?1:0)*(1-reveal));
  }
  draw(){const w=this.w,r=w.r,rect=r.playCss;Object.assign(this.overlay.style,{left:`${rect.x}px`,top:`${rect.y}px`,width:`${rect.w}px`,height:`${rect.h}px`});let html='';
   if(this.briefUntil>w.presentationTime){const [title,target,purpose]=CH2_BRIEFS[this.brief-1],age=3.65-(this.briefUntil-w.presentationTime);html+=`<div data-c2-brief="${this.brief}" style="position:absolute;top:8%;left:8%;right:8%;padding:18px;background:#151e27e8;border:1px solid #b7c9cb;opacity:${Math.min(1,age/.15,(3.65-age)/.3)};transform:translateY(${12*(1-Math.min(1,age/.3))}px);font-size:22px"><b>${title}</b><div>目标：${target}</div><p>${purpose}</p></div>`;}
