@@ -1,0 +1,4987 @@
+{
+  "schemaVersion": 1,
+  "task": "P3-11",
+  "status": "ready_for_integration",
+  "baseline": "081d5b4610c5691d89c74bc334e68d4426a4bd29",
+  "movesBaseline": "p3-02-play b21b0f8",
+  "anchorUnit": "source pixels from top-left",
+  "entries": [
+    {
+      "id": "logo-paper",
+      "text": "墨空",
+      "usage": "游戏标志",
+      "style": "swift",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "logo-paper-v1.png",
+      "url": "/art/lettering/logo-paper-v1.png",
+      "pixelSize": [
+        855,
+        401
+      ],
+      "anchor": [
+        427.5,
+        200.5
+      ],
+      "source": "src/ui/index.ts:695",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        831,
+        377
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "ffe16be226e3e354807206f597c6c27deeae819e9be4452a0e31ee0777954cf4",
+      "sourceCrop": {
+        "file": "local-source/swift-paper-0.png",
+        "box": [
+          0,
+          0,
+          831,
+          377
+        ],
+        "originalSize": [
+          831,
+          377
+        ]
+      }
+    },
+    {
+      "id": "chapter-dawn-ink",
+      "text": "晓山返笔",
+      "usage": "第一章名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "chapter-dawn-ink-v1.png",
+      "url": "/art/lettering/chapter-dawn-ink-v1.png",
+      "pixelSize": [
+        1111,
+        326
+      ],
+      "anchor": [
+        555.5,
+        163.0
+      ],
+      "source": "src/stages/stage1.ts:58",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1087,
+        302
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "c9448562b5326269611eb02318bd5622b180650fcad0c93328e711494220202f",
+      "sourceCrop": {
+        "file": "local-source/weibei-ink-1.png",
+        "box": [
+          0,
+          0,
+          1087,
+          302
+        ],
+        "originalSize": [
+          1087,
+          302
+        ]
+      },
+      "deprecated": true,
+      "deprecatedBy": "P3-11c",
+      "deprecatedReason": "章题以术语表更新、第一章Boss身份更新或旧第一章反制题头已撤下",
+      "replacementId": "chapter-ch1-story-ink"
+    },
+    {
+      "id": "chapter-dawn-paper",
+      "text": "晓山返笔",
+      "usage": "第一章名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "chapter-dawn-paper-v1.png",
+      "url": "/art/lettering/chapter-dawn-paper-v1.png",
+      "pixelSize": [
+        1118,
+        329
+      ],
+      "anchor": [
+        559.0,
+        164.5
+      ],
+      "source": "src/stages/stage1.ts:58",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1094,
+        305
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "7fd756a82f2a11222700d9bbf6e2701df8d9c0bb86abe67592b97e911aab2efb",
+      "sourceCrop": {
+        "file": "local-source/weibei-paper-1.png",
+        "box": [
+          0,
+          0,
+          1094,
+          305
+        ],
+        "originalSize": [
+          1094,
+          305
+        ]
+      },
+      "deprecated": true,
+      "deprecatedBy": "P3-11c",
+      "deprecatedReason": "章题以术语表更新、第一章Boss身份更新或旧第一章反制题头已撤下",
+      "replacementId": "chapter-ch1-story-paper"
+    },
+    {
+      "id": "chapter-river-ink",
+      "text": "灯河还名",
+      "usage": "第二章名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "chapter-river-ink-v1.png",
+      "url": "/art/lettering/chapter-river-ink-v1.png",
+      "pixelSize": [
+        1608,
+        413
+      ],
+      "anchor": [
+        804.0,
+        206.5
+      ],
+      "source": "src/stages/stage2.ts:39",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1584,
+        389
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "fa7c572e7966c22a26d43b26f47663795e3b7e24ce2686d0816bc2bdc0cd23b6",
+      "sourceCrop": {
+        "file": "local-source/chapter-river-ink-v1.png",
+        "box": [
+          169,
+          227,
+          1753,
+          616
+        ],
+        "originalSize": [
+          1916,
+          821
+        ]
+      },
+      "deprecated": true,
+      "deprecatedBy": "P3-11c",
+      "deprecatedReason": "章题以术语表更新、第一章Boss身份更新或旧第一章反制题头已撤下",
+      "replacementId": "chapter-ch2-story-ink"
+    },
+    {
+      "id": "chapter-river-paper",
+      "text": "灯河还名",
+      "usage": "第二章名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "chapter-river-paper-v1.png",
+      "url": "/art/lettering/chapter-river-paper-v1.png",
+      "pixelSize": [
+        1673,
+        426
+      ],
+      "anchor": [
+        836.5,
+        213.0
+      ],
+      "source": "src/stages/stage2.ts:39",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1649,
+        402
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "3fa91cc8bdddc33956a6fbb633af85d91576a20458969fa8919c01b756a72131",
+      "sourceCrop": {
+        "file": "local-source/chapter-river-paper-v1.png",
+        "box": [
+          137,
+          215,
+          1786,
+          617
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      },
+      "deprecated": true,
+      "deprecatedBy": "P3-11c",
+      "deprecatedReason": "章题以术语表更新、第一章Boss身份更新或旧第一章反制题头已撤下",
+      "replacementId": "chapter-ch2-story-paper"
+    },
+    {
+      "id": "chapter-cloud-ink",
+      "text": "云垣断律",
+      "usage": "第三章名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "chapter-cloud-ink-v1.png",
+      "url": "/art/lettering/chapter-cloud-ink-v1.png",
+      "pixelSize": [
+        1665,
+        439
+      ],
+      "anchor": [
+        832.5,
+        219.5
+      ],
+      "source": "src/stages/stage3.ts:24",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1641,
+        415
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "575fe49df3511ede890a7d3605d09f858a4c70ba7eaf684d2da224552309df3a",
+      "sourceCrop": {
+        "file": "local-source/chapter-cloud-ink-v1.png",
+        "box": [
+          156,
+          236,
+          1797,
+          651
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      },
+      "deprecated": true,
+      "deprecatedBy": "P3-11c",
+      "deprecatedReason": "章题以术语表更新、第一章Boss身份更新或旧第一章反制题头已撤下",
+      "replacementId": "chapter-ch3-story-ink"
+    },
+    {
+      "id": "chapter-cloud-paper",
+      "text": "云垣断律",
+      "usage": "第三章名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "chapter-cloud-paper-v1.png",
+      "url": "/art/lettering/chapter-cloud-paper-v1.png",
+      "pixelSize": [
+        1801,
+        466
+      ],
+      "anchor": [
+        900.5,
+        233.0
+      ],
+      "source": "src/stages/stage3.ts:24",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1777,
+        442
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "878d9bfa8d1e96d7b4252164e147a48bf119cf1188e840a35eb12834e6256e71",
+      "sourceCrop": {
+        "file": "local-source/chapter-cloud-paper-v1.png",
+        "box": [
+          70,
+          211,
+          1847,
+          653
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      },
+      "deprecated": true,
+      "deprecatedBy": "P3-11c",
+      "deprecatedReason": "章题以术语表更新、第一章Boss身份更新或旧第一章反制题头已撤下",
+      "replacementId": "chapter-ch3-story-paper"
+    },
+    {
+      "id": "chapter-final-ink",
+      "text": "鲲鹏终战",
+      "usage": "第四章测试与结算名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "chapter-final-ink-v1.png",
+      "url": "/art/lettering/chapter-final-ink-v1.png",
+      "pixelSize": [
+        1755,
+        449
+      ],
+      "anchor": [
+        877.5,
+        224.5
+      ],
+      "source": "src/stages/stage3.ts:31",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1731,
+        425
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "4ee3bf49d970641a0b7338fbaf3398ac958733dfa9195767786d1ee3d4ca382d",
+      "sourceCrop": {
+        "file": "local-source/chapter-final-ink-v1.png",
+        "box": [
+          89,
+          198,
+          1820,
+          623
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      },
+      "deprecated": true,
+      "deprecatedBy": "P3-11c",
+      "deprecatedReason": "章题以术语表更新、第一章Boss身份更新或旧第一章反制题头已撤下",
+      "replacementId": "chapter-ch4-story-ink"
+    },
+    {
+      "id": "chapter-final-paper",
+      "text": "鲲鹏终战",
+      "usage": "第四章测试与结算名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "chapter-final-paper-v1.png",
+      "url": "/art/lettering/chapter-final-paper-v1.png",
+      "pixelSize": [
+        1723,
+        463
+      ],
+      "anchor": [
+        861.5,
+        231.5
+      ],
+      "source": "src/stages/stage3.ts:31",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1699,
+        439
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "757340fb29ae4aa6055fdc73602014e43e9eba66973b4aeb29346f5f0813e80a",
+      "sourceCrop": {
+        "file": "local-source/chapter-final-paper-v1.png",
+        "box": [
+          108,
+          196,
+          1807,
+          635
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      },
+      "deprecated": true,
+      "deprecatedBy": "P3-11c",
+      "deprecatedReason": "章题以术语表更新、第一章Boss身份更新或旧第一章反制题头已撤下",
+      "replacementId": "chapter-ch4-story-paper"
+    },
+    {
+      "id": "section-river-ferry-ink",
+      "text": "渡灯",
+      "usage": "第二章分节章卡",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "section-river-ferry-ink-v1.png",
+      "url": "/art/lettering/section-river-ferry-ink-v1.png",
+      "pixelSize": [
+        1101,
+        548
+      ],
+      "anchor": [
+        550.5,
+        274.0
+      ],
+      "source": "src/stages/stage2.ts:7,43",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1077,
+        524
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "507f73b5f4a4beccb7852c34c37e8ae6ea0e7fd5961fa22a383f112fbaddadf4",
+      "sourceCrop": {
+        "file": "local-source/section-river-ferry-ink-v1.png",
+        "box": [
+          418,
+          153,
+          1495,
+          677
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "section-river-ferry-paper",
+      "text": "渡灯",
+      "usage": "第二章分节章卡",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "section-river-ferry-paper-v1.png",
+      "url": "/art/lettering/section-river-ferry-paper-v1.png",
+      "pixelSize": [
+        1138,
+        547
+      ],
+      "anchor": [
+        569.0,
+        273.5
+      ],
+      "source": "src/stages/stage2.ts:7,43",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1114,
+        523
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "7acedf38c0b55237fac357f93d27513c25daf5c9bf366a9266900d6b1cdef453",
+      "sourceCrop": {
+        "file": "local-source/section-river-ferry-paper-v1.png",
+        "box": [
+          417,
+          151,
+          1531,
+          674
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "section-river-tax-ink",
+      "text": "拆税舟",
+      "usage": "第二章分节章卡",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "section-river-tax-ink-v1.png",
+      "url": "/art/lettering/section-river-tax-ink-v1.png",
+      "pixelSize": [
+        1502,
+        578
+      ],
+      "anchor": [
+        751.0,
+        289.0
+      ],
+      "source": "src/stages/stage2.ts:7,43",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1478,
+        554
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "d4fa463d5f89e320a7ffd39456c537bdf56cfc0ee349f19f27a75eb075041343",
+      "sourceCrop": {
+        "file": "local-source/section-river-tax-ink-v1.png",
+        "box": [
+          235,
+          189,
+          1713,
+          743
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "section-river-tax-paper",
+      "text": "拆税舟",
+      "usage": "第二章分节章卡",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "section-river-tax-paper-v1.png",
+      "url": "/art/lettering/section-river-tax-paper-v1.png",
+      "pixelSize": [
+        1487,
+        511
+      ],
+      "anchor": [
+        743.5,
+        255.5
+      ],
+      "source": "src/stages/stage2.ts:7,43",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1463,
+        487
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "1924e386cd3c683867ca635ca7f1d901e38305131e12bf7e9e68fdff61175b9f",
+      "sourceCrop": {
+        "file": "local-source/section-river-tax-paper-v1.png",
+        "box": [
+          226,
+          187,
+          1689,
+          674
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "section-river-pagoda-ink",
+      "text": "宝塔记忆",
+      "usage": "第二章分节章卡",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "section-river-pagoda-ink-v1.png",
+      "url": "/art/lettering/section-river-pagoda-ink-v1.png",
+      "pixelSize": [
+        1801,
+        454
+      ],
+      "anchor": [
+        900.5,
+        227.0
+      ],
+      "source": "src/stages/stage2.ts:7,43",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1777,
+        430
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "5d469751c8ef638c22f952bc2f28798c385bc51994899ddb548db05c28b46fa6",
+      "sourceCrop": {
+        "file": "local-source/section-river-pagoda-ink-v1.png",
+        "box": [
+          76,
+          195,
+          1853,
+          625
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "section-river-pagoda-paper",
+      "text": "宝塔记忆",
+      "usage": "第二章分节章卡",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "section-river-pagoda-paper-v1.png",
+      "url": "/art/lettering/section-river-pagoda-paper-v1.png",
+      "pixelSize": [
+        1772,
+        470
+      ],
+      "anchor": [
+        886.0,
+        235.0
+      ],
+      "source": "src/stages/stage2.ts:7,43",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1748,
+        446
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "c1b1bce5f5791504b3a3a32749faec2122598596ca37f0366d2f65e99d844895",
+      "sourceCrop": {
+        "file": "local-source/section-river-pagoda-paper-v1.png",
+        "box": [
+          91,
+          202,
+          1839,
+          648
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "section-river-mirage-ink",
+      "text": "蜃还名",
+      "usage": "第二章分节章卡",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "section-river-mirage-ink-v1.png",
+      "url": "/art/lettering/section-river-mirage-ink-v1.png",
+      "pixelSize": [
+        1467,
+        501
+      ],
+      "anchor": [
+        733.5,
+        250.5
+      ],
+      "source": "src/stages/stage2.ts:7,43",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1443,
+        477
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "45fd7a2e672d6352cb79163a2b1967411bf9086331dbcb10c4737c29c63494a8",
+      "sourceCrop": {
+        "file": "local-source/section-river-mirage-ink-v1.png",
+        "box": [
+          244,
+          188,
+          1687,
+          665
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "section-river-mirage-paper",
+      "text": "蜃还名",
+      "usage": "第二章分节章卡",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "section-river-mirage-paper-v1.png",
+      "url": "/art/lettering/section-river-mirage-paper-v1.png",
+      "pixelSize": [
+        1336,
+        453
+      ],
+      "anchor": [
+        668.0,
+        226.5
+      ],
+      "source": "src/stages/stage2.ts:7,43",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1312,
+        429
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "8d75cdca2edf496cf4b9b232f9feb30c6635a6ea09f61590a711ab72987d16c9",
+      "sourceCrop": {
+        "file": "local-source/section-river-mirage-paper-v1.png",
+        "box": [
+          306,
+          225,
+          1618,
+          654
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "chapter-test-ink",
+      "text": "空卷",
+      "usage": "引擎试炼章卡",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "chapter-test-ink-v1.png",
+      "url": "/art/lettering/chapter-test-ink-v1.png",
+      "pixelSize": [
+        1299,
+        615
+      ],
+      "anchor": [
+        649.5,
+        307.5
+      ],
+      "source": "src/stages/test.ts:97",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1275,
+        591
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "bcc2b3505be20a6dbe53bf37ba34170ca64f2f73611574dca1fbc46391304eaf",
+      "sourceCrop": {
+        "file": "local-source/chapter-test-ink-v1.png",
+        "box": [
+          328,
+          147,
+          1603,
+          738
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "chapter-test-paper",
+      "text": "空卷",
+      "usage": "引擎试炼章卡",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "chapter-test-paper-v1.png",
+      "url": "/art/lettering/chapter-test-paper-v1.png",
+      "pixelSize": [
+        1034,
+        548
+      ],
+      "anchor": [
+        517.0,
+        274.0
+      ],
+      "source": "src/stages/test.ts:97",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1010,
+        524
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "aaa9944d5a0fc0efe828b4147a12a07716174f2dd5200c2503785f47e2f6ca1f",
+      "sourceCrop": {
+        "file": "local-source/chapter-test-paper-v1.png",
+        "box": [
+          454,
+          155,
+          1464,
+          679
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "warning-cinnabar",
+      "text": "强敌接近",
+      "usage": "强敌警告",
+      "style": "weibei",
+      "palette": "cinnabar",
+      "color": "#B83B28",
+      "filename": "warning-cinnabar-v1.png",
+      "url": "/art/lettering/warning-cinnabar-v1.png",
+      "pixelSize": [
+        1149,
+        307
+      ],
+      "anchor": [
+        574.5,
+        153.5
+      ],
+      "source": "src/ui/index.ts:456",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1125,
+        283
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "3409aa1fdbb3476493a1d8c8efe0988f9be71141c8e3b754fb8813e9ed20ba0f",
+      "sourceCrop": {
+        "file": "local-source/weibei-ink-2.png",
+        "box": [
+          0,
+          0,
+          1125,
+          283
+        ],
+        "originalSize": [
+          1125,
+          283
+        ]
+      }
+    },
+    {
+      "id": "boss-serpent-ink",
+      "text": "纸龙",
+      "usage": "Boss名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "boss-serpent-ink-v1.png",
+      "url": "/art/lettering/boss-serpent-ink-v1.png",
+      "pixelSize": [
+        1108,
+        529
+      ],
+      "anchor": [
+        554.0,
+        264.5
+      ],
+      "source": "src/stages/stage1_boss.ts:20",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1084,
+        505
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "e7cd657426de7660260e2ad92762a1166630f4bd998039959078afbb95a63795",
+      "sourceCrop": {
+        "file": "local-source/boss-serpent-ink-v1.png",
+        "box": [
+          427,
+          164,
+          1511,
+          669
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "boss-serpent-paper",
+      "text": "纸龙",
+      "usage": "Boss名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "boss-serpent-paper-v1.png",
+      "url": "/art/lettering/boss-serpent-paper-v1.png",
+      "pixelSize": [
+        1055,
+        524
+      ],
+      "anchor": [
+        527.5,
+        262.0
+      ],
+      "source": "src/stages/stage1_boss.ts:20",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1031,
+        500
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "36e8f45c5b4681b98d1f2d3fb26f828b8b4b5fee84951563d84d406ac94aecc5",
+      "sourceCrop": {
+        "file": "local-source/boss-serpent-paper-v1.png",
+        "box": [
+          442,
+          179,
+          1473,
+          679
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "boss-sparrow-ink",
+      "text": "铜雀 · 守晨",
+      "usage": "Boss名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "boss-sparrow-ink-v1.png",
+      "url": "/art/lettering/boss-sparrow-ink-v1.png",
+      "pixelSize": [
+        1623,
+        396
+      ],
+      "anchor": [
+        811.5,
+        198.0
+      ],
+      "source": "src/stages/stage1_boss.ts:163",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1599,
+        372
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "beba58840b4719a560c791e937453a4946b1e09f1836dc5ab758c7808975cf25",
+      "sourceCrop": {
+        "file": "local-source/boss-sparrow-ink-v1.png",
+        "box": [
+          181,
+          257,
+          1780,
+          629
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      },
+      "deprecated": true,
+      "deprecatedBy": "P3-11c",
+      "deprecatedReason": "章题以术语表更新、第一章Boss身份更新或旧第一章反制题头已撤下",
+      "replacementId": "boss-copper-name-ink"
+    },
+    {
+      "id": "boss-sparrow-paper",
+      "text": "铜雀 · 守晨",
+      "usage": "Boss名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "boss-sparrow-paper-v1.png",
+      "url": "/art/lettering/boss-sparrow-paper-v1.png",
+      "pixelSize": [
+        1693,
+        404
+      ],
+      "anchor": [
+        846.5,
+        202.0
+      ],
+      "source": "src/stages/stage1_boss.ts:163",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1669,
+        380
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "d814519ba35b0847a032df1ba09832665dbcd43397b2963ac143fa8805663679",
+      "sourceCrop": {
+        "file": "local-source/boss-sparrow-paper-v1.png",
+        "box": [
+          127,
+          258,
+          1796,
+          638
+        ],
+        "originalSize": [
+          1920,
+          819
+        ]
+      },
+      "deprecated": true,
+      "deprecatedBy": "P3-11c",
+      "deprecatedReason": "章题以术语表更新、第一章Boss身份更新或旧第一章反制题头已撤下",
+      "replacementId": "boss-copper-name-paper"
+    },
+    {
+      "id": "boss-pagoda-ink",
+      "text": "宝塔 · 锁名断链",
+      "usage": "Boss名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "boss-pagoda-ink-v1.png",
+      "url": "/art/lettering/boss-pagoda-ink-v1.png",
+      "pixelSize": [
+        2045,
+        351
+      ],
+      "anchor": [
+        1022.5,
+        175.5
+      ],
+      "source": "src/stages/stage2_boss.ts:22",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        2021,
+        327
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "53f19b7fef08512794ae65289b0e19fe42ad9552a6ffcfac44e95c6402341913",
+      "sourceCrop": {
+        "file": "local-source/boss-pagoda-ink-v1.png",
+        "box": [
+          69,
+          208,
+          2090,
+          535
+        ],
+        "originalSize": [
+          2146,
+          733
+        ]
+      }
+    },
+    {
+      "id": "boss-pagoda-paper",
+      "text": "宝塔 · 锁名断链",
+      "usage": "Boss名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "boss-pagoda-paper-v1.png",
+      "url": "/art/lettering/boss-pagoda-paper-v1.png",
+      "pixelSize": [
+        1996,
+        330
+      ],
+      "anchor": [
+        998.0,
+        165.0
+      ],
+      "source": "src/stages/stage2_boss.ts:22",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1972,
+        306
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "e80b35fc08c8d98c69da172cd86228c368e15ad240fbe3041bdc22a023ed788c",
+      "sourceCrop": {
+        "file": "local-source/boss-pagoda-paper-v1.png",
+        "box": [
+          68,
+          217,
+          2040,
+          523
+        ],
+        "originalSize": [
+          2109,
+          745
+        ]
+      }
+    },
+    {
+      "id": "boss-mirage-ink",
+      "text": "蜃 · 藏灯",
+      "usage": "Boss名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "boss-mirage-ink-v1.png",
+      "url": "/art/lettering/boss-mirage-ink-v1.png",
+      "pixelSize": [
+        1819,
+        532
+      ],
+      "anchor": [
+        909.5,
+        266.0
+      ],
+      "source": "src/stages/stage2_boss.ts:34",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1795,
+        508
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "d87a590fe47ae667d994432db4a151bbe02d422d3f1fc18744b28ce5c3817597",
+      "sourceCrop": {
+        "file": "local-source/boss-mirage-ink-v1.png",
+        "box": [
+          87,
+          161,
+          1882,
+          669
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "boss-mirage-paper",
+      "text": "蜃 · 藏灯",
+      "usage": "Boss名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "boss-mirage-paper-v1.png",
+      "url": "/art/lettering/boss-mirage-paper-v1.png",
+      "pixelSize": [
+        1563,
+        434
+      ],
+      "anchor": [
+        781.5,
+        217.0
+      ],
+      "source": "src/stages/stage2_boss.ts:34",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1539,
+        410
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "6fe48635f10f57d450bbb9b2d1c59bb1836145e76a05dd1997d9372d72e50f87",
+      "sourceCrop": {
+        "file": "local-source/boss-mirage-paper-v1.png",
+        "box": [
+          188,
+          204,
+          1727,
+          614
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "boss-leigong-ink",
+      "text": "雷公 · 原签审判",
+      "usage": "Boss名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "boss-leigong-ink-v1.png",
+      "url": "/art/lettering/boss-leigong-ink-v1.png",
+      "pixelSize": [
+        1735,
+        295
+      ],
+      "anchor": [
+        867.5,
+        147.5
+      ],
+      "source": "src/stages/stage3_leigong.ts:5",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1711,
+        271
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "2ebc9b0fe0caee649f385542cd6b5839e45ec527f953d5fa80c3c7388cf4da66",
+      "sourceCrop": {
+        "file": "local-source/boss-leigong-ink-v1.png",
+        "box": [
+          97,
+          298,
+          1808,
+          569
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "boss-leigong-paper",
+      "text": "雷公 · 原签审判",
+      "usage": "Boss名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "boss-leigong-paper-v1.png",
+      "url": "/art/lettering/boss-leigong-paper-v1.png",
+      "pixelSize": [
+        1968,
+        327
+      ],
+      "anchor": [
+        984.0,
+        163.5
+      ],
+      "source": "src/stages/stage3_leigong.ts:5",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1944,
+        303
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "7951ff694158f2379270dd3e387e74c033e72c6ad078ca38da1216a6f51ba5cb",
+      "sourceCrop": {
+        "file": "local-source/boss-leigong-paper-v1.png",
+        "box": [
+          115,
+          225,
+          2059,
+          528
+        ],
+        "originalSize": [
+          2172,
+          724
+        ]
+      }
+    },
+    {
+      "id": "boss-kun-ink",
+      "text": "衡天 · 鲲",
+      "usage": "Boss名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "boss-kun-ink-v1.png",
+      "url": "/art/lettering/boss-kun-ink-v1.png",
+      "pixelSize": [
+        1613,
+        465
+      ],
+      "anchor": [
+        806.5,
+        232.5
+      ],
+      "source": "src/stages/stage3_boss.ts:9",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1589,
+        441
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "6d2cb877dbcaa92967ea21e8e781596b29a3b429b003d30bfc89668fc685d67b",
+      "sourceCrop": {
+        "file": "local-source/boss-kun-ink-v1.png",
+        "box": [
+          165,
+          211,
+          1754,
+          652
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "boss-kun-paper",
+      "text": "衡天 · 鲲",
+      "usage": "Boss名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "boss-kun-paper-v1.png",
+      "url": "/art/lettering/boss-kun-paper-v1.png",
+      "pixelSize": [
+        1551,
+        456
+      ],
+      "anchor": [
+        775.5,
+        228.0
+      ],
+      "source": "src/stages/stage3_boss.ts:9",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1527,
+        432
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "06751b81b477fd884c14e1f9e8dbbac4329bc697f7acd1ac120e42c946ba4712",
+      "sourceCrop": {
+        "file": "local-source/boss-kun-paper-v1.png",
+        "box": [
+          201,
+          209,
+          1728,
+          641
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "boss-peng-ink",
+      "text": "衡天 · 鹏",
+      "usage": "Boss名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "boss-peng-ink-v1.png",
+      "url": "/art/lettering/boss-peng-ink-v1.png",
+      "pixelSize": [
+        1564,
+        430
+      ],
+      "anchor": [
+        782.0,
+        215.0
+      ],
+      "source": "src/stages/stage3_boss.ts:74",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1540,
+        406
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "e05de60e55e24b8e2698647d4c9a5c1863bf1b133bba7794e9ce0d223a17ce21",
+      "sourceCrop": {
+        "file": "local-source/boss-peng-ink-v1.png",
+        "box": [
+          197,
+          228,
+          1737,
+          634
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "boss-peng-paper",
+      "text": "衡天 · 鹏",
+      "usage": "Boss名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "boss-peng-paper-v1.png",
+      "url": "/art/lettering/boss-peng-paper-v1.png",
+      "pixelSize": [
+        1516,
+        455
+      ],
+      "anchor": [
+        758.0,
+        227.5
+      ],
+      "source": "src/stages/stage3_boss.ts:74",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1492,
+        431
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "ad3e4c8f3c7c11bc1dbffa178a7e0b197825559a8caa3485dc13b043e9705479",
+      "sourceCrop": {
+        "file": "local-source/boss-peng-paper-v1.png",
+        "box": [
+          212,
+          212,
+          1704,
+          643
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "boss-test-ink",
+      "text": "测试 · 铜雀",
+      "usage": "引擎试炼Boss名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "boss-test-ink-v1.png",
+      "url": "/art/lettering/boss-test-ink-v1.png",
+      "pixelSize": [
+        1787,
+        423
+      ],
+      "anchor": [
+        893.5,
+        211.5
+      ],
+      "source": "src/stages/test.ts:61",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1763,
+        399
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "75025aa2132df675ba9047a2dca7cbc9bd87cdb867cf6bc192a44f5c44ea3acb",
+      "sourceCrop": {
+        "file": "local-source/boss-test-ink-v1.png",
+        "box": [
+          89,
+          220,
+          1852,
+          619
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "boss-test-paper",
+      "text": "测试 · 铜雀",
+      "usage": "引擎试炼Boss名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "boss-test-paper-v1.png",
+      "url": "/art/lettering/boss-test-paper-v1.png",
+      "pixelSize": [
+        1665,
+        385
+      ],
+      "anchor": [
+        832.5,
+        192.5
+      ],
+      "source": "src/stages/test.ts:61",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1641,
+        361
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "65c25f43df1a22f237dbe402d58920f79729fce1952e092f2e026b3b98266b37",
+      "sourceCrop": {
+        "file": "local-source/boss-test-paper-v1.png",
+        "box": [
+          144,
+          239,
+          1785,
+          600
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "move-guard-ink",
+      "text": "收墨",
+      "usage": "招式名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "move-guard-ink-v1.png",
+      "url": "/art/lettering/move-guard-ink-v1.png",
+      "pixelSize": [
+        1171,
+        565
+      ],
+      "anchor": [
+        585.5,
+        282.5
+      ],
+      "source": "p3-02-play:src/game/moves.ts:9",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1147,
+        541
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "4d3c7e9545f08374c262572e185dd552c6bbf982281f93ddb03ed64234d402a2",
+      "sourceCrop": {
+        "file": "local-source/move-guard-ink-v1.png",
+        "box": [
+          389,
+          161,
+          1536,
+          702
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "move-guard-paper",
+      "text": "收墨",
+      "usage": "招式名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "move-guard-paper-v1.png",
+      "url": "/art/lettering/move-guard-paper-v1.png",
+      "pixelSize": [
+        1043,
+        527
+      ],
+      "anchor": [
+        521.5,
+        263.5
+      ],
+      "source": "p3-02-play:src/game/moves.ts:9",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1019,
+        503
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "ded941d193c795f22611cba84b66cd34010b95e7eca6ff413a600620fbd57caf",
+      "sourceCrop": {
+        "file": "local-source/move-guard-paper-v1.png",
+        "box": [
+          455,
+          198,
+          1474,
+          701
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "move-cut-ink",
+      "text": "破甲",
+      "usage": "招式名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "move-cut-ink-v1.png",
+      "url": "/art/lettering/move-cut-ink-v1.png",
+      "pixelSize": [
+        1236,
+        604
+      ],
+      "anchor": [
+        618.0,
+        302.0
+      ],
+      "source": "p3-02-play:src/game/moves.ts:10",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1212,
+        580
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "d98c12762677f51ce3aaa7eceb56d510ffa3953a855630ba642ca461d22d262b",
+      "sourceCrop": {
+        "file": "local-source/move-cut-ink-v1.png",
+        "box": [
+          358,
+          129,
+          1570,
+          709
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "move-cut-paper",
+      "text": "破甲",
+      "usage": "招式名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "move-cut-paper-v1.png",
+      "url": "/art/lettering/move-cut-paper-v1.png",
+      "pixelSize": [
+        1076,
+        526
+      ],
+      "anchor": [
+        538.0,
+        263.0
+      ],
+      "source": "p3-02-play:src/game/moves.ts:10",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1052,
+        502
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "5dea8fd7de51545c698b02ae303f7d99b6e8da4ca7d7c6b906634870d44350a9",
+      "sourceCrop": {
+        "file": "local-source/move-cut-paper-v1.png",
+        "box": [
+          431,
+          185,
+          1483,
+          687
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "move-dash-ink",
+      "text": "飞身追击",
+      "usage": "招式名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "move-dash-ink-v1.png",
+      "url": "/art/lettering/move-dash-ink-v1.png",
+      "pixelSize": [
+        1702,
+        446
+      ],
+      "anchor": [
+        851.0,
+        223.0
+      ],
+      "source": "p3-02-play:src/game/moves.ts:11",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1678,
+        422
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "e8f5ca4261b27f8b7ab95199ae40d561e89c4ec0fdbb51098e92c3750feb6388",
+      "sourceCrop": {
+        "file": "local-source/move-dash-ink-v1.png",
+        "box": [
+          129,
+          212,
+          1807,
+          634
+        ],
+        "originalSize": [
+          1914,
+          822
+        ]
+      }
+    },
+    {
+      "id": "move-dash-paper",
+      "text": "飞身追击",
+      "usage": "招式名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "move-dash-paper-v1.png",
+      "url": "/art/lettering/move-dash-paper-v1.png",
+      "pixelSize": [
+        1749,
+        470
+      ],
+      "anchor": [
+        874.5,
+        235.0
+      ],
+      "source": "p3-02-play:src/game/moves.ts:11",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1725,
+        446
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "193d5b7dd2e48ae8fa04b9755387f9effc879ded30408aefa5d71311e1a36dbe",
+      "sourceCrop": {
+        "file": "local-source/move-dash-paper-v1.png",
+        "box": [
+          102,
+          190,
+          1827,
+          636
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "move-assist-ink",
+      "text": "伙伴合击",
+      "usage": "招式名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "move-assist-ink-v1.png",
+      "url": "/art/lettering/move-assist-ink-v1.png",
+      "pixelSize": [
+        1672,
+        443
+      ],
+      "anchor": [
+        836.0,
+        221.5
+      ],
+      "source": "p3-02-play:src/game/moves.ts:12",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1648,
+        419
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "37bd16f4ddfb17f14d638fdd190230ec9d30c9b518a70d8d909d997b2742a176",
+      "sourceCrop": {
+        "file": "local-source/move-assist-ink-v1.png",
+        "box": [
+          135,
+          204,
+          1783,
+          623
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "move-assist-paper",
+      "text": "伙伴合击",
+      "usage": "招式名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "move-assist-paper-v1.png",
+      "url": "/art/lettering/move-assist-paper-v1.png",
+      "pixelSize": [
+        1670,
+        434
+      ],
+      "anchor": [
+        835.0,
+        217.0
+      ],
+      "source": "p3-02-play:src/game/moves.ts:12",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1646,
+        410
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "b7def99506b3cf32c409bf6700f85099ab66594ddf334a3c3eeed935f06dcd0a",
+      "sourceCrop": {
+        "file": "local-source/move-assist-paper-v1.png",
+        "box": [
+          143,
+          208,
+          1789,
+          618
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "move-counter-ink",
+      "text": "回身反击",
+      "usage": "招式名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "move-counter-ink-v1.png",
+      "url": "/art/lettering/move-counter-ink-v1.png",
+      "pixelSize": [
+        1632,
+        452
+      ],
+      "anchor": [
+        816.0,
+        226.0
+      ],
+      "source": "p3-02-play:src/game/moves.ts:13",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1608,
+        428
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "db1af417a9c924be0ede9dcb3185f16a11d0de951e27f8e4269a4c1fcba7ca82",
+      "sourceCrop": {
+        "file": "local-source/move-counter-ink-v1.png",
+        "box": [
+          174,
+          224,
+          1782,
+          652
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "move-counter-paper",
+      "text": "回身反击",
+      "usage": "招式名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "move-counter-paper-v1.png",
+      "url": "/art/lettering/move-counter-paper-v1.png",
+      "pixelSize": [
+        1515,
+        435
+      ],
+      "anchor": [
+        757.5,
+        217.5
+      ],
+      "source": "p3-02-play:src/game/moves.ts:13",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1491,
+        411
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "0437de6f404659f02d3d8b0d51087e73c3c72130565920677488d79bf819231d",
+      "sourceCrop": {
+        "file": "local-source/move-counter-paper-v1.png",
+        "box": [
+          231,
+          227,
+          1722,
+          638
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "bomb-blank-ink",
+      "text": "留白",
+      "usage": "泼墨变体名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "bomb-blank-ink-v1.png",
+      "url": "/art/lettering/bomb-blank-ink-v1.png",
+      "pixelSize": [
+        978,
+        513
+      ],
+      "anchor": [
+        489.0,
+        256.5
+      ],
+      "source": "P3-11任务卡",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        954,
+        489
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "0f7b03ca5b1412e6b049bcc7b9b0025123a0bef7747114b29bd690e1c89bbb7a",
+      "sourceCrop": {
+        "file": "local-source/bomb-blank-ink-v1.png",
+        "box": [
+          489,
+          185,
+          1443,
+          674
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "bomb-blank-paper",
+      "text": "留白",
+      "usage": "泼墨变体名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "bomb-blank-paper-v1.png",
+      "url": "/art/lettering/bomb-blank-paper-v1.png",
+      "pixelSize": [
+        927,
+        483
+      ],
+      "anchor": [
+        463.5,
+        241.5
+      ],
+      "source": "P3-11任务卡",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        903,
+        459
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "ea20ea44908d00060d78b1e3d4b1b17dda48a8745e2784a548a842a4a7106fb5",
+      "sourceCrop": {
+        "file": "local-source/bomb-blank-paper-v1.png",
+        "box": [
+          518,
+          207,
+          1421,
+          666
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "bomb-dragon-ink",
+      "text": "墨龙",
+      "usage": "泼墨变体名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "bomb-dragon-ink-v1.png",
+      "url": "/art/lettering/bomb-dragon-ink-v1.png",
+      "pixelSize": [
+        1206,
+        585
+      ],
+      "anchor": [
+        603.0,
+        292.5
+      ],
+      "source": "P3-11任务卡",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1182,
+        561
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "39021c7a630796ee4da3adf63b1261185765a86f4f73bee53994782591af8aad",
+      "sourceCrop": {
+        "file": "local-source/bomb-dragon-ink-v1.png",
+        "box": [
+          368,
+          164,
+          1550,
+          725
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "bomb-dragon-paper",
+      "text": "墨龙",
+      "usage": "泼墨变体名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "bomb-dragon-paper-v1.png",
+      "url": "/art/lettering/bomb-dragon-paper-v1.png",
+      "pixelSize": [
+        1165,
+        607
+      ],
+      "anchor": [
+        582.5,
+        303.5
+      ],
+      "source": "P3-11任务卡",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1141,
+        583
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "a469cb68b0b12f96028adf03a955e3c3b3d98a7cc2a5363b00ea9b00081bc24a",
+      "sourceCrop": {
+        "file": "local-source/bomb-dragon-paper-v1.png",
+        "box": [
+          386,
+          127,
+          1527,
+          710
+        ],
+        "originalSize": [
+          1914,
+          822
+        ]
+      }
+    },
+    {
+      "id": "bomb-stamp-ink",
+      "text": "落印",
+      "usage": "泼墨变体名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "bomb-stamp-ink-v1.png",
+      "url": "/art/lettering/bomb-stamp-ink-v1.png",
+      "pixelSize": [
+        1311,
+        620
+      ],
+      "anchor": [
+        655.5,
+        310.0
+      ],
+      "source": "P3-11任务卡",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1287,
+        596
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "ac65620406acdaeed7877a6b2951ef11c7d1e72d82bff0b7e93fe879e88ad020",
+      "sourceCrop": {
+        "file": "local-source/bomb-stamp-ink-v1.png",
+        "box": [
+          342,
+          135,
+          1629,
+          731
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "bomb-stamp-paper",
+      "text": "落印",
+      "usage": "泼墨变体名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "bomb-stamp-paper-v1.png",
+      "url": "/art/lettering/bomb-stamp-paper-v1.png",
+      "pixelSize": [
+        988,
+        499
+      ],
+      "anchor": [
+        494.0,
+        249.5
+      ],
+      "source": "P3-11任务卡",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        964,
+        475
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "1431c720cc310ad266d09ab9fd370e9cce72e4c4855bfa37db31ef0735e6a878",
+      "sourceCrop": {
+        "file": "local-source/bomb-stamp-paper-v1.png",
+        "box": [
+          486,
+          194,
+          1450,
+          669
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "brush-horizontal-ink",
+      "text": "横",
+      "usage": "笔法解锁名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "brush-horizontal-ink-v1.png",
+      "url": "/art/lettering/brush-horizontal-ink-v1.png",
+      "pixelSize": [
+        749,
+        696
+      ],
+      "anchor": [
+        374.5,
+        348.0
+      ],
+      "source": "P3-11任务卡",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        725,
+        672
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "f11e56b07d86ddd7b4f308b56597de3e156dd4bb84a9b1b54fa0472522328cd8",
+      "sourceCrop": {
+        "file": "local-source/brush-horizontal-ink-v1.png",
+        "box": [
+          580,
+          86,
+          1305,
+          758
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "brush-horizontal-paper",
+      "text": "横",
+      "usage": "笔法解锁名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "brush-horizontal-paper-v1.png",
+      "url": "/art/lettering/brush-horizontal-paper-v1.png",
+      "pixelSize": [
+        778,
+        674
+      ],
+      "anchor": [
+        389.0,
+        337.0
+      ],
+      "source": "P3-11任务卡",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        754,
+        650
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "e45fc4a19189ae9a16a8fd8d7db187427a8a656211c8bc8f5746bcd110f6655e",
+      "sourceCrop": {
+        "file": "local-source/brush-horizontal-paper-v1.png",
+        "box": [
+          583,
+          115,
+          1337,
+          765
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "brush-vertical-ink",
+      "text": "竖",
+      "usage": "笔法解锁名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "brush-vertical-ink-v1.png",
+      "url": "/art/lettering/brush-vertical-ink-v1.png",
+      "pixelSize": [
+        738,
+        640
+      ],
+      "anchor": [
+        369.0,
+        320.0
+      ],
+      "source": "P3-11任务卡",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        714,
+        616
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "acc35b8ecce3e97fca69c4c539f71eaf6910bf3752ea282046554eac4e00d59f",
+      "sourceCrop": {
+        "file": "local-source/brush-vertical-ink-v1.png",
+        "box": [
+          606,
+          130,
+          1320,
+          746
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "brush-vertical-paper",
+      "text": "竖",
+      "usage": "笔法解锁名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "brush-vertical-paper-v1.png",
+      "url": "/art/lettering/brush-vertical-paper-v1.png",
+      "pixelSize": [
+        643,
+        595
+      ],
+      "anchor": [
+        321.5,
+        297.5
+      ],
+      "source": "P3-11任务卡",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        619,
+        571
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "8bc76934f833a69295bea6f3608618ee648d0b33bf695e254090da887e23bffe",
+      "sourceCrop": {
+        "file": "local-source/brush-vertical-paper-v1.png",
+        "box": [
+          655,
+          164,
+          1274,
+          735
+        ],
+        "originalSize": [
+          1916,
+          821
+        ]
+      }
+    },
+    {
+      "id": "brush-dot-ink",
+      "text": "点",
+      "usage": "笔法解锁名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "brush-dot-ink-v1.png",
+      "url": "/art/lettering/brush-dot-ink-v1.png",
+      "pixelSize": [
+        673,
+        640
+      ],
+      "anchor": [
+        336.5,
+        320.0
+      ],
+      "source": "P3-11任务卡",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        649,
+        616
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "93d3da3424525e09dcc38474dccd8ee430f521330fae3279d75758fd738eaf12",
+      "sourceCrop": {
+        "file": "local-source/brush-dot-ink-v1.png",
+        "box": [
+          636,
+          137,
+          1285,
+          753
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "brush-dot-paper",
+      "text": "点",
+      "usage": "笔法解锁名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "brush-dot-paper-v1.png",
+      "url": "/art/lettering/brush-dot-paper-v1.png",
+      "pixelSize": [
+        968,
+        935
+      ],
+      "anchor": [
+        484.0,
+        467.5
+      ],
+      "source": "P3-11任务卡",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        944,
+        911
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "5721d7c57ad4d40c94b4f5c6dc317bc100ea1ea3fccb93f3a45cf84d0fa7a7ef",
+      "sourceCrop": {
+        "file": "local-source/brush-dot-paper-v1.png",
+        "box": [
+          296,
+          61,
+          1240,
+          972
+        ],
+        "originalSize": [
+          1536,
+          1024
+        ]
+      }
+    },
+    {
+      "id": "brush-fold-ink",
+      "text": "折",
+      "usage": "笔法解锁名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "brush-fold-ink-v1.png",
+      "url": "/art/lettering/brush-fold-ink-v1.png",
+      "pixelSize": [
+        766,
+        669
+      ],
+      "anchor": [
+        383.0,
+        334.5
+      ],
+      "source": "P3-11任务卡",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        742,
+        645
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "a556a1daedd1710a42aca15a0e199d68bbef04f35684697d1117a48e845213aa",
+      "sourceCrop": {
+        "file": "local-source/brush-fold-ink-v1.png",
+        "box": [
+          606,
+          94,
+          1348,
+          739
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "brush-fold-paper",
+      "text": "折",
+      "usage": "笔法解锁名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "brush-fold-paper-v1.png",
+      "url": "/art/lettering/brush-fold-paper-v1.png",
+      "pixelSize": [
+        851,
+        799
+      ],
+      "anchor": [
+        425.5,
+        399.5
+      ],
+      "source": "P3-11任务卡",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        827,
+        775
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "b06e7aa306cf6f4a772add9ed1626b4f7a08bcb3ac0e7ca282951da6509978ea",
+      "sourceCrop": {
+        "file": "local-source/brush-fold-paper-v1.png",
+        "box": [
+          378,
+          137,
+          1205,
+          912
+        ],
+        "originalSize": [
+          1536,
+          1024
+        ]
+      }
+    },
+    {
+      "id": "brush-hook-ink",
+      "text": "钩",
+      "usage": "笔法解锁名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "brush-hook-ink-v1.png",
+      "url": "/art/lettering/brush-hook-ink-v1.png",
+      "pixelSize": [
+        874,
+        734
+      ],
+      "anchor": [
+        437.0,
+        367.0
+      ],
+      "source": "P3-11任务卡",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        850,
+        710
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "5e35e382e076f939f0d2a1a05900cf0b02c08d1967d07e194dd9725149dd9cfe",
+      "sourceCrop": {
+        "file": "local-source/brush-hook-ink-v1.png",
+        "box": [
+          544,
+          57,
+          1394,
+          767
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "brush-hook-paper",
+      "text": "钩",
+      "usage": "笔法解锁名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "brush-hook-paper-v1.png",
+      "url": "/art/lettering/brush-hook-paper-v1.png",
+      "pixelSize": [
+        699,
+        670
+      ],
+      "anchor": [
+        349.5,
+        335.0
+      ],
+      "source": "P3-11任务卡",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        675,
+        646
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "e6abcb7d460facc03ec38f840aeb7e9858d8a55536595146efd82b75e530704b",
+      "sourceCrop": {
+        "file": "local-source/brush-hook-paper-v1.png",
+        "box": [
+          636,
+          114,
+          1311,
+          760
+        ],
+        "originalSize": [
+          1914,
+          822
+        ]
+      }
+    },
+    {
+      "id": "brush-diagonal-ink",
+      "text": "撇捺",
+      "usage": "笔法解锁名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "brush-diagonal-ink-v1.png",
+      "url": "/art/lettering/brush-diagonal-ink-v1.png",
+      "pixelSize": [
+        1270,
+        589
+      ],
+      "anchor": [
+        635.0,
+        294.5
+      ],
+      "source": "P3-11任务卡",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1246,
+        565
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "000efdd9dee75a01f1f4b87b526bdefc5abf7ee52a386ea45caa711f8cec1ae0",
+      "sourceCrop": {
+        "file": "local-source/brush-diagonal-ink-v1.png",
+        "box": [
+          343,
+          133,
+          1589,
+          698
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "brush-diagonal-paper",
+      "text": "撇捺",
+      "usage": "笔法解锁名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "brush-diagonal-paper-v1.png",
+      "url": "/art/lettering/brush-diagonal-paper-v1.png",
+      "pixelSize": [
+        1134,
+        561
+      ],
+      "anchor": [
+        567.0,
+        280.5
+      ],
+      "source": "P3-11任务卡",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1110,
+        537
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "06e67d9462b70320097a902530058797fb3ddbfa731dce22db09969f46b963c2",
+      "sourceCrop": {
+        "file": "local-source/brush-diagonal-paper-v1.png",
+        "box": [
+          404,
+          161,
+          1514,
+          698
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "brush-eternal-ink",
+      "text": "永",
+      "usage": "笔法解锁名",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "brush-eternal-ink-v1.png",
+      "url": "/art/lettering/brush-eternal-ink-v1.png",
+      "pixelSize": [
+        747,
+        676
+      ],
+      "anchor": [
+        373.5,
+        338.0
+      ],
+      "source": "P3-11任务卡",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        723,
+        652
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "d85c466c61bd5d4bdd0ea4ea180d5ef584f37abe4d8c4718eb585af8b65b30e6",
+      "sourceCrop": {
+        "file": "local-source/brush-eternal-ink-v1.png",
+        "box": [
+          599,
+          89,
+          1322,
+          741
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "brush-eternal-paper",
+      "text": "永",
+      "usage": "笔法解锁名",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "brush-eternal-paper-v1.png",
+      "url": "/art/lettering/brush-eternal-paper-v1.png",
+      "pixelSize": [
+        733,
+        671
+      ],
+      "anchor": [
+        366.5,
+        335.5
+      ],
+      "source": "P3-11任务卡",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        709,
+        647
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "6ab5f42e9637f0f1548a357637ad0ed4d7bc700790d83727773b90d642cb5ac5",
+      "sourceCrop": {
+        "file": "local-source/brush-eternal-paper-v1.png",
+        "box": [
+          604,
+          96,
+          1313,
+          743
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "continue-paper",
+      "text": "续战？",
+      "usage": "续关大字",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "continue-paper-v1.png",
+      "url": "/art/lettering/continue-paper-v1.png",
+      "pixelSize": [
+        1163,
+        463
+      ],
+      "anchor": [
+        581.5,
+        231.5
+      ],
+      "source": "src/ui/index.ts:952",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1139,
+        439
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "e03141447f0b5d02b3e4b821a9dbc1f335cfe44bcf6ec8a8ff94af0e5080cb6f",
+      "sourceCrop": {
+        "file": "local-source/continue-paper-v1.png",
+        "box": [
+          400,
+          220,
+          1539,
+          659
+        ],
+        "originalSize": [
+          1914,
+          822
+        ]
+      }
+    },
+    {
+      "id": "gameover-cinnabar",
+      "text": "墨尽",
+      "usage": "失败大字",
+      "style": "weibei",
+      "palette": "cinnabar",
+      "color": "#B83B28",
+      "filename": "gameover-cinnabar-v1.png",
+      "url": "/art/lettering/gameover-cinnabar-v1.png",
+      "pixelSize": [
+        1404,
+        653
+      ],
+      "anchor": [
+        702.0,
+        326.5
+      ],
+      "source": "src/ui/index.ts:969",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1380,
+        629
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "ed6c19d9db38ea7b32f06c593f543cac3bd57c6c60f6c1ea9ee3087dca132a12",
+      "sourceCrop": {
+        "file": "local-source/gameover-cinnabar-v1.png",
+        "box": [
+          271,
+          117,
+          1651,
+          746
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "ending-paper",
+      "text": "完",
+      "usage": "过关/尾声大字",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "ending-paper-v1.png",
+      "url": "/art/lettering/ending-paper-v1.png",
+      "pixelSize": [
+        741,
+        657
+      ],
+      "anchor": [
+        370.5,
+        328.5
+      ],
+      "source": "src/ui/index.ts:1048",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        717,
+        633
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "e0315f077100a65628e080abdf713d1496f4ee507d3ac497077869e7166292fa",
+      "sourceCrop": {
+        "file": "local-source/ending-paper-v1.png",
+        "box": [
+          628,
+          103,
+          1345,
+          736
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "record-cinnabar",
+      "text": "新纪录",
+      "usage": "新纪录印章文字",
+      "style": "weibei",
+      "palette": "cinnabar",
+      "color": "#B83B28",
+      "filename": "record-cinnabar-v1.png",
+      "url": "/art/lettering/record-cinnabar-v1.png",
+      "pixelSize": [
+        1690,
+        574
+      ],
+      "anchor": [
+        845.0,
+        287.0
+      ],
+      "source": "src/ui/index.ts:973",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1666,
+        550
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "f2e559e7cb3f3a148d2bfa2ee29d3339e2daa1fe26dffd6a7f0db5d5a61c32d8",
+      "sourceCrop": {
+        "file": "local-source/record-cinnabar-v1.png",
+        "box": [
+          138,
+          135,
+          1804,
+          685
+        ],
+        "originalSize": [
+          1916,
+          821
+        ]
+      }
+    },
+    {
+      "id": "menu-test-paper",
+      "text": "测试",
+      "usage": "测试菜单标题",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "menu-test-paper-v1.png",
+      "url": "/art/lettering/menu-test-paper-v1.png",
+      "pixelSize": [
+        1178,
+        582
+      ],
+      "anchor": [
+        589.0,
+        291.0
+      ],
+      "source": "src/ui/index.ts:731",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1154,
+        558
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "313a8d188a41beeb09cd1eabaff0f53101a8228c29098db728113459434b20b7",
+      "sourceCrop": {
+        "file": "local-source/menu-test-paper-v1.png",
+        "box": [
+          385,
+          158,
+          1539,
+          716
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "menu-pause-paper",
+      "text": "暂停",
+      "usage": "暂停标题",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "menu-pause-paper-v1.png",
+      "url": "/art/lettering/menu-pause-paper-v1.png",
+      "pixelSize": [
+        1217,
+        603
+      ],
+      "anchor": [
+        608.5,
+        301.5
+      ],
+      "source": "src/ui/index.ts:800",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1193,
+        579
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "3f2df38ceaadb5bff6be9aa33e06a52bd069bc71b28d80b11f923eb7330afee1",
+      "sourceCrop": {
+        "file": "local-source/menu-pause-paper-v1.png",
+        "box": [
+          383,
+          143,
+          1576,
+          722
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "menu-settings-paper",
+      "text": "设置",
+      "usage": "设置标题",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "menu-settings-paper-v1.png",
+      "url": "/art/lettering/menu-settings-paper-v1.png",
+      "pixelSize": [
+        1099,
+        560
+      ],
+      "anchor": [
+        549.5,
+        280.0
+      ],
+      "source": "src/ui/index.ts:826",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1075,
+        536
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "920e3e391d903c670c763b80f61c6976df696101bcf35a94406938cc9a46dfdf",
+      "sourceCrop": {
+        "file": "local-source/menu-settings-paper-v1.png",
+        "box": [
+          419,
+          156,
+          1494,
+          692
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "menu-help-paper",
+      "text": "操作说明",
+      "usage": "操作说明标题",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "menu-help-paper-v1.png",
+      "url": "/art/lettering/menu-help-paper-v1.png",
+      "pixelSize": [
+        1521,
+        393
+      ],
+      "anchor": [
+        760.5,
+        196.5
+      ],
+      "source": "src/ui/index.ts:873",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1497,
+        369
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "f8d7d387d97241045ec3b667a84e2a85d4257b8739c0d6d4e305b74b8bf4e8f4",
+      "sourceCrop": {
+        "file": "local-source/menu-help-paper-v1.png",
+        "box": [
+          211,
+          241,
+          1708,
+          610
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "rest-paper",
+      "text": "章间休整",
+      "usage": "休整默认标题",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "rest-paper-v1.png",
+      "url": "/art/lettering/rest-paper-v1.png",
+      "pixelSize": [
+        1576,
+        434
+      ],
+      "anchor": [
+        788.0,
+        217.0
+      ],
+      "source": "src/ui/index.ts:920",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1552,
+        410
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "af78774f3a8baed50b3cf52f670c49d79837e581908c2f91fa5ec9321d9cb777",
+      "sourceCrop": {
+        "file": "local-source/rest-paper-v1.png",
+        "box": [
+          183,
+          237,
+          1735,
+          647
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "shop-paper",
+      "text": "行囊补给",
+      "usage": "补给标题",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "shop-paper-v1.png",
+      "url": "/art/lettering/shop-paper-v1.png",
+      "pixelSize": [
+        1574,
+        428
+      ],
+      "anchor": [
+        787.0,
+        214.0
+      ],
+      "source": "src/game/game.ts:142",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1550,
+        404
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "6dfd74caa1c918babfe1464d84f2e04623a499277cb52f0bb4328b75502b9e59",
+      "sourceCrop": {
+        "file": "local-source/shop-paper-v1.png",
+        "box": [
+          190,
+          216,
+          1740,
+          620
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "growth-1-paper",
+      "text": "成长 1/3",
+      "usage": "成长标题",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "growth-1-paper-v1.png",
+      "url": "/art/lettering/growth-1-paper-v1.png",
+      "pixelSize": [
+        1513,
+        429
+      ],
+      "anchor": [
+        756.5,
+        214.5
+      ],
+      "source": "src/game/world.ts:863",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1489,
+        405
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "5d132aa08672f076d8861a8973bbfdb3f6f3df0b4f934c0adde11541b173af3c",
+      "sourceCrop": {
+        "file": "local-source/growth-1-paper-v1.png",
+        "box": [
+          216,
+          229,
+          1705,
+          634
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "growth-2-paper",
+      "text": "成长 2/3",
+      "usage": "成长标题",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "growth-2-paper-v1.png",
+      "url": "/art/lettering/growth-2-paper-v1.png",
+      "pixelSize": [
+        1682,
+        471
+      ],
+      "anchor": [
+        841.0,
+        235.5
+      ],
+      "source": "src/game/world.ts:863",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1658,
+        447
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "d7863977de0dfcfb6714183376d81cc4621c60377be03a85deba5f3203c4f656",
+      "sourceCrop": {
+        "file": "local-source/growth-2-paper-v1.png",
+        "box": [
+          128,
+          199,
+          1786,
+          646
+        ],
+        "originalSize": [
+          1914,
+          822
+        ]
+      }
+    },
+    {
+      "id": "growth-3-paper",
+      "text": "成长 3/3",
+      "usage": "成长标题",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "growth-3-paper-v1.png",
+      "url": "/art/lettering/growth-3-paper-v1.png",
+      "pixelSize": [
+        1663,
+        458
+      ],
+      "anchor": [
+        831.5,
+        229.0
+      ],
+      "source": "src/game/world.ts:863",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1639,
+        434
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "84e71bdfed628b129271693b2fabff2397c0ed3bceba509960de9c74923e3b27",
+      "sourceCrop": {
+        "file": "local-source/growth-3-paper-v1.png",
+        "box": [
+          153,
+          221,
+          1792,
+          655
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "loading-paper",
+      "text": "研墨",
+      "usage": "载入大字",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "loading-paper-v1.png",
+      "url": "/art/lettering/loading-paper-v1.png",
+      "pixelSize": [
+        1240,
+        598
+      ],
+      "anchor": [
+        620.0,
+        299.0
+      ],
+      "source": "src/ui/index.ts:1061",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1216,
+        574
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "4be9bbca4293982c609b8fc64492c93a5a5a6ea65cbbe03f10e664306bbe3078",
+      "sourceCrop": {
+        "file": "local-source/loading-paper-v1.png",
+        "box": [
+          362,
+          169,
+          1578,
+          743
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "weapon-red-paper",
+      "text": "朱",
+      "usage": "武器名印章",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "weapon-red-paper-v1.png",
+      "url": "/art/lettering/weapon-red-paper-v1.png",
+      "pixelSize": [
+        715,
+        681
+      ],
+      "anchor": [
+        357.5,
+        340.5
+      ],
+      "source": "src/ui/index.ts:250",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        691,
+        657
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "89ab301d1efb11a8090a0067770edeb33a0c8531ef3037829ac59337c8dec509",
+      "sourceCrop": {
+        "file": "local-source/weapon-red-paper-v1.png",
+        "box": [
+          628,
+          89,
+          1319,
+          746
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "weapon-blue-paper",
+      "text": "青",
+      "usage": "武器名印章",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "weapon-blue-paper-v1.png",
+      "url": "/art/lettering/weapon-blue-paper-v1.png",
+      "pixelSize": [
+        866,
+        849
+      ],
+      "anchor": [
+        433.0,
+        424.5
+      ],
+      "source": "src/ui/index.ts:250",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        842,
+        825
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "b0794be28e7d24a2032e1a5c673844717e14392f8395e0ecca5858304ee524d7",
+      "sourceCrop": {
+        "file": "local-source/weapon-blue-paper-v1.png",
+        "box": [
+          348,
+          122,
+          1190,
+          947
+        ],
+        "originalSize": [
+          1536,
+          1024
+        ]
+      }
+    },
+    {
+      "id": "weapon-purple-paper",
+      "text": "雷",
+      "usage": "武器名印章",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "weapon-purple-paper-v1.png",
+      "url": "/art/lettering/weapon-purple-paper-v1.png",
+      "pixelSize": [
+        744,
+        738
+      ],
+      "anchor": [
+        372.0,
+        369.0
+      ],
+      "source": "src/ui/index.ts:250",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        720,
+        714
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "1bc9db299e89cd6876a80b7278a42b081bd3281022763f64863921a057d4ce21",
+      "sourceCrop": {
+        "file": "local-source/weapon-purple-paper-v1.png",
+        "box": [
+          419,
+          175,
+          1139,
+          889
+        ],
+        "originalSize": [
+          1536,
+          1024
+        ]
+      }
+    },
+    {
+      "id": "seal-warning-cinnabar",
+      "text": "警",
+      "usage": "警告章印",
+      "style": "weibei",
+      "palette": "cinnabar",
+      "color": "#B83B28",
+      "filename": "seal-warning-cinnabar-v1.png",
+      "url": "/art/lettering/seal-warning-cinnabar-v1.png",
+      "pixelSize": [
+        803,
+        703
+      ],
+      "anchor": [
+        401.5,
+        351.5
+      ],
+      "source": "src/ui/index.ts:456",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        779,
+        679
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "358c009b1ca9e87e42114624518b662ad7c69b0b7f943eb9e21413f0f589db20",
+      "sourceCrop": {
+        "file": "local-source/seal-warning-cinnabar-v1.png",
+        "box": [
+          589,
+          78,
+          1368,
+          757
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "seal-1-cinnabar",
+      "text": "一",
+      "usage": "章节印",
+      "style": "weibei",
+      "palette": "cinnabar",
+      "color": "#B83B28",
+      "filename": "seal-1-cinnabar-v1.png",
+      "url": "/art/lettering/seal-1-cinnabar-v1.png",
+      "pixelSize": [
+        2007,
+        284
+      ],
+      "anchor": [
+        1003.5,
+        142.0
+      ],
+      "source": "src/ui/index.ts:446",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1983,
+        260
+      ],
+      "review": "P3-11b一道横画、方切起笔、平钝下顿收笔自检通过；待总导演复审",
+      "version": "v2",
+      "sha256": "c3196433dd700d8b40c6e1c81a95429202df2e92dd1737b4eb60bb7967845e90",
+      "sourceCrop": {
+        "file": "local-source/seal-1-cinnabar-v2-raw.png",
+        "box": [
+          95,
+          266,
+          2078,
+          526
+        ],
+        "originalSize": [
+          2172,
+          724
+        ]
+      },
+      "revisionTask": "P3-11b"
+    },
+    {
+      "id": "seal-2-cinnabar",
+      "text": "二",
+      "usage": "章节印",
+      "style": "weibei",
+      "palette": "cinnabar",
+      "color": "#B83B28",
+      "filename": "seal-2-cinnabar-v1.png",
+      "url": "/art/lettering/seal-2-cinnabar-v1.png",
+      "pixelSize": [
+        829,
+        518
+      ],
+      "anchor": [
+        414.5,
+        259.0
+      ],
+      "source": "src/ui/index.ts:446",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        805,
+        494
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "f3b806520ff9961e6db8bec8c0110d82cf436ff3bb0a891d4d1c042913bff961",
+      "sourceCrop": {
+        "file": "local-source/seal-2-cinnabar-v1.png",
+        "box": [
+          573,
+          187,
+          1378,
+          681
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "seal-3-cinnabar",
+      "text": "三",
+      "usage": "章节印",
+      "style": "weibei",
+      "palette": "cinnabar",
+      "color": "#B83B28",
+      "filename": "seal-3-cinnabar-v1.png",
+      "url": "/art/lettering/seal-3-cinnabar-v1.png",
+      "pixelSize": [
+        1031,
+        686
+      ],
+      "anchor": [
+        515.5,
+        343.0
+      ],
+      "source": "src/ui/index.ts:446",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1007,
+        662
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "6c2b431c861d263ec9f493a7941517eca4e137e675fc1a6837dc1423986cf938",
+      "sourceCrop": {
+        "file": "local-source/seal-3-cinnabar-v1.png",
+        "box": [
+          478,
+          80,
+          1485,
+          742
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "seal-4-cinnabar",
+      "text": "四",
+      "usage": "章节印",
+      "style": "weibei",
+      "palette": "cinnabar",
+      "color": "#B83B28",
+      "filename": "seal-4-cinnabar-v1.png",
+      "url": "/art/lettering/seal-4-cinnabar-v1.png",
+      "pixelSize": [
+        707,
+        654
+      ],
+      "anchor": [
+        353.5,
+        327.0
+      ],
+      "source": "src/ui/index.ts:446",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        683,
+        630
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "e7098138ed34e3ae6866df05fcdb0987a800481a937f4ea77248494ffe07241b",
+      "sourceCrop": {
+        "file": "local-source/seal-4-cinnabar-v1.png",
+        "box": [
+          617,
+          95,
+          1300,
+          725
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "challenge-sword-paper",
+      "text": "返乡剑诀",
+      "usage": "反制题头",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "challenge-sword-paper-v1.png",
+      "url": "/art/lettering/challenge-sword-paper-v1.png",
+      "pixelSize": [
+        1636,
+        431
+      ],
+      "anchor": [
+        818.0,
+        215.5
+      ],
+      "source": "src/stages/stage1_boss.ts:210",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1612,
+        407
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "7c19a024bbe759b85a21439936f4664ed129ad5b10779c831668fb2760664c85",
+      "sourceCrop": {
+        "file": "local-source/challenge-sword-paper-v1.png",
+        "box": [
+          163,
+          228,
+          1775,
+          635
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      },
+      "deprecated": true,
+      "deprecatedBy": "P3-11c",
+      "deprecatedReason": "章题以术语表更新、第一章Boss身份更新或旧第一章反制题头已撤下",
+      "replacementId": null
+    },
+    {
+      "id": "challenge-dawn-paper",
+      "text": "归晨一笔",
+      "usage": "反制题头",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "challenge-dawn-paper-v1.png",
+      "url": "/art/lettering/challenge-dawn-paper-v1.png",
+      "pixelSize": [
+        1518,
+        406
+      ],
+      "anchor": [
+        759.0,
+        203.0
+      ],
+      "source": "src/stages/stage1_boss.ts:270",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1494,
+        382
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "4bc6492e5bcb14c4f105e6d574467678755d638c130def69f8137f1c6ed56835",
+      "sourceCrop": {
+        "file": "local-source/challenge-dawn-paper-v1.png",
+        "box": [
+          215,
+          225,
+          1709,
+          607
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      },
+      "deprecated": true,
+      "deprecatedBy": "P3-11c",
+      "deprecatedReason": "章题以术语表更新、第一章Boss身份更新或旧第一章反制题头已撤下",
+      "replacementId": null
+    },
+    {
+      "id": "challenge-tide-paper",
+      "text": "潮声反制",
+      "usage": "反制题头",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "challenge-tide-paper-v1.png",
+      "url": "/art/lettering/challenge-tide-paper-v1.png",
+      "pixelSize": [
+        1649,
+        433
+      ],
+      "anchor": [
+        824.5,
+        216.5
+      ],
+      "source": "src/stages/stage2_boss.ts:67",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1625,
+        409
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "34adbe1a180e8c2c020ad88b79b7e1986b5c1a5e9d0fb842f18eb37c64504b23",
+      "sourceCrop": {
+        "file": "local-source/challenge-tide-paper-v1.png",
+        "box": [
+          145,
+          237,
+          1770,
+          646
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "challenge-mirror-paper",
+      "text": "断镜救舟",
+      "usage": "反制题头",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "challenge-mirror-paper-v1.png",
+      "url": "/art/lettering/challenge-mirror-paper-v1.png",
+      "pixelSize": [
+        1742,
+        470
+      ],
+      "anchor": [
+        871.0,
+        235.0
+      ],
+      "source": "src/stages/stage2_boss.ts:83",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1718,
+        446
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "cb35cccc37061ff9e85608169c2d1dc5b1b959b3312ea0e9af17a8f422ae7556",
+      "sourceCrop": {
+        "file": "local-source/challenge-mirror-paper-v1.png",
+        "box": [
+          105,
+          210,
+          1823,
+          656
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "challenge-name-paper",
+      "text": "还名一笔",
+      "usage": "反制题头",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "challenge-name-paper-v1.png",
+      "url": "/art/lettering/challenge-name-paper-v1.png",
+      "pixelSize": [
+        1537,
+        396
+      ],
+      "anchor": [
+        768.5,
+        198.0
+      ],
+      "source": "src/stages/stage2_boss.ts:89",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1513,
+        372
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "4d7759733388daaa48f025bddfa6e785fb072187fbbecbb6f9237392a4e30b6e",
+      "sourceCrop": {
+        "file": "local-source/challenge-name-paper-v1.png",
+        "box": [
+          200,
+          237,
+          1713,
+          609
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "challenge-oath-paper",
+      "text": "吞天反誓",
+      "usage": "反制题头",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "challenge-oath-paper-v1.png",
+      "url": "/art/lettering/challenge-oath-paper-v1.png",
+      "pixelSize": [
+        1512,
+        411
+      ],
+      "anchor": [
+        756.0,
+        205.5
+      ],
+      "source": "src/stages/stage3_boss.ts:26",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1488,
+        387
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "c46f34fc6221bed394e54c84be3307c4ea937db1b0b1643af2e61fc3ff2dc3be",
+      "sourceCrop": {
+        "file": "local-source/challenge-oath-paper-v1.png",
+        "box": [
+          209,
+          221,
+          1697,
+          608
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "challenge-boat-paper",
+      "text": "同舟九万里",
+      "usage": "反制题头",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "challenge-boat-paper-v1.png",
+      "url": "/art/lettering/challenge-boat-paper-v1.png",
+      "pixelSize": [
+        1743,
+        403
+      ],
+      "anchor": [
+        871.5,
+        201.5
+      ],
+      "source": "src/stages/stage3_boss.ts:80",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1719,
+        379
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "bdb4ffdd92018bb9f6033ac2d89059227292fee077a42dd92ecfa2f12119f3e2",
+      "sourceCrop": {
+        "file": "local-source/challenge-boat-paper-v1.png",
+        "box": [
+          118,
+          241,
+          1837,
+          620
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "challenge-sky-paper",
+      "text": "一笔封天",
+      "usage": "终战反制题头/菜单副标/尾声",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "challenge-sky-paper-v1.png",
+      "url": "/art/lettering/challenge-sky-paper-v1.png",
+      "pixelSize": [
+        1653,
+        417
+      ],
+      "anchor": [
+        826.5,
+        208.5
+      ],
+      "source": "src/stages/stage3_boss.ts:90;src/ui/index.ts:1048",
+      "status": "ready",
+      "contentBox": [
+        12,
+        12,
+        1629,
+        393
+      ],
+      "review": "逐字自检通过；待总导演和制作人审图",
+      "version": "v1",
+      "sha256": "1dd78d941f5f17819af58f2a9e7d2ed96bc437694f4923bb7ba2d1e24274cc29",
+      "sourceCrop": {
+        "file": "local-source/challenge-sky-paper-v1.png",
+        "box": [
+          143,
+          228,
+          1772,
+          621
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "chapter-ch1-story-ink",
+      "text": "下山修桥",
+      "usage": "第1章章题/结算名",
+      "source": "local-source/glossary.md:38; p3-13-ui:src/stages/stage1.ts:9",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "chapter-ch1-story-ink-v1.png",
+      "url": "/art/lettering/chapter-ch1-story-ink-v1.png",
+      "pixelSize": [
+        1702,
+        424
+      ],
+      "anchor": [
+        851.0,
+        212.0
+      ],
+      "contentBox": [
+        12,
+        12,
+        1678,
+        400
+      ],
+      "version": "v1",
+      "status": "ready",
+      "deprecated": false,
+      "review": "P3-11c逐字自检通过；待总导演复审",
+      "sha256": "c5d64e6e3aec0b7ea438d3a617945ca2454d812b7b061101641aaf2871413062",
+      "spec": "local-source/p3-11c-chapter-ch1-story-ink-v1.md",
+      "sourceCrop": {
+        "file": "local-source/chapter-ch1-story-ink-v1.png",
+        "box": [
+          126,
+          226,
+          1804,
+          626
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "chapter-ch1-story-paper",
+      "text": "下山修桥",
+      "usage": "第1章章题/结算名",
+      "source": "local-source/glossary.md:38; p3-13-ui:src/stages/stage1.ts:9",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "chapter-ch1-story-paper-v1.png",
+      "url": "/art/lettering/chapter-ch1-story-paper-v1.png",
+      "pixelSize": [
+        1678,
+        429
+      ],
+      "anchor": [
+        839.0,
+        214.5
+      ],
+      "contentBox": [
+        12,
+        12,
+        1654,
+        405
+      ],
+      "version": "v1",
+      "status": "ready",
+      "deprecated": false,
+      "review": "P3-11c逐字自检通过；待总导演复审",
+      "sha256": "521f4fee8dcfd1fc27c230651c65ccdc37148cf6daf22b1726660891abd724a4",
+      "spec": "local-source/p3-11c-chapter-ch1-story-paper-v1.md",
+      "sourceCrop": {
+        "file": "local-source/chapter-ch1-story-paper-v1.png",
+        "box": [
+          139,
+          238,
+          1793,
+          643
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "chapter-ch2-story-ink",
+      "text": "拆开太平画",
+      "usage": "第2章章题/结算名",
+      "source": "local-source/glossary.md:38",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "chapter-ch2-story-ink-v1.png",
+      "url": "/art/lettering/chapter-ch2-story-ink-v1.png",
+      "pixelSize": [
+        1787,
+        386
+      ],
+      "anchor": [
+        893.5,
+        193.0
+      ],
+      "contentBox": [
+        12,
+        12,
+        1763,
+        362
+      ],
+      "version": "v1",
+      "status": "ready",
+      "deprecated": false,
+      "review": "P3-11c逐字自检通过；待总导演复审",
+      "sha256": "af40708358f37132e8988e010fd732d01983cb2b9e48138d7c1a2e0a580c4f02",
+      "spec": "local-source/p3-11c-chapter-ch2-story-ink-v1.md",
+      "sourceCrop": {
+        "file": "local-source/chapter-ch2-story-ink-v1.png",
+        "box": [
+          78,
+          240,
+          1841,
+          602
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "chapter-ch2-story-paper",
+      "text": "拆开太平画",
+      "usage": "第2章章题/结算名",
+      "source": "local-source/glossary.md:38",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "chapter-ch2-story-paper-v1.png",
+      "url": "/art/lettering/chapter-ch2-story-paper-v1.png",
+      "pixelSize": [
+        1746,
+        381
+      ],
+      "anchor": [
+        873.0,
+        190.5
+      ],
+      "contentBox": [
+        12,
+        12,
+        1722,
+        357
+      ],
+      "version": "v1",
+      "status": "ready",
+      "deprecated": false,
+      "review": "P3-11c逐字自检通过；待总导演复审",
+      "sha256": "28ffb3cc16a88b73fe8edce4c0b2f351a4527971167432b9b20549cdc33b77a8",
+      "spec": "local-source/p3-11c-chapter-ch2-story-paper-v1.md",
+      "sourceCrop": {
+        "file": "local-source/chapter-ch2-story-paper-v1.png",
+        "box": [
+          101,
+          226,
+          1823,
+          583
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "chapter-ch3-story-ink",
+      "text": "把实话带上去",
+      "usage": "第3章章题/结算名",
+      "source": "local-source/glossary.md:38",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "chapter-ch3-story-ink-v1.png",
+      "url": "/art/lettering/chapter-ch3-story-ink-v1.png",
+      "pixelSize": [
+        1738,
+        315
+      ],
+      "anchor": [
+        869.0,
+        157.5
+      ],
+      "contentBox": [
+        12,
+        12,
+        1714,
+        291
+      ],
+      "version": "v1",
+      "status": "ready",
+      "deprecated": false,
+      "review": "P3-11c逐字自检通过；待总导演复审",
+      "sha256": "83b0c99efc749ac4b011b4a99b55ad483fa451999619f1e40fde50976dfe7e57",
+      "spec": "local-source/p3-11c-chapter-ch3-story-ink-v1.md",
+      "sourceCrop": {
+        "file": "local-source/chapter-ch3-story-ink-v1.png",
+        "box": [
+          100,
+          252,
+          1814,
+          543
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "chapter-ch3-story-paper",
+      "text": "把实话带上去",
+      "usage": "第3章章题/结算名",
+      "source": "local-source/glossary.md:38",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "chapter-ch3-story-paper-v1.png",
+      "url": "/art/lettering/chapter-ch3-story-paper-v1.png",
+      "pixelSize": [
+        1829,
+        383
+      ],
+      "anchor": [
+        914.5,
+        191.5
+      ],
+      "contentBox": [
+        12,
+        12,
+        1805,
+        359
+      ],
+      "version": "v1",
+      "status": "ready",
+      "deprecated": false,
+      "review": "P3-11c逐字自检通过；待总导演复审",
+      "sha256": "8ca8321885433a527867906e5fddb64e6aa0ab2b71629bdd6bb1276503735f5a",
+      "spec": "local-source/p3-11c-chapter-ch3-story-paper-v1.md",
+      "sourceCrop": {
+        "file": "local-source/chapter-ch3-story-paper-v1.png",
+        "box": [
+          55,
+          236,
+          1860,
+          595
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "chapter-ch4-story-ink",
+      "text": "先把人放出来",
+      "usage": "第4章章题/结算名",
+      "source": "local-source/glossary.md:38",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "chapter-ch4-story-ink-v1.png",
+      "url": "/art/lettering/chapter-ch4-story-ink-v1.png",
+      "pixelSize": [
+        1809,
+        330
+      ],
+      "anchor": [
+        904.5,
+        165.0
+      ],
+      "contentBox": [
+        12,
+        12,
+        1785,
+        306
+      ],
+      "version": "v1",
+      "status": "ready",
+      "deprecated": false,
+      "review": "P3-11c逐字自检通过；待总导演复审",
+      "sha256": "5f8f6097131b728c2404b7950889130dbb73a89e887b71e1bbb5d15a879f2f8f",
+      "spec": "local-source/p3-11c-chapter-ch4-story-ink-v1.md",
+      "sourceCrop": {
+        "file": "local-source/chapter-ch4-story-ink-v1.png",
+        "box": [
+          74,
+          260,
+          1859,
+          566
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "chapter-ch4-story-paper",
+      "text": "先把人放出来",
+      "usage": "第4章章题/结算名",
+      "source": "local-source/glossary.md:38",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "chapter-ch4-story-paper-v1.png",
+      "url": "/art/lettering/chapter-ch4-story-paper-v1.png",
+      "pixelSize": [
+        2006,
+        368
+      ],
+      "anchor": [
+        1003.0,
+        184.0
+      ],
+      "contentBox": [
+        12,
+        12,
+        1982,
+        344
+      ],
+      "version": "v1",
+      "status": "ready",
+      "deprecated": false,
+      "review": "P3-11c逐字自检通过；待总导演复审",
+      "sha256": "b72a1bb23d26bd76c91396bf7839412e6b3fbf7e61f9a9a73eec3bfa49fb94d1",
+      "spec": "local-source/p3-11c-chapter-ch4-story-paper-v1.md",
+      "sourceCrop": {
+        "file": "local-source/chapter-ch4-story-paper-v1.png",
+        "box": [
+          76,
+          196,
+          2058,
+          540
+        ],
+        "originalSize": [
+          2135,
+          736
+        ]
+      }
+    },
+    {
+      "id": "boss-copper-name-ink",
+      "text": "铜雀",
+      "usage": "新第一章实际Boss名",
+      "source": "p3-13-ui:src/stages/stage1_boss.ts:267",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "boss-copper-name-ink-v1.png",
+      "url": "/art/lettering/boss-copper-name-ink-v1.png",
+      "pixelSize": [
+        1385,
+        661
+      ],
+      "anchor": [
+        692.5,
+        330.5
+      ],
+      "contentBox": [
+        12,
+        12,
+        1361,
+        637
+      ],
+      "version": "v1",
+      "status": "ready",
+      "deprecated": false,
+      "review": "P3-11c逐字自检通过；待总导演复审",
+      "sha256": "7cb571c744373909d1833e66495dc02911b7f6fc17b1b3425324c7147ca2055c",
+      "spec": "local-source/p3-11c-boss-copper-name-ink-v1.md",
+      "sourceCrop": {
+        "file": "local-source/boss-copper-name-ink-v1.png",
+        "box": [
+          300,
+          118,
+          1661,
+          755
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "boss-copper-name-paper",
+      "text": "铜雀",
+      "usage": "新第一章实际Boss名",
+      "source": "p3-13-ui:src/stages/stage1_boss.ts:267",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "boss-copper-name-paper-v1.png",
+      "url": "/art/lettering/boss-copper-name-paper-v1.png",
+      "pixelSize": [
+        1179,
+        563
+      ],
+      "anchor": [
+        589.5,
+        281.5
+      ],
+      "contentBox": [
+        12,
+        12,
+        1155,
+        539
+      ],
+      "version": "v1",
+      "status": "ready",
+      "deprecated": false,
+      "review": "P3-11c逐字自检通过；待总导演复审",
+      "sha256": "719ef6556bd84b1ca44c6529fd5059314d091b6e5b2dba76479de510b0e5201d",
+      "spec": "local-source/p3-11c-boss-copper-name-paper-v1.md",
+      "sourceCrop": {
+        "file": "local-source/boss-copper-name-paper-v1.png",
+        "box": [
+          386,
+          164,
+          1541,
+          703
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "boss-copper-identity-ink",
+      "text": "铜雀 · 守桥机器",
+      "usage": "第一章规范Boss身份卡；分支subtitle已有，warning:false尚未单独显示",
+      "source": "p3-13-ui:src/stages/stage1.ts:25; local-source/glossary.md:40",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "boss-copper-identity-ink-v1.png",
+      "url": "/art/lettering/boss-copper-identity-ink-v1.png",
+      "pixelSize": [
+        1752,
+        294
+      ],
+      "anchor": [
+        876.0,
+        147.0
+      ],
+      "contentBox": [
+        12,
+        12,
+        1728,
+        270
+      ],
+      "version": "v1",
+      "status": "ready",
+      "deprecated": false,
+      "review": "P3-11c逐字自检通过；待总导演复审",
+      "sha256": "1efce8f6690851f157dfdf18118c1094644cb45f41a9267050c3c32df65cd830",
+      "spec": "local-source/p3-11c-boss-copper-identity-ink-v1.md",
+      "sourceCrop": {
+        "file": "local-source/boss-copper-identity-ink-v1.png",
+        "box": [
+          99,
+          280,
+          1827,
+          550
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "boss-copper-identity-paper",
+      "text": "铜雀 · 守桥机器",
+      "usage": "第一章规范Boss身份卡；分支subtitle已有，warning:false尚未单独显示",
+      "source": "p3-13-ui:src/stages/stage1.ts:25; local-source/glossary.md:40",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "boss-copper-identity-paper-v1.png",
+      "url": "/art/lettering/boss-copper-identity-paper-v1.png",
+      "pixelSize": [
+        1716,
+        281
+      ],
+      "anchor": [
+        858.0,
+        140.5
+      ],
+      "contentBox": [
+        12,
+        12,
+        1692,
+        257
+      ],
+      "version": "v1",
+      "status": "ready",
+      "deprecated": false,
+      "review": "P3-11c逐字自检通过；待总导演复审",
+      "sha256": "c7222260a8812f1ba9bfa82e35043d1deb364148e1381e431695f6d8401f76b0",
+      "spec": "local-source/p3-11c-boss-copper-identity-paper-v1.md",
+      "sourceCrop": {
+        "file": "local-source/boss-copper-identity-paper-v1.png",
+        "box": [
+          113,
+          290,
+          1805,
+          547
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "passive-drawcut-ink",
+      "text": "跟笔追击",
+      "usage": "被动连携成功大字；末尾感叹号由UI保留",
+      "source": "p3-13-ui:src/game/combos.ts:7,43",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "passive-drawcut-ink-v1.png",
+      "url": "/art/lettering/passive-drawcut-ink-v1.png",
+      "pixelSize": [
+        1664,
+        401
+      ],
+      "anchor": [
+        832.0,
+        200.5
+      ],
+      "contentBox": [
+        12,
+        12,
+        1640,
+        377
+      ],
+      "version": "v1",
+      "status": "ready",
+      "deprecated": false,
+      "review": "P3-11c逐字自检通过；待总导演复审",
+      "sha256": "daa780dbc63b7305f71e43c03ae25febb082fda1e4231ce4e4717e77c1613115",
+      "spec": "local-source/p3-11c-passive-drawcut-ink-v1.md",
+      "sourceCrop": {
+        "file": "local-source/passive-drawcut-ink-v1.png",
+        "box": [
+          140,
+          227,
+          1780,
+          604
+        ],
+        "originalSize": [
+          1916,
+          821
+        ]
+      }
+    },
+    {
+      "id": "passive-drawcut-paper",
+      "text": "跟笔追击",
+      "usage": "被动连携成功大字；末尾感叹号由UI保留",
+      "source": "p3-13-ui:src/game/combos.ts:7,43",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "passive-drawcut-paper-v1.png",
+      "url": "/art/lettering/passive-drawcut-paper-v1.png",
+      "pixelSize": [
+        1745,
+        443
+      ],
+      "anchor": [
+        872.5,
+        221.5
+      ],
+      "contentBox": [
+        12,
+        12,
+        1721,
+        419
+      ],
+      "version": "v1",
+      "status": "ready",
+      "deprecated": false,
+      "review": "P3-11c逐字自检通过；待总导演复审",
+      "sha256": "eaf073dba59a3cd477e554ad5e59597fb8d9172cd764ca739d6bf2c202bc5aa6",
+      "spec": "local-source/p3-11c-passive-drawcut-paper-v1.md",
+      "sourceCrop": {
+        "file": "local-source/passive-drawcut-paper-v1.png",
+        "box": [
+          101,
+          216,
+          1822,
+          635
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "passive-jade-ink",
+      "text": "收笔护航",
+      "usage": "被动连携成功大字；末尾感叹号由UI保留",
+      "source": "p3-13-ui:src/game/combos.ts:8,43",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "passive-jade-ink-v1.png",
+      "url": "/art/lettering/passive-jade-ink-v1.png",
+      "pixelSize": [
+        1634,
+        429
+      ],
+      "anchor": [
+        817.0,
+        214.5
+      ],
+      "contentBox": [
+        12,
+        12,
+        1610,
+        405
+      ],
+      "version": "v1",
+      "status": "ready",
+      "deprecated": false,
+      "review": "P3-11c逐字自检通过；待总导演复审",
+      "sha256": "c480c38d3a8e02b0c5ebc8e7c91f15d942cff389cd620f2c270992e19b81fbdf",
+      "spec": "local-source/p3-11c-passive-jade-ink-v1.md",
+      "sourceCrop": {
+        "file": "local-source/passive-jade-ink-v1.png",
+        "box": [
+          157,
+          224,
+          1767,
+          629
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "passive-jade-paper",
+      "text": "收笔护航",
+      "usage": "被动连携成功大字；末尾感叹号由UI保留",
+      "source": "p3-13-ui:src/game/combos.ts:8,43",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "passive-jade-paper-v1.png",
+      "url": "/art/lettering/passive-jade-paper-v1.png",
+      "pixelSize": [
+        1537,
+        391
+      ],
+      "anchor": [
+        768.5,
+        195.5
+      ],
+      "contentBox": [
+        12,
+        12,
+        1513,
+        367
+      ],
+      "version": "v1",
+      "status": "ready",
+      "deprecated": false,
+      "review": "P3-11c逐字自检通过；待总导演复审",
+      "sha256": "9358c62f3207036dafe61cc6c9c1ea683b2c983cc5e969bdfd943b86b32c5d61",
+      "spec": "local-source/p3-11c-passive-jade-paper-v1.md",
+      "sourceCrop": {
+        "file": "local-source/passive-jade-paper-v1.png",
+        "box": [
+          205,
+          244,
+          1718,
+          611
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "passive-prison-ink",
+      "text": "圈封标记",
+      "usage": "被动连携成功大字；末尾感叹号由UI保留",
+      "source": "p3-13-ui:src/game/combos.ts:9,43",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "passive-prison-ink-v1.png",
+      "url": "/art/lettering/passive-prison-ink-v1.png",
+      "pixelSize": [
+        1903,
+        486
+      ],
+      "anchor": [
+        951.5,
+        243.0
+      ],
+      "contentBox": [
+        12,
+        12,
+        1879,
+        462
+      ],
+      "version": "v1",
+      "status": "ready",
+      "deprecated": false,
+      "review": "P3-11c逐字自检通过；待总导演复审",
+      "sha256": "f6e741d5014b7ccf4d28593fad953f58a713aed2a59fccac9c69e95dbe86de9e",
+      "spec": "local-source/p3-11c-passive-prison-ink-v1.md",
+      "sourceCrop": {
+        "file": "local-source/passive-prison-ink-v1.png",
+        "box": [
+          135,
+          140,
+          2014,
+          602
+        ],
+        "originalSize": [
+          2140,
+          735
+        ]
+      }
+    },
+    {
+      "id": "passive-prison-paper",
+      "text": "圈封标记",
+      "usage": "被动连携成功大字；末尾感叹号由UI保留",
+      "source": "p3-13-ui:src/game/combos.ts:9,43",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "passive-prison-paper-v1.png",
+      "url": "/art/lettering/passive-prison-paper-v1.png",
+      "pixelSize": [
+        1555,
+        402
+      ],
+      "anchor": [
+        777.5,
+        201.0
+      ],
+      "contentBox": [
+        12,
+        12,
+        1531,
+        378
+      ],
+      "version": "v1",
+      "status": "ready",
+      "deprecated": false,
+      "review": "P3-11c逐字自检通过；待总导演复审",
+      "sha256": "940f28a35d28782c9f0916de2e38cbaf8e88052765b8ea65a86fad8a071cb445",
+      "spec": "local-source/p3-11c-passive-prison-paper-v1.md",
+      "sourceCrop": {
+        "file": "local-source/passive-prison-paper-v1.png",
+        "box": [
+          200,
+          230,
+          1731,
+          608
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "passive-lance-ink",
+      "text": "标记追雷",
+      "usage": "被动连携成功大字；末尾感叹号由UI保留",
+      "source": "p3-13-ui:src/game/combos.ts:10,43",
+      "style": "weibei",
+      "palette": "ink",
+      "color": "#161A1D",
+      "filename": "passive-lance-ink-v1.png",
+      "url": "/art/lettering/passive-lance-ink-v1.png",
+      "pixelSize": [
+        1555,
+        399
+      ],
+      "anchor": [
+        777.5,
+        199.5
+      ],
+      "contentBox": [
+        12,
+        12,
+        1531,
+        375
+      ],
+      "version": "v1",
+      "status": "ready",
+      "deprecated": false,
+      "review": "P3-11c逐字自检通过；待总导演复审",
+      "sha256": "ea72535f31a8cf5960322a793374f181b19234caaf13728c81eef297ef1e521f",
+      "spec": "local-source/p3-11c-passive-lance-ink-v1.md",
+      "sourceCrop": {
+        "file": "local-source/passive-lance-ink-v1.png",
+        "box": [
+          187,
+          228,
+          1718,
+          603
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    },
+    {
+      "id": "passive-lance-paper",
+      "text": "标记追雷",
+      "usage": "被动连携成功大字；末尾感叹号由UI保留",
+      "source": "p3-13-ui:src/game/combos.ts:10,43",
+      "style": "weibei",
+      "palette": "paper",
+      "color": "#F1F2EE",
+      "filename": "passive-lance-paper-v1.png",
+      "url": "/art/lettering/passive-lance-paper-v1.png",
+      "pixelSize": [
+        1579,
+        415
+      ],
+      "anchor": [
+        789.5,
+        207.5
+      ],
+      "contentBox": [
+        12,
+        12,
+        1555,
+        391
+      ],
+      "version": "v1",
+      "status": "ready",
+      "deprecated": false,
+      "review": "P3-11c逐字自检通过；待总导演复审",
+      "sha256": "861c307d61875c192f125d153e4edff887fb8e230e5eb85590de67c18dc6d777",
+      "spec": "local-source/p3-11c-passive-lance-paper-v1.md",
+      "sourceCrop": {
+        "file": "local-source/passive-lance-paper-v1.png",
+        "box": [
+          164,
+          229,
+          1719,
+          620
+        ],
+        "originalSize": [
+          1915,
+          821
+        ]
+      }
+    }
+  ],
+  "approvalStatus": "逐字自检通过；待总导演与制作人视觉终审",
+  "integrationStatus": "未接入；交由后续UI任务卡",
+  "displaySizing": {
+    "wideGlyphHeightPx": 27,
+    "narrowGlyphHeightPx": 24,
+    "logoWideGlyphHeightPx": 247.5,
+    "logoNarrowGlyphHeightPx": 330,
+    "scaleFormula": "目标可见字高 / contentBox[3]；PNG外留白随相同比例缩放",
+    "sealNote": "一、二、三的自然长宽比保留；接入印框时按字格宽度等比适配，勿横向压字"
+  },
+  "revisionSource": {
+    "task": "P3-11c",
+    "branch": "p3-13-ui",
+    "commit": "a2ab7ae8ed5301072a8058079324ff11e5727461",
+    "chapterAuthority": "local-source/glossary.md:38"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "inksky",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5173",
+    "build": "npm run fonts:subset && tsc --noEmit -p . && vite build",
+    "typecheck": "tsc --noEmit -p .",
+    "preview": "vite preview --host 127.0.0.1 --port 4173",
+    "shot": "node tools/shot.mjs",
+    "play": "bash play.sh",
+    "fonts:setup": "python3 -m venv .venv && .venv/bin/python -m pip install -r tools/fonts/requirements.txt",
+    "fonts:subset": "node tools/fonts/subset.mjs",
+    "predev": "npm run fonts:subset"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^25.12.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.1"
+  }
+}

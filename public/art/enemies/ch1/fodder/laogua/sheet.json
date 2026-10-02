@@ -1,0 +1,414 @@
+{
+  "image": "art/enemies/ch1/fodder/laogua/sheet.png",
+  "columns": 4,
+  "rows": 4,
+  "count": 16,
+  "fps": 10,
+  "mode": "once",
+  "frameSize": [
+    128,
+    128
+  ],
+  "runtimeSize": [
+    165.161,
+    165.161
+  ],
+  "anchorPixel": [
+    64.0,
+    64.0
+  ],
+  "pivot": [
+    0.0,
+    0.0
+  ],
+  "anchors": {
+    "root": [
+      0,
+      0
+    ]
+  },
+  "segments": {
+    "hidden": {
+      "start": 0,
+      "count": 4,
+      "fps": 10,
+      "mode": "once",
+      "events": []
+    },
+    "glint": {
+      "start": 4,
+      "count": 4,
+      "fps": 10,
+      "mode": "once",
+      "events": []
+    },
+    "fire": {
+      "start": 8,
+      "count": 4,
+      "fps": 10,
+      "mode": "once",
+      "events": [
+        {
+          "frame": 2,
+          "sheetFrame": 10,
+          "name": "shot"
+        }
+      ]
+    },
+    "retreat": {
+      "start": 12,
+      "count": 4,
+      "fps": 10,
+      "mode": "once",
+      "events": []
+    }
+  },
+  "source": "local-source/laogua-v2.png",
+  "sourceRects": [
+    [
+      0,
+      0,
+      323,
+      303
+    ],
+    [
+      323,
+      0,
+      647,
+      303
+    ],
+    [
+      647,
+      0,
+      971,
+      303
+    ],
+    [
+      971,
+      0,
+      1295,
+      303
+    ],
+    [
+      0,
+      303,
+      323,
+      607
+    ],
+    [
+      323,
+      303,
+      647,
+      607
+    ],
+    [
+      647,
+      303,
+      971,
+      607
+    ],
+    [
+      971,
+      303,
+      1295,
+      607
+    ],
+    [
+      0,
+      607,
+      323,
+      911
+    ],
+    [
+      323,
+      607,
+      647,
+      911
+    ],
+    [
+      647,
+      607,
+      995,
+      911
+    ],
+    [
+      995,
+      607,
+      1295,
+      911
+    ],
+    [
+      0,
+      911,
+      323,
+      1215
+    ],
+    [
+      323,
+      911,
+      647,
+      1215
+    ],
+    [
+      647,
+      911,
+      971,
+      1215
+    ],
+    [
+      971,
+      911,
+      1295,
+      1215
+    ]
+  ],
+  "sourceBoundaryOpaquePixels": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "alphaFloor": 8,
+  "sourceAlignment": "local-source/sheet.json",
+  "sourceJitterPx": 1.4142135623730951,
+  "frames": [
+    {
+      "index": 0,
+      "contentBounds": [
+        34,
+        15,
+        96,
+        65
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2276
+    },
+    {
+      "index": 1,
+      "contentBounds": [
+        33,
+        14,
+        96,
+        65
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2284
+    },
+    {
+      "index": 2,
+      "contentBounds": [
+        33,
+        13,
+        97,
+        65
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2406
+    },
+    {
+      "index": 3,
+      "contentBounds": [
+        32,
+        15,
+        97,
+        65
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2353
+    },
+    {
+      "index": 4,
+      "contentBounds": [
+        32,
+        13,
+        97,
+        65
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2456
+    },
+    {
+      "index": 5,
+      "contentBounds": [
+        32,
+        13,
+        97,
+        65
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2407
+    },
+    {
+      "index": 6,
+      "contentBounds": [
+        32,
+        13,
+        97,
+        65
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2476
+    },
+    {
+      "index": 7,
+      "contentBounds": [
+        33,
+        13,
+        97,
+        65
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2452
+    },
+    {
+      "index": 8,
+      "contentBounds": [
+        32,
+        9,
+        97,
+        65
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2614
+    },
+    {
+      "index": 9,
+      "contentBounds": [
+        32,
+        9,
+        97,
+        65
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2588
+    },
+    {
+      "index": 10,
+      "contentBounds": [
+        26,
+        8,
+        101,
+        65
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2697
+    },
+    {
+      "index": 11,
+      "contentBounds": [
+        33,
+        9,
+        97,
+        65
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2525
+    },
+    {
+      "index": 12,
+      "contentBounds": [
+        32,
+        14,
+        96,
+        65
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2356
+    },
+    {
+      "index": 13,
+      "contentBounds": [
+        32,
+        13,
+        97,
+        65
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2434
+    },
+    {
+      "index": 14,
+      "contentBounds": [
+        32,
+        14,
+        97,
+        65
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2427
+    },
+    {
+      "index": 15,
+      "contentBounds": [
+        32,
+        13,
+        97,
+        65
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2440
+    }
+  ],
+  "approval": "待总导演审图；P4-22待接入",
+  "note": "runtimeSize为整张透明单帧的逻辑尺寸；不得再次压缩为主体尺寸。"
+}

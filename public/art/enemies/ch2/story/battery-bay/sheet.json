@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "assetVersion": "v1",
+  "image": "art/enemies/ch2/story/battery-bay/sheet.png",
+  "columns": 4,
+  "rows": 4,
+  "count": 3,
+  "fps": 8,
+  "mode": "once",
+  "frameSize": [
+    1120,
+    600
+  ],
+  "runtimeSize": [
+    560,
+    300
+  ],
+  "pivot": [
+    0.0,
+    0.0
+  ],
+  "anchorPixel": [
+    560.0,
+    300.0
+  ],
+  "anchors": {
+    "root": [
+      0,
+      0
+    ]
+  },
+  "segments": {
+    "full": {
+      "start": 0,
+      "count": 1,
+      "fps": 8,
+      "mode": "once"
+    },
+    "pried": {
+      "start": 1,
+      "count": 1,
+      "fps": 8,
+      "mode": "once"
+    },
+    "empty": {
+      "start": 2,
+      "count": 1,
+      "fps": 8,
+      "mode": "once"
+    }
+  },
+  "frames": [
+    {
+      "index": 0,
+      "contentBounds": [
+        210,
+        95,
+        994,
+        536
+      ]
+    },
+    {
+      "index": 1,
+      "contentBounds": [
+        126,
+        92,
+        994,
+        542
+      ]
+    },
+    {
+      "index": 2,
+      "contentBounds": [
+        126,
+        90,
+        994,
+        537
+      ]
+    }
+  ],
+  "source": "local-source/battery-bay.png",
+  "approval": "待审；未正式接入关卡",
+  "note": "尺寸含画布留白。按segments选段，空格不播放；anchors为相对pivot的游戏坐标，锚点与8fps为暂定接入初值。"
+}

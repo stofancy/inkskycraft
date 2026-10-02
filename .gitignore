@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.venv/
+.publication/
+.shots/
+*.log
+.env
+.env.*
+.wrangler/

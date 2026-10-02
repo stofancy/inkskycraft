@@ -1,0 +1,215 @@
+{
+  "version": 1,
+  "assetVersion": "v1",
+  "image": "art/enemies/ch2/story/battery-ship/sheet.png",
+  "columns": 4,
+  "rows": 4,
+  "count": 16,
+  "fps": 8,
+  "mode": "once",
+  "frameSize": [
+    560,
+    720
+  ],
+  "runtimeSize": [
+    280,
+    360
+  ],
+  "pivot": [
+    0.0,
+    0.0
+  ],
+  "anchorPixel": [
+    280.0,
+    360.0
+  ],
+  "anchors": {
+    "root": [
+      0,
+      0
+    ],
+    "bow": [
+      0,
+      -130
+    ],
+    "cargo": [
+      0,
+      0
+    ]
+  },
+  "segments": {
+    "intact": {
+      "start": 0,
+      "count": 4,
+      "fps": 8,
+      "mode": "loop"
+    },
+    "smoke": {
+      "start": 4,
+      "count": 4,
+      "fps": 8,
+      "mode": "loop"
+    },
+    "leaking": {
+      "start": 8,
+      "count": 4,
+      "fps": 8,
+      "mode": "loop"
+    },
+    "clamped": {
+      "start": 12,
+      "count": 4,
+      "fps": 8,
+      "mode": "loop"
+    }
+  },
+  "frames": [
+    {
+      "index": 0,
+      "contentBounds": [
+        22,
+        92,
+        538,
+        628
+      ]
+    },
+    {
+      "index": 1,
+      "contentBounds": [
+        23,
+        102,
+        530,
+        626
+      ]
+    },
+    {
+      "index": 2,
+      "contentBounds": [
+        74,
+        103,
+        537,
+        618
+      ]
+    },
+    {
+      "index": 3,
+      "contentBounds": [
+        25,
+        103,
+        457,
+        627
+      ]
+    },
+    {
+      "index": 4,
+      "contentBounds": [
+        105,
+        93,
+        499,
+        627
+      ]
+    },
+    {
+      "index": 5,
+      "contentBounds": [
+        24,
+        94,
+        537,
+        627
+      ]
+    },
+    {
+      "index": 6,
+      "contentBounds": [
+        25,
+        94,
+        516,
+        627
+      ]
+    },
+    {
+      "index": 7,
+      "contentBounds": [
+        71,
+        94,
+        460,
+        627
+      ]
+    },
+    {
+      "index": 8,
+      "contentBounds": [
+        65,
+        93,
+        537,
+        625
+      ]
+    },
+    {
+      "index": 9,
+      "contentBounds": [
+        24,
+        93,
+        537,
+        627
+      ]
+    },
+    {
+      "index": 10,
+      "contentBounds": [
+        77,
+        93,
+        537,
+        627
+      ]
+    },
+    {
+      "index": 11,
+      "contentBounds": [
+        22,
+        93,
+        504,
+        627
+      ]
+    },
+    {
+      "index": 12,
+      "contentBounds": [
+        22,
+        98,
+        538,
+        628
+      ]
+    },
+    {
+      "index": 13,
+      "contentBounds": [
+        23,
+        92,
+        537,
+        628
+      ]
+    },
+    {
+      "index": 14,
+      "contentBounds": [
+        23,
+        92,
+        537,
+        628
+      ]
+    },
+    {
+      "index": 15,
+      "contentBounds": [
+        22,
+        92,
+        433,
+        612
+      ]
+    }
+  ],
+  "source": "local-source/battery-ship.png",
+  "approval": "待审；未正式接入关卡",
+  "note": "尺寸含画布留白。按segments选段，空格不播放；anchors为相对pivot的游戏坐标，锚点与8fps为暂定接入初值。"
+}

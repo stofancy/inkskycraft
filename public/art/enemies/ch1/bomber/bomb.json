@@ -1,0 +1,32 @@
+{
+  "image": "art/enemies/ch1/bomber/bomb.png",
+  "imageSize": [
+    32,
+    44
+  ],
+  "runtimeSize": [
+    32,
+    44
+  ],
+  "targetBodySize": [
+    24,
+    36
+  ],
+  "anchorPixel": [
+    16.0,
+    22.0
+  ],
+  "pivot": [
+    0,
+    0
+  ],
+  "source": "local-source/bomb.png",
+  "sourceCrop": [
+    290,
+    151,
+    735,
+    1353
+  ],
+  "note": "炸弹主体24×36，透明画布32×44。",
+  "approval": "待审"
+}

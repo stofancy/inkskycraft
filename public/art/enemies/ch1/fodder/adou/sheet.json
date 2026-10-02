@@ -1,0 +1,386 @@
+{
+  "image": "art/enemies/ch1/fodder/adou/sheet.png",
+  "columns": 4,
+  "rows": 4,
+  "count": 16,
+  "fps": 10,
+  "mode": "loop",
+  "frameSize": [
+    128,
+    128
+  ],
+  "runtimeSize": [
+    75.156,
+    75.156
+  ],
+  "anchorPixel": [
+    64.0,
+    64.0
+  ],
+  "pivot": [
+    0.0,
+    0.0
+  ],
+  "anchors": {
+    "root": [
+      0,
+      0
+    ]
+  },
+  "segments": {
+    "flight": {
+      "start": 0,
+      "count": 16,
+      "fps": 10,
+      "mode": "loop"
+    }
+  },
+  "source": "local-source/adou-v1.png",
+  "sourceRects": [
+    [
+      0,
+      0,
+      323,
+      303
+    ],
+    [
+      323,
+      0,
+      647,
+      303
+    ],
+    [
+      647,
+      0,
+      971,
+      303
+    ],
+    [
+      971,
+      0,
+      1295,
+      303
+    ],
+    [
+      0,
+      303,
+      325,
+      607
+    ],
+    [
+      325,
+      303,
+      647,
+      607
+    ],
+    [
+      647,
+      303,
+      971,
+      607
+    ],
+    [
+      971,
+      303,
+      1295,
+      607
+    ],
+    [
+      0,
+      607,
+      323,
+      910
+    ],
+    [
+      323,
+      607,
+      647,
+      910
+    ],
+    [
+      647,
+      607,
+      971,
+      910
+    ],
+    [
+      971,
+      607,
+      1295,
+      910
+    ],
+    [
+      0,
+      910,
+      323,
+      1214
+    ],
+    [
+      323,
+      910,
+      647,
+      1214
+    ],
+    [
+      647,
+      910,
+      971,
+      1214
+    ],
+    [
+      971,
+      910,
+      1295,
+      1214
+    ]
+  ],
+  "sourceBoundaryOpaquePixels": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "alphaFloor": 8,
+  "sourceAlignment": "local-source/sheet.json",
+  "sourceJitterPx": 1.0711885047949083,
+  "frames": [
+    {
+      "index": 0,
+      "contentBounds": [
+        9,
+        18,
+        118,
+        109
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 3111
+    },
+    {
+      "index": 1,
+      "contentBounds": [
+        8,
+        18,
+        119,
+        110
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 3115
+    },
+    {
+      "index": 2,
+      "contentBounds": [
+        8,
+        17,
+        119,
+        109
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 3129
+    },
+    {
+      "index": 3,
+      "contentBounds": [
+        8,
+        18,
+        119,
+        109
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2996
+    },
+    {
+      "index": 4,
+      "contentBounds": [
+        8,
+        18,
+        119,
+        109
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 3029
+    },
+    {
+      "index": 5,
+      "contentBounds": [
+        8,
+        17,
+        120,
+        109
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 3046
+    },
+    {
+      "index": 6,
+      "contentBounds": [
+        7,
+        17,
+        120,
+        109
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2987
+    },
+    {
+      "index": 7,
+      "contentBounds": [
+        7,
+        17,
+        119,
+        109
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2933
+    },
+    {
+      "index": 8,
+      "contentBounds": [
+        8,
+        17,
+        118,
+        109
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2837
+    },
+    {
+      "index": 9,
+      "contentBounds": [
+        8,
+        18,
+        119,
+        109
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2852
+    },
+    {
+      "index": 10,
+      "contentBounds": [
+        8,
+        18,
+        119,
+        109
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2901
+    },
+    {
+      "index": 11,
+      "contentBounds": [
+        8,
+        18,
+        119,
+        109
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 2909
+    },
+    {
+      "index": 12,
+      "contentBounds": [
+        9,
+        18,
+        118,
+        109
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 3118
+    },
+    {
+      "index": 13,
+      "contentBounds": [
+        9,
+        18,
+        118,
+        109
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 3227
+    },
+    {
+      "index": 14,
+      "contentBounds": [
+        9,
+        18,
+        119,
+        110
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 3228
+    },
+    {
+      "index": 15,
+      "contentBounds": [
+        8,
+        18,
+        119,
+        110
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 3223
+    }
+  ],
+  "approval": "待总导演审图；P4-22待接入",
+  "note": "runtimeSize为整张透明单帧的逻辑尺寸；不得再次压缩为主体尺寸。"
+}

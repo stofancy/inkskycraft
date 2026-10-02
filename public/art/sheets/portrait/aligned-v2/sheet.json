@@ -1,0 +1,446 @@
+{
+  "version": 1,
+  "source": "generated-v2.png",
+  "alphaFloor": 8,
+  "columns": 3,
+  "rows": 2,
+  "count": 6,
+  "fps": 6.0,
+  "mode": "loop",
+  "events": [],
+  "anchor": "bottom",
+  "anchorPixel": [
+    128.0,
+    225.28
+  ],
+  "frameSize": [
+    256,
+    256
+  ],
+  "commonScale": 0.4215261044176707,
+  "splitMethod": "components",
+  "gridTouchingFrames": [
+    0,
+    1,
+    3,
+    4
+  ],
+  "warnings": [],
+  "jitterPx": 0.5,
+  "maxAnchorResidualPx": 0.5730619512757766,
+  "seam": {
+    "firstLastPremultipliedMAE": 0.03766291998570261,
+    "adjacentMeanMAE": 0.01595482919730392,
+    "adjacentMAE": [
+      0.024376823076235704,
+      0.010318870793760211,
+      0.02184073254953023,
+      0.011938157424428103,
+      0.01129956214256536
+    ]
+  },
+  "frames": [
+    {
+      "index": 0,
+      "file": "00.png",
+      "sourceRect": [
+        49,
+        7,
+        525,
+        509
+      ],
+      "trim": [
+        4,
+        3,
+        472,
+        501
+      ],
+      "sourceAnchor": [
+        234.0,
+        498
+      ],
+      "offset": [
+        30,
+        15
+      ],
+      "alignedAnchor": [
+        128.5,
+        225.0
+      ],
+      "anchorResidualPx": 0.5730619512757766,
+      "aligned": {
+        "bbox": [
+          30,
+          15,
+          227,
+          225
+        ],
+        "centroid": [
+          131.87602399111378,
+          144.3549716551793
+        ],
+        "alphaRange": [
+          0,
+          255
+        ],
+        "whiteEdgeCandidates": 1,
+        "grayEdgeCandidates": 1182,
+        "semiTransparentPixels": 2788
+      },
+      "source": {
+        "bbox": [
+          4,
+          3,
+          472,
+          501
+        ],
+        "centroid": [
+          245.984501883114,
+          309.76728294395195
+        ],
+        "alphaRange": [
+          0,
+          254
+        ],
+        "whiteEdgeCandidates": 59,
+        "grayEdgeCandidates": 6970,
+        "semiTransparentPixels": 15156
+      }
+    },
+    {
+      "index": 1,
+      "file": "01.png",
+      "sourceRect": [
+        539,
+        6,
+        1014,
+        509
+      ],
+      "trim": [
+        4,
+        3,
+        471,
+        500
+      ],
+      "sourceAnchor": [
+        233.5,
+        497
+      ],
+      "offset": [
+        30,
+        16
+      ],
+      "alignedAnchor": [
+        128.5,
+        225.0
+      ],
+      "anchorResidualPx": 0.5730619512757766,
+      "aligned": {
+        "bbox": [
+          30,
+          16,
+          227,
+          225
+        ],
+        "centroid": [
+          131.79617341451484,
+          145.47795994448455
+        ],
+        "alphaRange": [
+          0,
+          255
+        ],
+        "whiteEdgeCandidates": 1,
+        "grayEdgeCandidates": 1165,
+        "semiTransparentPixels": 2758
+      },
+      "source": {
+        "bbox": [
+          4,
+          3,
+          471,
+          500
+        ],
+        "centroid": [
+          245.28192216369155,
+          310.91697294826093
+        ],
+        "alphaRange": [
+          0,
+          254
+        ],
+        "whiteEdgeCandidates": 27,
+        "grayEdgeCandidates": 6682,
+        "semiTransparentPixels": 14737
+      }
+    },
+    {
+      "index": 2,
+      "file": "02.png",
+      "sourceRect": [
+        1050,
+        6,
+        1526,
+        509
+      ],
+      "trim": [
+        3,
+        3,
+        472,
+        500
+      ],
+      "sourceAnchor": [
+        234.5,
+        497
+      ],
+      "offset": [
+        29,
+        16
+      ],
+      "alignedAnchor": [
+        128.0,
+        225.0
+      ],
+      "anchorResidualPx": 0.28000000000000114,
+      "aligned": {
+        "bbox": [
+          29,
+          16,
+          227,
+          225
+        ],
+        "centroid": [
+          131.50346631235752,
+          145.39249333922788
+        ],
+        "alphaRange": [
+          0,
+          255
+        ],
+        "whiteEdgeCandidates": 0,
+        "grayEdgeCandidates": 1100,
+        "semiTransparentPixels": 2703
+      },
+      "source": {
+        "bbox": [
+          3,
+          3,
+          472,
+          500
+        ],
+        "centroid": [
+          245.76618961902906,
+          310.7194136288024
+        ],
+        "alphaRange": [
+          0,
+          254
+        ],
+        "whiteEdgeCandidates": 50,
+        "grayEdgeCandidates": 6294,
+        "semiTransparentPixels": 14567
+      }
+    },
+    {
+      "index": 3,
+      "file": "03.png",
+      "sourceRect": [
+        49,
+        513,
+        525,
+        1013
+      ],
+      "trim": [
+        4,
+        4,
+        472,
+        497
+      ],
+      "sourceAnchor": [
+        234.0,
+        493
+      ],
+      "offset": [
+        30,
+        17
+      ],
+      "alignedAnchor": [
+        128.5,
+        225.0
+      ],
+      "anchorResidualPx": 0.5730619512757766,
+      "aligned": {
+        "bbox": [
+          30,
+          17,
+          227,
+          225
+        ],
+        "centroid": [
+          131.934107276771,
+          146.09784315153905
+        ],
+        "alphaRange": [
+          0,
+          255
+        ],
+        "whiteEdgeCandidates": 0,
+        "grayEdgeCandidates": 1249,
+        "semiTransparentPixels": 2773
+      },
+      "source": {
+        "bbox": [
+          4,
+          4,
+          472,
+          497
+        ],
+        "centroid": [
+          246.13397126853798,
+          309.9875502746954
+        ],
+        "alphaRange": [
+          0,
+          254
+        ],
+        "whiteEdgeCandidates": 43,
+        "grayEdgeCandidates": 7292,
+        "semiTransparentPixels": 14338
+      }
+    },
+    {
+      "index": 4,
+      "file": "04.png",
+      "sourceRect": [
+        539,
+        514,
+        1014,
+        1013
+      ],
+      "trim": [
+        4,
+        4,
+        471,
+        496
+      ],
+      "sourceAnchor": [
+        233.5,
+        492
+      ],
+      "offset": [
+        30,
+        18
+      ],
+      "alignedAnchor": [
+        128.5,
+        225.0
+      ],
+      "anchorResidualPx": 0.5730619512757766,
+      "aligned": {
+        "bbox": [
+          30,
+          18,
+          227,
+          225
+        ],
+        "centroid": [
+          131.9347842591899,
+          146.4706742419922
+        ],
+        "alphaRange": [
+          0,
+          255
+        ],
+        "whiteEdgeCandidates": 0,
+        "grayEdgeCandidates": 1167,
+        "semiTransparentPixels": 2612
+      },
+      "source": {
+        "bbox": [
+          4,
+          4,
+          471,
+          496
+        ],
+        "centroid": [
+          245.61747061931382,
+          309.3555398426422
+        ],
+        "alphaRange": [
+          0,
+          254
+        ],
+        "whiteEdgeCandidates": 27,
+        "grayEdgeCandidates": 6849,
+        "semiTransparentPixels": 13353
+      }
+    },
+    {
+      "index": 5,
+      "file": "05.png",
+      "sourceRect": [
+        1051,
+        514,
+        1526,
+        1013
+      ],
+      "trim": [
+        3,
+        4,
+        471,
+        495
+      ],
+      "sourceAnchor": [
+        234.0,
+        491
+      ],
+      "offset": [
+        30,
+        18
+      ],
+      "alignedAnchor": [
+        128.5,
+        225.0
+      ],
+      "anchorResidualPx": 0.5730619512757766,
+      "aligned": {
+        "bbox": [
+          30,
+          18,
+          227,
+          225
+        ],
+        "centroid": [
+          132.00247574419512,
+          146.72200337285494
+        ],
+        "alphaRange": [
+          0,
+          255
+        ],
+        "whiteEdgeCandidates": 2,
+        "grayEdgeCandidates": 1117,
+        "semiTransparentPixels": 2547
+      },
+      "source": {
+        "bbox": [
+          3,
+          4,
+          471,
+          495
+        ],
+        "centroid": [
+          245.29550159780337,
+          309.3330581720937
+        ],
+        "alphaRange": [
+          0,
+          254
+        ],
+        "whiteEdgeCandidates": 37,
+        "grayEdgeCandidates": 6655,
+        "semiTransparentPixels": 13223
+      }
+    }
+  ]
+}

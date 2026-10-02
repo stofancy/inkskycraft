@@ -1,0 +1,32 @@
+{
+  "image": "art/textures/ch1/story/interception-net-broken.png",
+  "imageSize": [
+    640,
+    64
+  ],
+  "runtimeSize": [
+    640,
+    64
+  ],
+  "targetBodySize": [
+    640,
+    60
+  ],
+  "anchorPixel": [
+    320.0,
+    32.0
+  ],
+  "pivot": [
+    0,
+    0
+  ],
+  "source": "local-source/net-broken.png",
+  "sourceCrop": [
+    0,
+    95,
+    2172,
+    657
+  ],
+  "note": "按任务指定游戏尺寸裁切缩放；断网两端与透明中央缺口保留。",
+  "approval": "待审"
+}

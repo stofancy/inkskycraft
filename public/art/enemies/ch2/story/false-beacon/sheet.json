@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "assetVersion": "v1",
+  "image": "art/enemies/ch2/story/false-beacon/sheet.png",
+  "columns": 4,
+  "rows": 4,
+  "count": 12,
+  "fps": 8,
+  "mode": "once",
+  "frameSize": [
+    280,
+    360
+  ],
+  "runtimeSize": [
+    140,
+    180
+  ],
+  "pivot": [
+    0.0,
+    0.0
+  ],
+  "anchorPixel": [
+    140.0,
+    180.0
+  ],
+  "anchors": {
+    "root": [
+      0,
+      0
+    ]
+  },
+  "segments": {
+    "dim": {
+      "start": 0,
+      "count": 4,
+      "fps": 8,
+      "mode": "loop"
+    },
+    "lit": {
+      "start": 4,
+      "count": 4,
+      "fps": 8,
+      "mode": "loop"
+    },
+    "extinguished": {
+      "start": 8,
+      "count": 4,
+      "fps": 8,
+      "mode": "loop"
+    }
+  },
+  "frames": [
+    {
+      "index": 0,
+      "contentBounds": [
+        52,
+        60,
+        269,
+        314
+      ]
+    },
+    {
+      "index": 1,
+      "contentBounds": [
+        45,
+        59,
+        257,
+        314
+      ]
+    },
+    {
+      "index": 2,
+      "contentBounds": [
+        24,
+        60,
+        268,
+        314
+      ]
+    },
+    {
+      "index": 3,
+      "contentBounds": [
+        11,
+        60,
+        230,
+        312
+      ]
+    },
+    {
+      "index": 4,
+      "contentBounds": [
+        49,
+        47,
+        269,
+        313
+      ]
+    },
+    {
+      "index": 5,
+      "contentBounds": [
+        12,
+        47,
+        268,
+        313
+      ]
+    },
+    {
+      "index": 6,
+      "contentBounds": [
+        12,
+        47,
+        268,
+        313
+      ]
+    },
+    {
+      "index": 7,
+      "contentBounds": [
+        11,
+        51,
+        231,
+        313
+      ]
+    },
+    {
+      "index": 8,
+      "contentBounds": [
+        51,
+        47,
+        269,
+        295
+      ]
+    },
+    {
+      "index": 9,
+      "contentBounds": [
+        38,
+        47,
+        262,
+        295
+      ]
+    },
+    {
+      "index": 10,
+      "contentBounds": [
+        21,
+        47,
+        260,
+        309
+      ]
+    },
+    {
+      "index": 11,
+      "contentBounds": [
+        11,
+        47,
+        229,
+        296
+      ]
+    }
+  ],
+  "source": "local-source/false-beacon.png",
+  "approval": "待审；未正式接入关卡",
+  "note": "尺寸含画布留白。按segments选段，空格不播放；anchors为相对pivot的游戏坐标，锚点与8fps为暂定接入初值。 熄灭帧琥珀投射灯已暗，洋红外框保留。主航灯sx=sy=1.6。"
+}

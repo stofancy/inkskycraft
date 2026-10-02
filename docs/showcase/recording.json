@@ -1,0 +1,36 @@
+{
+  "source": {
+    "branch": "v2",
+    "commit": "5fa8b167f834668444a4f3dc3b336465d28233ba",
+    "publication": "sanitized-snapshot-v1"
+  },
+  "recordedAt": "2026-10-02T07:52:26.314Z",
+  "mode": "automated gameplay, invulnerable test options; live browser video and game audio",
+  "scenes": [
+    {
+      "chapter": 1,
+      "checkpoint": "W12",
+      "state": "playing",
+      "time": 15.266666666667005,
+      "score": 46239,
+      "fps": 60
+    },
+    {
+      "chapter": 2,
+      "checkpoint": "W12",
+      "state": "playing",
+      "time": 27.683333333333042,
+      "score": 15548,
+      "fps": 60
+    },
+    {
+      "chapter": 3,
+      "checkpoint": "W12",
+      "state": "playing",
+      "time": 40.08333333333234,
+      "score": 19479,
+      "fps": 60
+    }
+  ],
+  "errors": []
+}

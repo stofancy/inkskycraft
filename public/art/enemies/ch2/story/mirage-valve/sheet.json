@@ -1,0 +1,208 @@
+{
+  "version": 1,
+  "assetVersion": "v1",
+  "image": "art/enemies/ch2/story/mirage-valve/sheet.png",
+  "columns": 4,
+  "rows": 4,
+  "count": 16,
+  "fps": 8,
+  "mode": "once",
+  "frameSize": [
+    680,
+    840
+  ],
+  "runtimeSize": [
+    340,
+    420
+  ],
+  "pivot": [
+    136.0,
+    0.0
+  ],
+  "anchorPixel": [
+    612.0,
+    420.0
+  ],
+  "anchors": {
+    "root": [
+      0,
+      0
+    ]
+  },
+  "segments": {
+    "closed": {
+      "start": 0,
+      "count": 4,
+      "fps": 8,
+      "mode": "loop"
+    },
+    "half-open": {
+      "start": 4,
+      "count": 4,
+      "fps": 8,
+      "mode": "loop"
+    },
+    "open": {
+      "start": 8,
+      "count": 4,
+      "fps": 8,
+      "mode": "loop"
+    },
+    "shattered": {
+      "start": 12,
+      "count": 4,
+      "fps": 8,
+      "mode": "once"
+    }
+  },
+  "frames": [
+    {
+      "index": 0,
+      "contentBounds": [
+        204,
+        137,
+        653,
+        731
+      ]
+    },
+    {
+      "index": 1,
+      "contentBounds": [
+        155,
+        123,
+        653,
+        731
+      ]
+    },
+    {
+      "index": 2,
+      "contentBounds": [
+        155,
+        122,
+        653,
+        731
+      ]
+    },
+    {
+      "index": 3,
+      "contentBounds": [
+        155,
+        137,
+        653,
+        731
+      ]
+    },
+    {
+      "index": 4,
+      "contentBounds": [
+        155,
+        125,
+        653,
+        741
+      ]
+    },
+    {
+      "index": 5,
+      "contentBounds": [
+        155,
+        125,
+        653,
+        741
+      ]
+    },
+    {
+      "index": 6,
+      "contentBounds": [
+        155,
+        125,
+        653,
+        741
+      ]
+    },
+    {
+      "index": 7,
+      "contentBounds": [
+        155,
+        125,
+        653,
+        741
+      ]
+    },
+    {
+      "index": 8,
+      "contentBounds": [
+        155,
+        136,
+        653,
+        752
+      ]
+    },
+    {
+      "index": 9,
+      "contentBounds": [
+        155,
+        136,
+        653,
+        752
+      ]
+    },
+    {
+      "index": 10,
+      "contentBounds": [
+        155,
+        136,
+        653,
+        752
+      ]
+    },
+    {
+      "index": 11,
+      "contentBounds": [
+        155,
+        136,
+        653,
+        752
+      ]
+    },
+    {
+      "index": 12,
+      "contentBounds": [
+        155,
+        118,
+        653,
+        704
+      ]
+    },
+    {
+      "index": 13,
+      "contentBounds": [
+        155,
+        118,
+        653,
+        732
+      ]
+    },
+    {
+      "index": 14,
+      "contentBounds": [
+        155,
+        118,
+        653,
+        700
+      ]
+    },
+    {
+      "index": 15,
+      "contentBounds": [
+        155,
+        118,
+        653,
+        693
+      ]
+    }
+  ],
+  "source": "local-source/mirage-valve.png",
+  "approval": "待审；未正式接入关卡",
+  "note": "尺寸含画布留白。按segments选段，空格不播放；anchors为相对pivot的游戏坐标，锚点与8fps为暂定接入初值。",
+  "mirror": "右件sx=-1，复用同图及pivot。"
+}

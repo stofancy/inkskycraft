@@ -1,0 +1,386 @@
+{
+  "image": "art/enemies/ch1/fodder/zhouwang/sheet.png",
+  "columns": 4,
+  "rows": 4,
+  "count": 16,
+  "fps": 10,
+  "mode": "loop",
+  "frameSize": [
+    128,
+    160
+  ],
+  "runtimeSize": [
+    78.769,
+    98.462
+  ],
+  "anchorPixel": [
+    64.0,
+    80.0
+  ],
+  "pivot": [
+    0.0,
+    0.0
+  ],
+  "anchors": {
+    "root": [
+      0,
+      0
+    ]
+  },
+  "segments": {
+    "flight": {
+      "start": 0,
+      "count": 16,
+      "fps": 10,
+      "mode": "loop"
+    }
+  },
+  "source": "local-source/zhouwang-v2.png",
+  "sourceRects": [
+    [
+      0,
+      0,
+      319,
+      314
+    ],
+    [
+      319,
+      0,
+      639,
+      314
+    ],
+    [
+      639,
+      0,
+      958,
+      314
+    ],
+    [
+      958,
+      0,
+      1278,
+      314
+    ],
+    [
+      0,
+      314,
+      319,
+      615
+    ],
+    [
+      319,
+      314,
+      639,
+      615
+    ],
+    [
+      639,
+      314,
+      958,
+      615
+    ],
+    [
+      958,
+      314,
+      1278,
+      615
+    ],
+    [
+      0,
+      615,
+      319,
+      922
+    ],
+    [
+      319,
+      615,
+      639,
+      922
+    ],
+    [
+      639,
+      615,
+      958,
+      922
+    ],
+    [
+      958,
+      615,
+      1278,
+      922
+    ],
+    [
+      0,
+      922,
+      319,
+      1230
+    ],
+    [
+      319,
+      922,
+      639,
+      1230
+    ],
+    [
+      639,
+      922,
+      958,
+      1230
+    ],
+    [
+      958,
+      922,
+      1278,
+      1230
+    ]
+  ],
+  "sourceBoundaryOpaquePixels": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "alphaFloor": 8,
+  "sourceAlignment": "local-source/sheet.json",
+  "sourceJitterPx": 1.2810073744868824,
+  "frames": [
+    {
+      "index": 0,
+      "contentBounds": [
+        12,
+        20,
+        116,
+        120
+      ],
+      "anchorPixel": [
+        64.0,
+        80.0
+      ],
+      "opaquePixels": 3094
+    },
+    {
+      "index": 1,
+      "contentBounds": [
+        10,
+        20,
+        119,
+        120
+      ],
+      "anchorPixel": [
+        64.0,
+        80.0
+      ],
+      "opaquePixels": 3229
+    },
+    {
+      "index": 2,
+      "contentBounds": [
+        9,
+        20,
+        119,
+        120
+      ],
+      "anchorPixel": [
+        64.0,
+        80.0
+      ],
+      "opaquePixels": 3282
+    },
+    {
+      "index": 3,
+      "contentBounds": [
+        9,
+        20,
+        118,
+        120
+      ],
+      "anchorPixel": [
+        64.0,
+        80.0
+      ],
+      "opaquePixels": 3243
+    },
+    {
+      "index": 4,
+      "contentBounds": [
+        12,
+        20,
+        116,
+        120
+      ],
+      "anchorPixel": [
+        64.0,
+        80.0
+      ],
+      "opaquePixels": 3229
+    },
+    {
+      "index": 5,
+      "contentBounds": [
+        12,
+        20,
+        117,
+        120
+      ],
+      "anchorPixel": [
+        64.0,
+        80.0
+      ],
+      "opaquePixels": 3255
+    },
+    {
+      "index": 6,
+      "contentBounds": [
+        11,
+        21,
+        117,
+        120
+      ],
+      "anchorPixel": [
+        64.0,
+        80.0
+      ],
+      "opaquePixels": 3251
+    },
+    {
+      "index": 7,
+      "contentBounds": [
+        12,
+        21,
+        116,
+        120
+      ],
+      "anchorPixel": [
+        64.0,
+        80.0
+      ],
+      "opaquePixels": 3187
+    },
+    {
+      "index": 8,
+      "contentBounds": [
+        11,
+        16,
+        118,
+        124
+      ],
+      "anchorPixel": [
+        64.0,
+        80.0
+      ],
+      "opaquePixels": 3326
+    },
+    {
+      "index": 9,
+      "contentBounds": [
+        8,
+        16,
+        119,
+        123
+      ],
+      "anchorPixel": [
+        64.0,
+        80.0
+      ],
+      "opaquePixels": 3491
+    },
+    {
+      "index": 10,
+      "contentBounds": [
+        8,
+        16,
+        120,
+        123
+      ],
+      "anchorPixel": [
+        64.0,
+        80.0
+      ],
+      "opaquePixels": 3460
+    },
+    {
+      "index": 11,
+      "contentBounds": [
+        10,
+        16,
+        119,
+        122
+      ],
+      "anchorPixel": [
+        64.0,
+        80.0
+      ],
+      "opaquePixels": 3350
+    },
+    {
+      "index": 12,
+      "contentBounds": [
+        12,
+        21,
+        116,
+        119
+      ],
+      "anchorPixel": [
+        64.0,
+        80.0
+      ],
+      "opaquePixels": 3088
+    },
+    {
+      "index": 13,
+      "contentBounds": [
+        10,
+        22,
+        119,
+        119
+      ],
+      "anchorPixel": [
+        64.0,
+        80.0
+      ],
+      "opaquePixels": 3199
+    },
+    {
+      "index": 14,
+      "contentBounds": [
+        8,
+        22,
+        120,
+        119
+      ],
+      "anchorPixel": [
+        64.0,
+        80.0
+      ],
+      "opaquePixels": 3307
+    },
+    {
+      "index": 15,
+      "contentBounds": [
+        9,
+        21,
+        119,
+        119
+      ],
+      "anchorPixel": [
+        64.0,
+        80.0
+      ],
+      "opaquePixels": 3258
+    }
+  ],
+  "approval": "待总导演审图；P4-22待接入",
+  "note": "runtimeSize为整张透明单帧的逻辑尺寸；不得再次压缩为主体尺寸。"
+}

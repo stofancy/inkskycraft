@@ -1,0 +1,153 @@
+{
+  "image": "art/enemies/ch1/net-pylon/sheet.png",
+  "columns": 3,
+  "rows": 1,
+  "count": 3,
+  "fps": 10,
+  "mode": "once",
+  "frameSize": [
+    160,
+    240
+  ],
+  "runtimeSize": [
+    160,
+    240
+  ],
+  "targetBodySize": [
+    90,
+    200
+  ],
+  "anchorPixel": [
+    80,
+    216
+  ],
+  "pivot": [
+    0.0,
+    96.0
+  ],
+  "anchors": {
+    "root": [
+      0,
+      0
+    ],
+    "netL": [
+      -37,
+      -70
+    ],
+    "netR": [
+      39,
+      -70
+    ]
+  },
+  "anchorPixels": {
+    "root": [
+      80,
+      216
+    ],
+    "netL": [
+      43,
+      146
+    ],
+    "netR": [
+      119,
+      146
+    ]
+  },
+  "segments": {
+    "intact": {
+      "start": 0,
+      "count": 1,
+      "mode": "once"
+    },
+    "damaged": {
+      "start": 1,
+      "count": 1,
+      "mode": "once"
+    },
+    "destroyed": {
+      "start": 2,
+      "count": 1,
+      "mode": "once"
+    }
+  },
+  "sourceAlignment": "local-source/sheet.json",
+  "registrationScale": [
+    1.25,
+    0.847457627118644
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "contentBounds": [
+        35,
+        25,
+        125,
+        225
+      ],
+      "anchorPixel": [
+        80,
+        216
+      ],
+      "sourceAlignmentFrame": 0,
+      "registrationCorrection": [
+        -4.722851153039832,
+        0.0
+      ],
+      "opaquePixels": 8962
+    },
+    {
+      "index": 1,
+      "contentBounds": [
+        35,
+        26,
+        138,
+        225
+      ],
+      "anchorPixel": [
+        80,
+        216
+      ],
+      "sourceAlignmentFrame": 1,
+      "registrationCorrection": [
+        0.9183321686466339,
+        0.0
+      ],
+      "opaquePixels": 9421
+    },
+    {
+      "index": 2,
+      "contentBounds": [
+        19,
+        172,
+        144,
+        227
+      ],
+      "anchorPixel": [
+        80,
+        216
+      ],
+      "sourceAlignmentFrame": 2,
+      "registrationCorrection": [
+        3.017377125553226,
+        0.0
+      ],
+      "opaquePixels": 3089
+    }
+  ],
+  "sourceJitterPx": 0.41732275275014996,
+  "note": "逐帧共用横纵缩放和固定锚点；格外透明留边保留烟气、坠落炸弹及倾斜。按 segments 选择状态，禁止直接整张循环。",
+  "approval": "待总导演审图；未正式接入",
+  "leftInstance": {
+    "netAnchor": "netR",
+    "mirror": false
+  },
+  "rightInstance": {
+    "netAnchor": "netL",
+    "mirror": false
+  },
+  "stateImages": {
+    "intact": "art/enemies/ch1/net-pylon/intact.png",
+    "damaged": "art/enemies/ch1/net-pylon/damaged.png",
+    "destroyed": "art/enemies/ch1/net-pylon/destroyed.png"
+  }
+}

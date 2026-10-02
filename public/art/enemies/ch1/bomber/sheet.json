@@ -1,0 +1,391 @@
+{
+  "image": "art/enemies/ch1/bomber/sheet.png",
+  "columns": 4,
+  "rows": 4,
+  "count": 16,
+  "fps": 10,
+  "mode": "once",
+  "frameSize": [
+    176,
+    192
+  ],
+  "runtimeSize": [
+    176,
+    192
+  ],
+  "targetBodySize": [
+    130,
+    110
+  ],
+  "anchorPixel": [
+    88,
+    96
+  ],
+  "pivot": [
+    0.0,
+    0.0
+  ],
+  "anchors": {
+    "root": [
+      0,
+      0
+    ],
+    "bombBay": [
+      0,
+      26
+    ],
+    "bombRelease": [
+      0,
+      46
+    ]
+  },
+  "anchorPixels": {
+    "root": [
+      88,
+      96
+    ],
+    "bombBay": [
+      88,
+      122
+    ],
+    "bombRelease": [
+      88,
+      142
+    ]
+  },
+  "segments": {
+    "flight": {
+      "start": 0,
+      "count": 8,
+      "fps": 10,
+      "mode": "loop"
+    },
+    "bombing": {
+      "start": 8,
+      "count": 8,
+      "fps": 10,
+      "mode": "once",
+      "events": [
+        {
+          "frame": 3,
+          "sheetFrame": 11,
+          "name": "bombRelease"
+        }
+      ]
+    }
+  },
+  "sourceAlignment": "local-source/sheet.json",
+  "registrationScale": [
+    0.6280193236714976,
+    0.6875
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "contentBounds": [
+        23,
+        43,
+        153,
+        153
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "sourceAlignmentFrame": 0,
+      "registrationCorrection": [
+        -3.813953488372107,
+        0.0
+      ],
+      "opaquePixels": 4422
+    },
+    {
+      "index": 1,
+      "contentBounds": [
+        23,
+        44,
+        154,
+        153
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "sourceAlignmentFrame": 1,
+      "registrationCorrection": [
+        0.27272727272726627,
+        0.0
+      ],
+      "opaquePixels": 4435
+    },
+    {
+      "index": 2,
+      "contentBounds": [
+        22,
+        44,
+        154,
+        153
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "sourceAlignmentFrame": 2,
+      "registrationCorrection": [
+        1.6046511627907023,
+        0.0
+      ],
+      "opaquePixels": 4500
+    },
+    {
+      "index": 3,
+      "contentBounds": [
+        22,
+        44,
+        154,
+        153
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "sourceAlignmentFrame": 3,
+      "registrationCorrection": [
+        4.288888888888891,
+        0.0
+      ],
+      "opaquePixels": 4467
+    },
+    {
+      "index": 4,
+      "contentBounds": [
+        23,
+        37,
+        154,
+        146
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "sourceAlignmentFrame": 4,
+      "registrationCorrection": [
+        -5.181818181818187,
+        0.0
+      ],
+      "opaquePixels": 4532
+    },
+    {
+      "index": 5,
+      "contentBounds": [
+        24,
+        37,
+        152,
+        146
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "sourceAlignmentFrame": 5,
+      "registrationCorrection": [
+        -2.2727272727272805,
+        0.0
+      ],
+      "opaquePixels": 4548
+    },
+    {
+      "index": 6,
+      "contentBounds": [
+        26,
+        36,
+        152,
+        145
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "sourceAlignmentFrame": 6,
+      "registrationCorrection": [
+        1.75,
+        0.0
+      ],
+      "opaquePixels": 4589
+    },
+    {
+      "index": 7,
+      "contentBounds": [
+        23,
+        36,
+        153,
+        145
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "sourceAlignmentFrame": 7,
+      "registrationCorrection": [
+        3.121951219512198,
+        0.0
+      ],
+      "opaquePixels": 4613
+    },
+    {
+      "index": 8,
+      "contentBounds": [
+        23,
+        27,
+        154,
+        136
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "sourceAlignmentFrame": 8,
+      "registrationCorrection": [
+        -5.181818181818187,
+        0.0
+      ],
+      "opaquePixels": 4502
+    },
+    {
+      "index": 9,
+      "contentBounds": [
+        23,
+        27,
+        154,
+        136
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "sourceAlignmentFrame": 9,
+      "registrationCorrection": [
+        -1.0,
+        0.0
+      ],
+      "opaquePixels": 4643
+    },
+    {
+      "index": 10,
+      "contentBounds": [
+        23,
+        27,
+        154,
+        126
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "sourceAlignmentFrame": 10,
+      "registrationCorrection": [
+        1.3333333333333286,
+        0.0
+      ],
+      "opaquePixels": 4838
+    },
+    {
+      "index": 11,
+      "contentBounds": [
+        23,
+        27,
+        152,
+        142
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "sourceAlignmentFrame": 11,
+      "registrationCorrection": [
+        3.125,
+        0.0
+      ],
+      "opaquePixels": 4794
+    },
+    {
+      "index": 12,
+      "contentBounds": [
+        24,
+        19,
+        152,
+        141
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "sourceAlignmentFrame": 12,
+      "registrationCorrection": [
+        -4.439024390243901,
+        0.0
+      ],
+      "opaquePixels": 4530
+    },
+    {
+      "index": 13,
+      "contentBounds": [
+        22,
+        18,
+        153,
+        149
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "sourceAlignmentFrame": 13,
+      "registrationCorrection": [
+        -1.3255813953488484,
+        0.0
+      ],
+      "opaquePixels": 4625
+    },
+    {
+      "index": 14,
+      "contentBounds": [
+        24,
+        19,
+        151,
+        127
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "sourceAlignmentFrame": 14,
+      "registrationCorrection": [
+        -1.4146341463414558,
+        0.0
+      ],
+      "opaquePixels": 4393
+    },
+    {
+      "index": 15,
+      "contentBounds": [
+        23,
+        20,
+        152,
+        127
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "sourceAlignmentFrame": 15,
+      "registrationCorrection": [
+        3.2195121951219505,
+        0.0
+      ],
+      "opaquePixels": 4390
+    }
+  ],
+  "sourceJitterPx": 1.256552158253959,
+  "note": "逐帧共用横纵缩放和固定锚点；格外透明留边保留烟气、坠落炸弹及倾斜。按 segments 选择状态，禁止直接整张循环。",
+  "approval": "待总导演审图；未正式接入"
+}

@@ -1,0 +1,978 @@
+{
+  "task": "P4-02",
+  "version": "v1",
+  "defaultSequences": {
+    "雷": [
+      "lin",
+      "bing",
+      "dou",
+      "zhe",
+      "jie",
+      "zhen",
+      "lie",
+      "qian",
+      "xing"
+    ],
+    "朱": [
+      "ji-1",
+      "ji-2",
+      "ru",
+      "lv",
+      "ling"
+    ],
+    "青": [
+      "tian",
+      "di",
+      "xuan",
+      "zong",
+      "wan",
+      "qi",
+      "ben",
+      "gen"
+    ]
+  },
+  "simplifiedAlternates": {
+    "lin": "lin-s",
+    "dou": "dou-s",
+    "zhen": "zhen-s",
+    "wan": "wan-s"
+  },
+  "entries": [
+    {
+      "id": "lin",
+      "text": "臨",
+      "group": "雷",
+      "form": "繁体默认",
+      "filename": "lin.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/lin.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        77,
+        87,
+        947,
+        936
+      ],
+      "sourceCrop": {
+        "file": "local-source/lin.png",
+        "box": [
+          129,
+          128,
+          1134,
+          1109
+        ],
+        "scale": 0.8656716417910447
+      },
+      "sha256": "d12564455677433f0ce5f3f7876fe8756d85e1aa99d2f028a55cb1ba94dab7c5",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "bing",
+      "text": "兵",
+      "group": "雷",
+      "form": "繁简共用",
+      "filename": "bing.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/bing.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        77,
+        87,
+        947,
+        937
+      ],
+      "sourceCrop": {
+        "file": "local-source/bing.png",
+        "box": [
+          106,
+          129,
+          1190,
+          1188
+        ],
+        "scale": 0.8025830258302583
+      },
+      "sha256": "e4aa95fc5b305b08e83ec028ccf939e126a9082d1ee0927b5fc4bedd3eebf578",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "dou",
+      "text": "鬥",
+      "group": "雷",
+      "form": "繁体默认",
+      "filename": "dou.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/dou.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        77,
+        88,
+        947,
+        935
+      ],
+      "sourceCrop": {
+        "file": "local-source/dou.png",
+        "box": [
+          120,
+          123,
+          1178,
+          1153
+        ],
+        "scale": 0.8223062381852552
+      },
+      "sha256": "c4012fc18f12629a0d1f7505da6074f3fc8840e1843b2ba8b8f88ad2ecb29141",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "zhe",
+      "text": "者",
+      "group": "雷",
+      "form": "繁简共用",
+      "filename": "zhe.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/zhe.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        77,
+        99,
+        947,
+        925
+      ],
+      "sourceCrop": {
+        "file": "local-source/zhe.png",
+        "box": [
+          99,
+          134,
+          1155,
+          1137
+        ],
+        "scale": 0.8238636363636364
+      },
+      "sha256": "d1c89b1aec7fb9c62e01e9a381a8561510ef188b401b7a1475a48fc35cb1ada2",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "jie",
+      "text": "皆",
+      "group": "雷",
+      "form": "繁简共用",
+      "filename": "jie.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/jie.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        99,
+        77,
+        925,
+        947
+      ],
+      "sourceCrop": {
+        "file": "local-source/jie.png",
+        "box": [
+          184,
+          138,
+          1166,
+          1172
+        ],
+        "scale": 0.8413926499032882
+      },
+      "sha256": "a6d5992ac68c26a630d73d56f1945cb63a3f2ab353582b4f5e4f455f0226f688",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "zhen",
+      "text": "陣",
+      "group": "雷",
+      "form": "繁体默认",
+      "filename": "zhen.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/zhen.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        77,
+        78,
+        947,
+        946
+      ],
+      "sourceCrop": {
+        "file": "local-source/zhen.png",
+        "box": [
+          111,
+          120,
+          1176,
+          1183
+        ],
+        "scale": 0.8169014084507042
+      },
+      "sha256": "04bc96bc9faa5cbc2c77102af8f50fcd3fd47d2d1b15187f68a6a5c3a67c4dee",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "lie",
+      "text": "列",
+      "group": "雷",
+      "form": "繁简共用",
+      "filename": "lie.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/lie.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        77,
+        102,
+        947,
+        921
+      ],
+      "sourceCrop": {
+        "file": "local-source/lie.png",
+        "box": [
+          83,
+          133,
+          1185,
+          1170
+        ],
+        "scale": 0.7894736842105263
+      },
+      "sha256": "013467992f25e6872bce299ca8006eca2328240e344da2fab6546b6be71a6ec9",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "qian",
+      "text": "前",
+      "group": "雷",
+      "form": "繁简共用",
+      "filename": "qian.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/qian.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        77,
+        77,
+        947,
+        946
+      ],
+      "sourceCrop": {
+        "file": "local-source/qian.png",
+        "box": [
+          110,
+          131,
+          1149,
+          1169
+        ],
+        "scale": 0.8373435996150145
+      },
+      "sha256": "9718796323d4ef1daa285f5a96ee608cb7108cd68489fb7be3ec24eafbd0c9f6",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "xing",
+      "text": "行",
+      "group": "雷",
+      "form": "繁简共用",
+      "filename": "xing.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/xing.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        77,
+        99,
+        947,
+        925
+      ],
+      "sourceCrop": {
+        "file": "local-source/xing.png",
+        "box": [
+          109,
+          159,
+          1145,
+          1143
+        ],
+        "scale": 0.8397683397683398
+      },
+      "sha256": "c48aeef77700e2c0c191778bcd8728e9611a892a883447eab92f5f5fffdba2ed",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "ji-1",
+      "text": "急",
+      "group": "朱",
+      "form": "繁简共用",
+      "filename": "ji-1.png",
+      "version": "v1",
+      "variant": "直立重顿，重心稳，下心卧钩较收敛",
+      "url": "/art/lettering/mantra/ji-1.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        77,
+        90,
+        947,
+        934
+      ],
+      "sourceCrop": {
+        "file": "local-source/ji-1.png",
+        "box": [
+          113,
+          142,
+          1172,
+          1169
+        ],
+        "scale": 0.8215297450424929
+      },
+      "sha256": "bc460f21d7e0207fcaa239170cf4183ff488ffc5c0ca9ce25b4971360ee7f206",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "ji-2",
+      "text": "急",
+      "group": "朱",
+      "form": "繁简共用",
+      "filename": "ji-2.png",
+      "version": "v1",
+      "variant": "骨架微向右前倾，起笔和心部钩锋更长，字形部件仍严格正确",
+      "url": "/art/lettering/mantra/ji-2.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        77,
+        107,
+        947,
+        917
+      ],
+      "sourceCrop": {
+        "file": "local-source/ji-2.png",
+        "box": [
+          75,
+          130,
+          1191,
+          1169
+        ],
+        "scale": 0.7795698924731183
+      },
+      "sha256": "e4844d00774e752f1fcb60b8c29eeb1327a7fc27930577ab663dde405b5fb09f",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "ru",
+      "text": "如",
+      "group": "朱",
+      "form": "繁简共用",
+      "filename": "ru.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/ru.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        77,
+        100,
+        947,
+        924
+      ],
+      "sourceCrop": {
+        "file": "local-source/ru.png",
+        "box": [
+          107,
+          148,
+          1149,
+          1135
+        ],
+        "scale": 0.8349328214971209
+      },
+      "sha256": "a35d534dd19f8f7a8fe4ffb993a54be8124ecf712a6433aec61f2c269d55ac73",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "lv",
+      "text": "律",
+      "group": "朱",
+      "form": "繁简共用",
+      "filename": "lv.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/lv.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        77,
+        89,
+        947,
+        935
+      ],
+      "sourceCrop": {
+        "file": "local-source/lv.png",
+        "box": [
+          113,
+          137,
+          1177,
+          1172
+        ],
+        "scale": 0.8176691729323309
+      },
+      "sha256": "8f8f8395482f6732c1ea567471ba5c88e7e213ee1729789942fca3feca3a6428",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "ling",
+      "text": "令",
+      "group": "朱",
+      "form": "繁简共用",
+      "filename": "ling.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/ling.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        80,
+        77,
+        944,
+        947
+      ],
+      "sourceCrop": {
+        "file": "local-source/ling.png",
+        "box": [
+          82,
+          97,
+          1173,
+          1196
+        ],
+        "scale": 0.7916287534121929
+      },
+      "sha256": "84396143c7bba01c00e1b3da1ec7b2751c2d19c67eeac6d0d30e39c9fc9f7892",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "tian",
+      "text": "天",
+      "group": "青",
+      "form": "繁简共用",
+      "filename": "tian.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/tian.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        77,
+        106,
+        947,
+        917
+      ],
+      "sourceCrop": {
+        "file": "local-source/tian.png",
+        "box": [
+          60,
+          130,
+          1217,
+          1208
+        ],
+        "scale": 0.7519446845289542
+      },
+      "sha256": "822ec5f45ade81490bdb2b9361f96dfede75c56a12e5e9963b517a181ca76942",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "di",
+      "text": "地",
+      "group": "青",
+      "form": "繁简共用",
+      "filename": "di.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/di.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        77,
+        115,
+        947,
+        908
+      ],
+      "sourceCrop": {
+        "file": "local-source/di.png",
+        "box": [
+          125,
+          184,
+          1158,
+          1125
+        ],
+        "scale": 0.8422071636011617
+      },
+      "sha256": "a5837279c4d8d44e4496c4e88c665b7d021537d4b7a16501a4045d4d69584899",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "xuan",
+      "text": "玄",
+      "group": "青",
+      "form": "繁简共用",
+      "filename": "xuan.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/xuan.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        77,
+        89,
+        947,
+        935
+      ],
+      "sourceCrop": {
+        "file": "local-source/xuan.png",
+        "box": [
+          123,
+          140,
+          1159,
+          1147
+        ],
+        "scale": 0.8397683397683398
+      },
+      "sha256": "c0644c0b0cb10464a421d9e946962b81f129542aebf8265a2e0cbd488ca8e2d1",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "zong",
+      "text": "宗",
+      "group": "青",
+      "form": "繁简共用",
+      "filename": "zong.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/zong.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        77,
+        91,
+        947,
+        932
+      ],
+      "sourceCrop": {
+        "file": "local-source/zong.png",
+        "box": [
+          111,
+          168,
+          1145,
+          1168
+        ],
+        "scale": 0.8413926499032882
+      },
+      "sha256": "d1989d8f5cec747600fef9ab7eddd089a0627711e52fdba58d0c74090a9b5ef8",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "wan",
+      "text": "萬",
+      "group": "青",
+      "form": "繁体默认",
+      "filename": "wan.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/wan.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        107,
+        77,
+        917,
+        947
+      ],
+      "sourceCrop": {
+        "file": "local-source/wan.png",
+        "box": [
+          127,
+          95,
+          1148,
+          1191
+        ],
+        "scale": 0.7937956204379562
+      },
+      "sha256": "b9179e1d481e3607a04e1a58f6d7f4c9f2f543c36b2586948db93324cdecf92b",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "qi",
+      "text": "炁",
+      "group": "青",
+      "form": "繁简共用",
+      "filename": "qi.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/qi.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        83,
+        77,
+        940,
+        947
+      ],
+      "sourceCrop": {
+        "file": "local-source/qi.png",
+        "box": [
+          116,
+          98,
+          1195,
+          1194
+        ],
+        "scale": 0.7937956204379562
+      },
+      "sha256": "2c5522f05f31323568bf9c923d31a831e034a37317af6b7a6db8f03fdb1e3c1e",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "ben",
+      "text": "本",
+      "group": "青",
+      "form": "繁简共用",
+      "filename": "ben.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/ben.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        77,
+        114,
+        947,
+        909
+      ],
+      "sourceCrop": {
+        "file": "local-source/ben.png",
+        "box": [
+          76,
+          142,
+          1185,
+          1156
+        ],
+        "scale": 0.7844905320108205
+      },
+      "sha256": "aaf22e148460089808d71044ccae517c42ddc4c0b56dcacfc929a924eb3c96e9",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "gen",
+      "text": "根",
+      "group": "青",
+      "form": "繁简共用",
+      "filename": "gen.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/gen.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        77,
+        100,
+        947,
+        924
+      ],
+      "sourceCrop": {
+        "file": "local-source/gen.png",
+        "box": [
+          93,
+          128,
+          1186,
+          1163
+        ],
+        "scale": 0.7959743824336688
+      },
+      "sha256": "0213b924b566b23264b3ee65c59fc04f162dcfb40e74b38d909f3a0150c9de38",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "lin-s",
+      "text": "临",
+      "group": "简体备用",
+      "form": "简体备用",
+      "filename": "lin-s.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/lin-s.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        77,
+        78,
+        947,
+        945
+      ],
+      "sourceCrop": {
+        "file": "local-source/lin-s.png",
+        "box": [
+          132,
+          128,
+          1158,
+          1151
+        ],
+        "scale": 0.847953216374269
+      },
+      "sha256": "7ceb8227dea43ec7b805a4e201e72e01d4c1d2761b5cf505ec0cf1f76baa7fc0",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "dou-s",
+      "text": "斗",
+      "group": "简体备用",
+      "form": "简体备用",
+      "filename": "dou-s.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/dou-s.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        77,
+        111,
+        947,
+        913
+      ],
+      "sourceCrop": {
+        "file": "local-source/dou-s.png",
+        "box": [
+          90,
+          132,
+          1176,
+          1133
+        ],
+        "scale": 0.8011049723756906
+      },
+      "sha256": "50dd9fc2c618272b13d856fc18015ffcbdb29362f62ab4053178efd931312b81",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "zhen-s",
+      "text": "阵",
+      "group": "简体备用",
+      "form": "简体备用",
+      "filename": "zhen-s.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/zhen-s.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        93,
+        77,
+        931,
+        947
+      ],
+      "sourceCrop": {
+        "file": "local-source/zhen-s.png",
+        "box": [
+          168,
+          118,
+          1172,
+          1160
+        ],
+        "scale": 0.8349328214971209
+      },
+      "sha256": "ffbbe4e210283ac38a7424b27a90f1bffc1039c26e5c4c03931ad25006bb94cc",
+      "review": "逐字自检通过，待总导演复审"
+    },
+    {
+      "id": "wan-s",
+      "text": "万",
+      "group": "简体备用",
+      "form": "简体备用",
+      "filename": "wan-s.png",
+      "version": "v1",
+      "variant": "直立雄健，重心稳定，方转折",
+      "url": "/art/lettering/mantra/wan-s.png",
+      "pixelSize": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        512,
+        512
+      ],
+      "contentBox": [
+        77,
+        97,
+        947,
+        927
+      ],
+      "sourceCrop": {
+        "file": "local-source/wan-s.png",
+        "box": [
+          63,
+          105,
+          1195,
+          1185
+        ],
+        "scale": 0.7685512367491166
+      },
+      "sha256": "d48ac6c4653bd64d15cced552cb75805b307e32e17df296d8c3f7552e41c6bc9",
+      "review": "逐字自检通过，待总导演复审"
+    }
+  ]
+}

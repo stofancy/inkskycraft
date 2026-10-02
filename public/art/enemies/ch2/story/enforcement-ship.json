@@ -1,0 +1,32 @@
+{
+  "image": "enforcement-ship.png",
+  "imageSize": [
+    1280,
+    600
+  ],
+  "logicalSize": [
+    640,
+    300
+  ],
+  "anchorPixel": [
+    640,
+    300
+  ],
+  "attachmentPoints": {
+    "chiyan": {
+      "pixel": [
+        639.04,
+        472.39
+      ],
+      "logical": [
+        319.52,
+        236.19
+      ],
+      "fromCenter": [
+        -0.48,
+        86.19
+      ]
+    }
+  },
+  "note": "赤燕翼锁挂在船底中央吊环下缘；翼锁与吊索由代码绘制，剪影不含红机。"
+}

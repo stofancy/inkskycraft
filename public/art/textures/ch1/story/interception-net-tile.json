@@ -1,0 +1,32 @@
+{
+  "image": "art/textures/ch1/story/interception-net-tile.png",
+  "imageSize": [
+    72,
+    64
+  ],
+  "materialHeight": 60,
+  "repeat": "x",
+  "tileStep": 71,
+  "duplicateEndpointColumn": true,
+  "sourceCrop": [
+    817,
+    125,
+    1360,
+    598
+  ],
+  "anchorPixel": [
+    36,
+    32
+  ],
+  "leftAnchor": [
+    0,
+    32
+  ],
+  "rightAnchor": [
+    71,
+    32
+  ],
+  "alphaHoles": true,
+  "edgePixelMaxDelta": 0,
+  "approval": "待审"
+}

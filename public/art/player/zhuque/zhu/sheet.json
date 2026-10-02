@@ -1,0 +1,506 @@
+{
+  "version": 1,
+  "source": "local-source/exec-a0552864-f8c5-4eb1-8b77-1f54e2c4a255.png",
+  "image": "sheet.png",
+  "alphaFloor": 8,
+  "columns": 4,
+  "rows": 4,
+  "count": 16,
+  "fps": 10.0,
+  "mode": "loop",
+  "events": [],
+  "anchor": "centroid",
+  "anchorPixel": [
+    128.0,
+    128.0
+  ],
+  "frameSize": [
+    256,
+    256
+  ],
+  "commonScale": 0.78,
+  "registration": "中央白色判定点固定在沿用的 128,128 锚点",
+  "animations": {
+    "level": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "left": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "reserve": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "right": [
+      12,
+      13,
+      14,
+      15
+    ]
+  },
+  "color": "zhu",
+  "bodyLengthPixels": 202.02,
+  "runtimeFrameSizeFor64pxBody": [
+    81.101,
+    81.101
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "rect": [
+        0,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        0,
+        317,
+        310
+      ],
+      "alignedAnchor": [
+        128.0,
+        128.0
+      ],
+      "aligned": {
+        "bbox": [
+          27,
+          18,
+          227,
+          231
+        ]
+      },
+      "pose": "平飞"
+    },
+    {
+      "index": 1,
+      "rect": [
+        256,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        0,
+        317,
+        310
+      ],
+      "alignedAnchor": [
+        128.0,
+        128.0
+      ],
+      "aligned": {
+        "bbox": [
+          27,
+          18,
+          227,
+          231
+        ]
+      },
+      "pose": "平飞"
+    },
+    {
+      "index": 2,
+      "rect": [
+        512,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        0,
+        317,
+        310
+      ],
+      "alignedAnchor": [
+        128.0,
+        128.0
+      ],
+      "aligned": {
+        "bbox": [
+          27,
+          18,
+          227,
+          231
+        ]
+      },
+      "pose": "平飞"
+    },
+    {
+      "index": 3,
+      "rect": [
+        768,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        0,
+        317,
+        310
+      ],
+      "alignedAnchor": [
+        128.0,
+        128.0
+      ],
+      "aligned": {
+        "bbox": [
+          27,
+          18,
+          227,
+          231
+        ]
+      },
+      "pose": "平飞"
+    },
+    {
+      "index": 4,
+      "rect": [
+        0,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        0,
+        317,
+        310
+      ],
+      "alignedAnchor": [
+        128.0,
+        128.0
+      ],
+      "aligned": {
+        "bbox": [
+          27,
+          18,
+          227,
+          231
+        ]
+      },
+      "pose": "左倾"
+    },
+    {
+      "index": 5,
+      "rect": [
+        256,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        317,
+        310,
+        634,
+        620
+      ],
+      "alignedAnchor": [
+        128.0,
+        128.0
+      ],
+      "aligned": {
+        "bbox": [
+          32,
+          25,
+          225,
+          231
+        ]
+      },
+      "pose": "左倾"
+    },
+    {
+      "index": 6,
+      "rect": [
+        512,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        634,
+        310,
+        952,
+        620
+      ],
+      "alignedAnchor": [
+        128.0,
+        128.0
+      ],
+      "aligned": {
+        "bbox": [
+          33,
+          26,
+          223,
+          226
+        ]
+      },
+      "pose": "左倾"
+    },
+    {
+      "index": 7,
+      "rect": [
+        768,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        952,
+        310,
+        1269,
+        620
+      ],
+      "alignedAnchor": [
+        128.0,
+        128.0
+      ],
+      "aligned": {
+        "bbox": [
+          37,
+          29,
+          218,
+          228
+        ]
+      },
+      "pose": "左倾"
+    },
+    {
+      "index": 8,
+      "rect": [
+        0,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        0,
+        317,
+        310
+      ],
+      "alignedAnchor": [
+        128.0,
+        128.0
+      ],
+      "aligned": {
+        "bbox": [
+          27,
+          18,
+          227,
+          231
+        ]
+      },
+      "pose": "平飞"
+    },
+    {
+      "index": 9,
+      "rect": [
+        256,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        0,
+        317,
+        310
+      ],
+      "alignedAnchor": [
+        128.0,
+        128.0
+      ],
+      "aligned": {
+        "bbox": [
+          27,
+          18,
+          227,
+          231
+        ]
+      },
+      "pose": "平飞"
+    },
+    {
+      "index": 10,
+      "rect": [
+        512,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        0,
+        317,
+        310
+      ],
+      "alignedAnchor": [
+        128.0,
+        128.0
+      ],
+      "aligned": {
+        "bbox": [
+          27,
+          18,
+          227,
+          231
+        ]
+      },
+      "pose": "平飞"
+    },
+    {
+      "index": 11,
+      "rect": [
+        768,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        0,
+        317,
+        310
+      ],
+      "alignedAnchor": [
+        128.0,
+        128.0
+      ],
+      "aligned": {
+        "bbox": [
+          27,
+          18,
+          227,
+          231
+        ]
+      },
+      "pose": "平飞"
+    },
+    {
+      "index": 12,
+      "rect": [
+        0,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        0,
+        317,
+        310
+      ],
+      "alignedAnchor": [
+        128.0,
+        128.0
+      ],
+      "aligned": {
+        "bbox": [
+          27,
+          18,
+          227,
+          231
+        ]
+      },
+      "pose": "右倾"
+    },
+    {
+      "index": 13,
+      "rect": [
+        256,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        317,
+        930,
+        634,
+        1240
+      ],
+      "alignedAnchor": [
+        128.0,
+        128.0
+      ],
+      "aligned": {
+        "bbox": [
+          29,
+          23,
+          226,
+          230
+        ]
+      },
+      "pose": "右倾"
+    },
+    {
+      "index": 14,
+      "rect": [
+        512,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        634,
+        930,
+        952,
+        1240
+      ],
+      "alignedAnchor": [
+        128.0,
+        128.0
+      ],
+      "aligned": {
+        "bbox": [
+          28,
+          23,
+          227,
+          230
+        ]
+      },
+      "pose": "右倾"
+    },
+    {
+      "index": 15,
+      "rect": [
+        768,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        952,
+        930,
+        1269,
+        1240
+      ],
+      "alignedAnchor": [
+        128.0,
+        128.0
+      ],
+      "aligned": {
+        "bbox": [
+          28,
+          24,
+          225,
+          228
+        ]
+      },
+      "pose": "右倾"
+    }
+  ],
+  "warnings": []
+}

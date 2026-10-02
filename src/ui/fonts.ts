@@ -1,0 +1,2 @@
+// 由 npm run fonts:subset 生成；修改 tools/fonts/config.json。
+export const FONT_CSS = "@font-face{font-family:\"InkskyFangsong\";src:url(\"/fonts/ui-text.woff2\") format(\"woff2\");font-style:normal;font-weight:400;font-display:swap}\n@font-face{font-family:\"InkskyNumbers\";src:url(\"/fonts/ui-numbers.woff2\") format(\"woff2\");font-style:normal;font-weight:400;font-display:swap}\n.ik{--font-title:\"InkskyFangsong\",serif;--font-body:\"InkskyFangsong\",serif;--font-number:\"InkskyNumbers\",monospace}";

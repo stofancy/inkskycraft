@@ -1,0 +1,64 @@
+{
+  "image": "art/textures/ch1/decor/travelers/sprite.png",
+  "columns": 1,
+  "rows": 1,
+  "count": 1,
+  "fps": 0,
+  "mode": "loop",
+  "frameSize": [
+    248,
+    142
+  ],
+  "runtimeSize": [
+    141.714,
+    81.143
+  ],
+  "anchorPixel": [
+    124.0,
+    71.0
+  ],
+  "pivot": [
+    0.0,
+    0.0
+  ],
+  "anchors": {
+    "root": [
+      0,
+      0
+    ]
+  },
+  "segments": {},
+  "source": "local-source/travelers-v1.png",
+  "sourceRects": [
+    [
+      22,
+      107,
+      1531,
+      902
+    ]
+  ],
+  "sourceBoundaryOpaquePixels": [
+    0
+  ],
+  "alphaFloor": 8,
+  "sourceAlignment": null,
+  "sourceJitterPx": null,
+  "frames": [
+    {
+      "index": 0,
+      "contentBounds": [
+        12,
+        12,
+        236,
+        130
+      ],
+      "anchorPixel": [
+        124.0,
+        71.0
+      ],
+      "opaquePixels": 14023
+    }
+  ],
+  "approval": "待总导演审图；P4-22待接入",
+  "note": "runtimeSize为整张透明单帧的逻辑尺寸；不得再次压缩为主体尺寸。"
+}

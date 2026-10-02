@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "assetVersion": "v1",
+  "image": "art/enemies/ch2/story/mirage-shadow/sheet.png",
+  "columns": 4,
+  "rows": 4,
+  "count": 4,
+  "fps": 8,
+  "mode": "once",
+  "frameSize": [
+    360,
+    360
+  ],
+  "runtimeSize": [
+    180,
+    180
+  ],
+  "pivot": [
+    0.0,
+    0.0
+  ],
+  "anchorPixel": [
+    180.0,
+    180.0
+  ],
+  "anchors": {
+    "root": [
+      0,
+      0
+    ]
+  },
+  "segments": {
+    "fake": {
+      "start": 0,
+      "count": 1,
+      "fps": 8,
+      "mode": "once"
+    },
+    "real-dim": {
+      "start": 1,
+      "count": 1,
+      "fps": 8,
+      "mode": "once"
+    },
+    "real-flash": {
+      "start": 2,
+      "count": 1,
+      "fps": 8,
+      "mode": "once"
+    },
+    "shattered": {
+      "start": 3,
+      "count": 1,
+      "fps": 8,
+      "mode": "once"
+    }
+  },
+  "frames": [
+    {
+      "index": 0,
+      "contentBounds": [
+        47,
+        64,
+        338,
+        296
+      ]
+    },
+    {
+      "index": 1,
+      "contentBounds": [
+        16,
+        60,
+        341,
+        308
+      ]
+    },
+    {
+      "index": 2,
+      "contentBounds": [
+        36,
+        59,
+        344,
+        297
+      ]
+    },
+    {
+      "index": 3,
+      "contentBounds": [
+        36,
+        59,
+        332,
+        294
+      ]
+    }
+  ],
+  "source": "local-source/mirage-shadow.png",
+  "approval": "待审；未正式接入关卡",
+  "note": "尺寸含画布留白。按segments选段，空格不播放；anchors为相对pivot的游戏坐标，锚点与8fps为暂定接入初值。",
+  "stateAlpha": {
+    "fake": 0.55,
+    "real-dim": 0.8,
+    "real-flash": 1,
+    "shattered": 0.5
+  },
+  "sourceRowHeight": 360
+}

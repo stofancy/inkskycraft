@@ -1,0 +1,288 @@
+{
+  "version": 1,
+  "assetVersion": "v1",
+  "image": "art/enemies/ch2/lampboat/sheet.png",
+  "columns": 4,
+  "rows": 4,
+  "count": 16,
+  "fps": 10,
+  "mode": "once",
+  "frameSize": [
+    180,
+    260
+  ],
+  "runtimeSize": [
+    90,
+    130
+  ],
+  "radius": 18,
+  "anchorPixel": [
+    90,
+    130
+  ],
+  "pivot": [
+    0,
+    0
+  ],
+  "anchors": {
+    "root": [
+      0,
+      0
+    ],
+    "muzzle": [
+      0,
+      49.4
+    ]
+  },
+  "anchorPixels": {
+    "root": [
+      90,
+      130
+    ],
+    "muzzle": [
+      90,
+      228.8
+    ]
+  },
+  "segments": {
+    "flight": {
+      "start": 0,
+      "count": 8,
+      "fps": 10,
+      "mode": "loop"
+    },
+    "attack": {
+      "start": 8,
+      "count": 8,
+      "fps": 10,
+      "mode": "once",
+      "events": [
+        {
+          "frame": 4,
+          "sheetFrame": 12,
+          "name": "attackPeak"
+        }
+      ]
+    }
+  },
+  "source": "local-source/lampboat-v1.png",
+  "sourceAlignment": "local-source/sheet.json",
+  "registrationScale": [
+    0.9658536585365854,
+    1.0214285714285716
+  ],
+  "orientation": "nose-down",
+  "lighting": "upper-left",
+  "approval": "待总导演审图；未正式接入",
+  "frames": [
+    {
+      "index": 0,
+      "anchorPixel": [
+        90,
+        130
+      ],
+      "contentBounds": [
+        11,
+        18,
+        168,
+        244
+      ]
+    },
+    {
+      "index": 1,
+      "anchorPixel": [
+        90,
+        130
+      ],
+      "contentBounds": [
+        11,
+        18,
+        168,
+        244
+      ]
+    },
+    {
+      "index": 2,
+      "anchorPixel": [
+        90,
+        130
+      ],
+      "contentBounds": [
+        11,
+        18,
+        168,
+        244
+      ]
+    },
+    {
+      "index": 3,
+      "anchorPixel": [
+        90,
+        130
+      ],
+      "contentBounds": [
+        11,
+        18,
+        168,
+        244
+      ]
+    },
+    {
+      "index": 4,
+      "anchorPixel": [
+        90,
+        130
+      ],
+      "contentBounds": [
+        10,
+        20,
+        168,
+        242
+      ]
+    },
+    {
+      "index": 5,
+      "anchorPixel": [
+        90,
+        130
+      ],
+      "contentBounds": [
+        11,
+        20,
+        168,
+        242
+      ]
+    },
+    {
+      "index": 6,
+      "anchorPixel": [
+        90,
+        130
+      ],
+      "contentBounds": [
+        11,
+        20,
+        167,
+        242
+      ]
+    },
+    {
+      "index": 7,
+      "anchorPixel": [
+        90,
+        130
+      ],
+      "contentBounds": [
+        11,
+        20,
+        168,
+        242
+      ]
+    },
+    {
+      "index": 8,
+      "anchorPixel": [
+        90,
+        130
+      ],
+      "contentBounds": [
+        11,
+        19,
+        168,
+        241
+      ]
+    },
+    {
+      "index": 9,
+      "anchorPixel": [
+        90,
+        130
+      ],
+      "contentBounds": [
+        11,
+        20,
+        167,
+        242
+      ]
+    },
+    {
+      "index": 10,
+      "anchorPixel": [
+        90,
+        130
+      ],
+      "contentBounds": [
+        11,
+        20,
+        168,
+        242
+      ]
+    },
+    {
+      "index": 11,
+      "anchorPixel": [
+        90,
+        130
+      ],
+      "contentBounds": [
+        11,
+        17,
+        168,
+        245
+      ]
+    },
+    {
+      "index": 12,
+      "anchorPixel": [
+        90,
+        130
+      ],
+      "contentBounds": [
+        11,
+        21,
+        168,
+        240
+      ]
+    },
+    {
+      "index": 13,
+      "anchorPixel": [
+        90,
+        130
+      ],
+      "contentBounds": [
+        11,
+        21,
+        168,
+        240
+      ]
+    },
+    {
+      "index": 14,
+      "anchorPixel": [
+        90,
+        130
+      ],
+      "contentBounds": [
+        11,
+        22,
+        168,
+        240
+      ]
+    },
+    {
+      "index": 15,
+      "anchorPixel": [
+        90,
+        130
+      ],
+      "contentBounds": [
+        11,
+        20,
+        168,
+        242
+      ]
+    }
+  ],
+  "note": "整套共用横纵缩放，按主体中心对齐根点，原格中心另存过程记录；使用 runtimeSize，画布留白已含在内。按 segments 选段，禁止整张混合循环。攻击时刻仍由 AI 决定，attackPeak 只供动作同步。"
+}

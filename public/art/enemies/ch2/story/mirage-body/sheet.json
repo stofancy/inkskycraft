@@ -1,0 +1,193 @@
+{
+  "version": 1,
+  "assetVersion": "v1",
+  "image": "art/enemies/ch2/story/mirage-body/sheet.png",
+  "columns": 4,
+  "rows": 4,
+  "count": 12,
+  "fps": 8,
+  "mode": "once",
+  "frameSize": [
+    1040,
+    840
+  ],
+  "runtimeSize": [
+    520,
+    420
+  ],
+  "pivot": [
+    0.0,
+    0.0
+  ],
+  "anchorPixel": [
+    520.0,
+    420.0
+  ],
+  "anchors": {
+    "root": [
+      0,
+      0
+    ],
+    "valveL": [
+      -180,
+      0
+    ],
+    "valveR": [
+      180,
+      0
+    ],
+    "batteryBay": [
+      0,
+      -180
+    ],
+    "hingeL": [
+      -290,
+      210
+    ],
+    "hingeR": [
+      290,
+      210
+    ],
+    "mirror": [
+      0,
+      30
+    ],
+    "projector": [
+      0,
+      -70
+    ]
+  },
+  "segments": {
+    "polite": {
+      "start": 0,
+      "count": 4,
+      "fps": 8,
+      "mode": "loop"
+    },
+    "uneasy": {
+      "start": 4,
+      "count": 4,
+      "fps": 8,
+      "mode": "loop"
+    },
+    "truth": {
+      "start": 8,
+      "count": 4,
+      "fps": 8,
+      "mode": "loop"
+    }
+  },
+  "frames": [
+    {
+      "index": 0,
+      "contentBounds": [
+        43,
+        34,
+        997,
+        806
+      ]
+    },
+    {
+      "index": 1,
+      "contentBounds": [
+        42,
+        34,
+        998,
+        806
+      ]
+    },
+    {
+      "index": 2,
+      "contentBounds": [
+        42,
+        34,
+        998,
+        799
+      ]
+    },
+    {
+      "index": 3,
+      "contentBounds": [
+        43,
+        34,
+        997,
+        806
+      ]
+    },
+    {
+      "index": 4,
+      "contentBounds": [
+        43,
+        34,
+        997,
+        806
+      ]
+    },
+    {
+      "index": 5,
+      "contentBounds": [
+        42,
+        44,
+        998,
+        806
+      ]
+    },
+    {
+      "index": 6,
+      "contentBounds": [
+        42,
+        44,
+        998,
+        806
+      ]
+    },
+    {
+      "index": 7,
+      "contentBounds": [
+        43,
+        44,
+        997,
+        806
+      ]
+    },
+    {
+      "index": 8,
+      "contentBounds": [
+        43,
+        34,
+        997,
+        806
+      ]
+    },
+    {
+      "index": 9,
+      "contentBounds": [
+        42,
+        34,
+        990,
+        802
+      ]
+    },
+    {
+      "index": 10,
+      "contentBounds": [
+        51,
+        34,
+        998,
+        806
+      ]
+    },
+    {
+      "index": 11,
+      "contentBounds": [
+        43,
+        34,
+        997,
+        806
+      ]
+    }
+  ],
+  "source": "local-source/mirage-body.png",
+  "approval": "待审；未正式接入关卡",
+  "note": "尺寸含画布留白。按segments选段，空格不播放；anchors为相对pivot的游戏坐标，锚点与8fps为暂定接入初值。"
+}

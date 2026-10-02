@@ -1,0 +1,304 @@
+{
+  "version": 1,
+  "assetVersion": "v1",
+  "image": "art/enemies/ch2/junk/sheet.png",
+  "columns": 4,
+  "rows": 4,
+  "count": 16,
+  "fps": 10,
+  "mode": "once",
+  "frameSize": [
+    200,
+    340
+  ],
+  "runtimeSize": [
+    100,
+    170
+  ],
+  "radius": 34,
+  "anchorPixel": [
+    100,
+    170
+  ],
+  "pivot": [
+    0,
+    0
+  ],
+  "anchors": {
+    "root": [
+      0,
+      0
+    ],
+    "muzzle": [
+      0,
+      64.6
+    ],
+    "gunF": [
+      0,
+      52
+    ],
+    "gunR": [
+      0,
+      -50
+    ]
+  },
+  "anchorPixels": {
+    "root": [
+      100,
+      170
+    ],
+    "muzzle": [
+      100,
+      299.2
+    ],
+    "gunF": [
+      100,
+      274
+    ],
+    "gunR": [
+      100,
+      70
+    ]
+  },
+  "segments": {
+    "flight": {
+      "start": 0,
+      "count": 8,
+      "fps": 10,
+      "mode": "loop"
+    },
+    "attack": {
+      "start": 8,
+      "count": 8,
+      "fps": 10,
+      "mode": "once",
+      "events": [
+        {
+          "frame": 4,
+          "sheetFrame": 12,
+          "name": "attackPeak"
+        }
+      ]
+    }
+  },
+  "source": "local-source/junk-v1.png",
+  "sourceAlignment": "local-source/sheet.json",
+  "registrationScale": [
+    1.1,
+    1.3599999999999999
+  ],
+  "orientation": "nose-down",
+  "lighting": "upper-left",
+  "approval": "待总导演审图；未正式接入",
+  "frames": [
+    {
+      "index": 0,
+      "anchorPixel": [
+        100,
+        170
+      ],
+      "contentBounds": [
+        27,
+        23,
+        173,
+        318
+      ]
+    },
+    {
+      "index": 1,
+      "anchorPixel": [
+        100,
+        170
+      ],
+      "contentBounds": [
+        24,
+        23,
+        177,
+        316
+      ]
+    },
+    {
+      "index": 2,
+      "anchorPixel": [
+        100,
+        170
+      ],
+      "contentBounds": [
+        27,
+        25,
+        174,
+        316
+      ]
+    },
+    {
+      "index": 3,
+      "anchorPixel": [
+        100,
+        170
+      ],
+      "contentBounds": [
+        25,
+        24,
+        175,
+        317
+      ]
+    },
+    {
+      "index": 4,
+      "anchorPixel": [
+        100,
+        170
+      ],
+      "contentBounds": [
+        23,
+        23,
+        178,
+        320
+      ]
+    },
+    {
+      "index": 5,
+      "anchorPixel": [
+        100,
+        170
+      ],
+      "contentBounds": [
+        24,
+        22,
+        177,
+        318
+      ]
+    },
+    {
+      "index": 6,
+      "anchorPixel": [
+        100,
+        170
+      ],
+      "contentBounds": [
+        23,
+        22,
+        177,
+        319
+      ]
+    },
+    {
+      "index": 7,
+      "anchorPixel": [
+        100,
+        170
+      ],
+      "contentBounds": [
+        24,
+        23,
+        176,
+        318
+      ]
+    },
+    {
+      "index": 8,
+      "anchorPixel": [
+        100,
+        170
+      ],
+      "contentBounds": [
+        20,
+        24,
+        178,
+        317
+      ]
+    },
+    {
+      "index": 9,
+      "anchorPixel": [
+        100,
+        170
+      ],
+      "contentBounds": [
+        22,
+        26,
+        178,
+        315
+      ]
+    },
+    {
+      "index": 10,
+      "anchorPixel": [
+        100,
+        170
+      ],
+      "contentBounds": [
+        21,
+        23,
+        181,
+        315
+      ]
+    },
+    {
+      "index": 11,
+      "anchorPixel": [
+        100,
+        170
+      ],
+      "contentBounds": [
+        21,
+        26,
+        179,
+        316
+      ]
+    },
+    {
+      "index": 12,
+      "anchorPixel": [
+        100,
+        170
+      ],
+      "contentBounds": [
+        12,
+        24,
+        188,
+        316
+      ]
+    },
+    {
+      "index": 13,
+      "anchorPixel": [
+        100,
+        170
+      ],
+      "contentBounds": [
+        22,
+        26,
+        179,
+        314
+      ]
+    },
+    {
+      "index": 14,
+      "anchorPixel": [
+        100,
+        170
+      ],
+      "contentBounds": [
+        20,
+        27,
+        180,
+        313
+      ]
+    },
+    {
+      "index": 15,
+      "anchorPixel": [
+        100,
+        170
+      ],
+      "contentBounds": [
+        24,
+        27,
+        176,
+        314
+      ]
+    }
+  ],
+  "note": "整套共用横纵缩放，按主体中心对齐根点，原格中心另存过程记录；使用 runtimeSize，画布留白已含在内。按 segments 选段，禁止整张混合循环。攻击时刻仍由 AI 决定，attackPeak 只供动作同步。"
+}

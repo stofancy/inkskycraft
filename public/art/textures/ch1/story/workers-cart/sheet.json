@@ -1,0 +1,307 @@
+{
+  "columns": 4,
+  "rows": 4,
+  "count": 16,
+  "fps": 10,
+  "mode": "loop",
+  "frameSize": [
+    256,
+    256
+  ],
+  "anchorPixel": [
+    128.0,
+    128.0
+  ],
+  "pivot": [
+    0,
+    0
+  ],
+  "anchors": {
+    "root": [
+      0,
+      0
+    ]
+  },
+  "frames": [
+    {
+      "index": 0,
+      "bbox": [
+        31,
+        34,
+        229,
+        203
+      ],
+      "rootPixel": [
+        128.0,
+        128.0
+      ],
+      "contentBounds": [
+        83.37,
+        71.16
+      ]
+    },
+    {
+      "index": 1,
+      "bbox": [
+        31,
+        34,
+        231,
+        203
+      ],
+      "rootPixel": [
+        128.0,
+        128.0
+      ],
+      "contentBounds": [
+        84.21,
+        71.16
+      ]
+    },
+    {
+      "index": 2,
+      "bbox": [
+        32,
+        34,
+        227,
+        203
+      ],
+      "rootPixel": [
+        128.0,
+        128.0
+      ],
+      "contentBounds": [
+        82.11,
+        71.16
+      ]
+    },
+    {
+      "index": 3,
+      "bbox": [
+        31,
+        34,
+        230,
+        203
+      ],
+      "rootPixel": [
+        128.0,
+        128.0
+      ],
+      "contentBounds": [
+        83.79,
+        71.16
+      ]
+    },
+    {
+      "index": 4,
+      "bbox": [
+        32,
+        34,
+        230,
+        203
+      ],
+      "rootPixel": [
+        128.0,
+        128.0
+      ],
+      "contentBounds": [
+        83.37,
+        71.16
+      ]
+    },
+    {
+      "index": 5,
+      "bbox": [
+        30,
+        34,
+        229,
+        203
+      ],
+      "rootPixel": [
+        128.0,
+        128.0
+      ],
+      "contentBounds": [
+        83.79,
+        71.16
+      ]
+    },
+    {
+      "index": 6,
+      "bbox": [
+        31,
+        34,
+        234,
+        203
+      ],
+      "rootPixel": [
+        128.0,
+        128.0
+      ],
+      "contentBounds": [
+        85.47,
+        71.16
+      ]
+    },
+    {
+      "index": 7,
+      "bbox": [
+        30,
+        34,
+        236,
+        203
+      ],
+      "rootPixel": [
+        128.0,
+        128.0
+      ],
+      "contentBounds": [
+        86.74,
+        71.16
+      ]
+    },
+    {
+      "index": 8,
+      "bbox": [
+        31,
+        35,
+        227,
+        203
+      ],
+      "rootPixel": [
+        128.0,
+        128.0
+      ],
+      "contentBounds": [
+        82.53,
+        70.74
+      ]
+    },
+    {
+      "index": 9,
+      "bbox": [
+        31,
+        35,
+        227,
+        203
+      ],
+      "rootPixel": [
+        128.0,
+        128.0
+      ],
+      "contentBounds": [
+        82.53,
+        70.74
+      ]
+    },
+    {
+      "index": 10,
+      "bbox": [
+        30,
+        35,
+        227,
+        203
+      ],
+      "rootPixel": [
+        128.0,
+        128.0
+      ],
+      "contentBounds": [
+        82.95,
+        70.74
+      ]
+    },
+    {
+      "index": 11,
+      "bbox": [
+        30,
+        35,
+        240,
+        204
+      ],
+      "rootPixel": [
+        128.0,
+        128.0
+      ],
+      "contentBounds": [
+        88.42,
+        71.16
+      ]
+    },
+    {
+      "index": 12,
+      "bbox": [
+        30,
+        38,
+        228,
+        202
+      ],
+      "rootPixel": [
+        128.0,
+        128.0
+      ],
+      "contentBounds": [
+        83.37,
+        69.05
+      ]
+    },
+    {
+      "index": 13,
+      "bbox": [
+        30,
+        38,
+        237,
+        201
+      ],
+      "rootPixel": [
+        128.0,
+        128.0
+      ],
+      "contentBounds": [
+        87.16,
+        68.63
+      ]
+    },
+    {
+      "index": 14,
+      "bbox": [
+        31,
+        39,
+        234,
+        202
+      ],
+      "rootPixel": [
+        128.0,
+        128.0
+      ],
+      "contentBounds": [
+        85.47,
+        68.63
+      ]
+    },
+    {
+      "index": 15,
+      "bbox": [
+        30,
+        39,
+        237,
+        202
+      ],
+      "rootPixel": [
+        128.0,
+        128.0
+      ],
+      "contentBounds": [
+        87.16,
+        68.63
+      ]
+    }
+  ],
+  "sourceAlignment": "local-source/sheet.json",
+  "registrationScale": [
+    0.990521327014218,
+    0.990521327014218
+  ],
+  "warnings": [],
+  "sourceJitterPx": 1.3349507701413892,
+  "note": "整套分镜统一等比例缩放，保持原中心根轴。"
+}

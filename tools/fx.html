@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><link rel="icon" href="data:,"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>墨空 · 特效试映</title>
+<style>
+:root{color-scheme:dark;font-family:"Noto Serif CJK SC","Songti SC",serif;color:#e8dfca;background:#171917}*{box-sizing:border-box}body{margin:0;height:100dvh;display:flex;flex-direction:column}header{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:15px 24px;border-bottom:1px solid #b79b593d;background:#20211e}h1{font-size:20px;letter-spacing:.18em;margin:0;font-weight:500}header p{margin:5px 0 0;color:#a9a694;font-size:12px}.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}button{font:inherit;font-size:13px;border:1px solid #81755280;border-radius:3px;background:#2c2d26;color:#e8dfca;padding:9px 13px;cursor:pointer}button:hover{background:#3c3b2c;border-color:#c3a65f}button:focus-visible{outline:2px solid #dfbd78;outline-offset:3px}button[aria-pressed=true]{border-color:#d0ad63;color:#f3d49b}button.primary{background:#863e30;border-color:#b5674d}button:disabled{opacity:.4;cursor:wait}.divider{width:1px;height:22px;background:#8f805b50;margin:0 4px}main{position:relative;flex:1;min-height:0}iframe{width:100%;height:100%;border:0;display:block}#status{position:absolute;inset:0;display:grid;place-items:center;background:#191c19e8;padding:30px;text-align:center;white-space:pre-wrap;color:#d8c9a5}#status[hidden]{display:none}footer{padding:7px 24px;color:#a19e8c;font-size:12px;border-top:1px solid #b79b5928;display:flex;justify-content:space-between;gap:12px}@media(max-width:900px){header{align-items:flex-start;flex-direction:column;padding:12px 16px;gap:12px}button{padding:7px 10px}.controls{gap:6px}footer{padding:7px 16px}}
+</style>
+</head>
+<body>
+<header><div><h1>墨空 · 特效试映</h1><p>火焰翻卷，墨烟散开，雷光穿行。</p></div><nav class="controls" aria-label="试映控制">
+<button data-stage="1" aria-pressed="true">晓山</button><button data-stage="2" aria-pressed="false">灯河</button><button data-stage="3" aria-pressed="false">云垣</button><span class="divider"></span>
+<button id="commands">招式 · 重播</button><button id="hits">三色命中</button><button id="chapterInk">朱墨爆散 · 重播</button><span class="divider"></span>
+<button id="fire" class="primary">火焰爆裂</button><button id="ink">墨焰绽放</button><button id="cyan">碎玉冷爆</button><button id="violet">雷蚀裂解</button><span class="divider"></span><button data-weapon="red">朱羽刃</button><button data-weapon="blue">青玉束</button><button id="thunder" data-weapon="purple">紫金雷刃</button><label>力 <input id="power" type="range" min="1" max="8" value="8" aria-label="火力等级" style="width:65px"></label><button id="slow" aria-pressed="false">慢放 · 0.4×</button>
+</nav></header>
+<main><iframe id="scene" title="三维特效试映" allow="autoplay"></iframe><div id="status" role="status">正在展开画卷…</div></main>
+<footer><span id="caption">墨山晓 · 火焰爆裂</span><span>爆炸可反复观看；切武器与力级查看命中、毁伤及机甲成长。</span></footer>
+<script type="module" src="./fx-preview.ts"></script>
+</body></html>

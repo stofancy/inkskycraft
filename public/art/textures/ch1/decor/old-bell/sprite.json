@@ -1,0 +1,64 @@
+{
+  "image": "art/textures/ch1/decor/old-bell/sprite.png",
+  "columns": 1,
+  "rows": 1,
+  "count": 1,
+  "fps": 0,
+  "mode": "loop",
+  "frameSize": [
+    126,
+    248
+  ],
+  "runtimeSize": [
+    34.588,
+    68.078
+  ],
+  "anchorPixel": [
+    63.0,
+    124.0
+  ],
+  "pivot": [
+    0.0,
+    0.0
+  ],
+  "anchors": {
+    "root": [
+      0,
+      0
+    ]
+  },
+  "segments": {},
+  "source": "local-source/old-bell-v1.png",
+  "sourceRects": [
+    [
+      183,
+      8,
+      828,
+      1418
+    ]
+  ],
+  "sourceBoundaryOpaquePixels": [
+    0
+  ],
+  "alphaFloor": 8,
+  "sourceAlignment": null,
+  "sourceJitterPx": null,
+  "frames": [
+    {
+      "index": 0,
+      "contentBounds": [
+        12,
+        12,
+        114,
+        236
+      ],
+      "anchorPixel": [
+        63.0,
+        124.0
+      ],
+      "opaquePixels": 9072
+    }
+  ],
+  "approval": "待总导演审图；P4-22待接入",
+  "note": "runtimeSize为整张透明单帧的逻辑尺寸；不得再次压缩为主体尺寸。"
+}

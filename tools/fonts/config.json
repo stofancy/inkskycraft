@@ -1,0 +1,14 @@
+{
+  "upstream": "https://github.com/TrionesType/zhuque/releases/tag/v0.212",
+  "license": "assets/fonts/Zhuque-OFL.txt",
+  "source": "assets/fonts/source/ZhuqueFangsong-Regular.ttf",
+  "roles": {
+    "title": "InkskyFangsong",
+    "body": "InkskyFangsong",
+    "numbers": "InkskyNumbers"
+  },
+  "extraText": "朱青雷墨空晓山返笔铜雀弱点暴露攻击核心强敌接近跟紧我前面有伏兵平静坚定急切↓↑←→↘↗↙↖×·…—，。！？：；（）「」【】％－小满赤燕老盾墨鸢算盘掌门铜雀平静得意着急追踪弹剩余战机下山修桥打开桥口救出工人",
+  "numericText": "0123456789.,:+-/%× LvFPS",
+  "numericSource": "assets/fonts/source/NotoSerifCJKsc-Regular.otf",
+  "numericLicense": "assets/fonts/Noto-OFL.txt"
+}

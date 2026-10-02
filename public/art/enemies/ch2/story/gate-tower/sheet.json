@@ -1,0 +1,216 @@
+{
+  "version": 1,
+  "assetVersion": "v1",
+  "image": "art/enemies/ch2/story/gate-tower/sheet.png",
+  "columns": 4,
+  "rows": 4,
+  "count": 16,
+  "fps": 8,
+  "mode": "once",
+  "frameSize": [
+    720,
+    880
+  ],
+  "runtimeSize": [
+    360,
+    440
+  ],
+  "pivot": [
+    0.0,
+    0.0
+  ],
+  "anchorPixel": [
+    360.0,
+    440.0
+  ],
+  "anchors": {
+    "root": [
+      0,
+      0
+    ],
+    "barrel": [
+      0,
+      55
+    ],
+    "muzzle": [
+      0,
+      170
+    ]
+  },
+  "segments": {
+    "intact": {
+      "start": 0,
+      "count": 4,
+      "fps": 8,
+      "mode": "loop"
+    },
+    "charging": {
+      "start": 4,
+      "count": 4,
+      "fps": 8,
+      "mode": "loop"
+    },
+    "broken": {
+      "start": 8,
+      "count": 4,
+      "fps": 8,
+      "mode": "loop"
+    },
+    "wreck": {
+      "start": 12,
+      "count": 4,
+      "fps": 8,
+      "mode": "once"
+    }
+  },
+  "frames": [
+    {
+      "index": 0,
+      "contentBounds": [
+        95,
+        90,
+        659,
+        822
+      ]
+    },
+    {
+      "index": 1,
+      "contentBounds": [
+        50,
+        87,
+        691,
+        822
+      ]
+    },
+    {
+      "index": 2,
+      "contentBounds": [
+        65,
+        89,
+        657,
+        822
+      ]
+    },
+    {
+      "index": 3,
+      "contentBounds": [
+        56,
+        89,
+        628,
+        800
+      ]
+    },
+    {
+      "index": 4,
+      "contentBounds": [
+        29,
+        58,
+        691,
+        822
+      ]
+    },
+    {
+      "index": 5,
+      "contentBounds": [
+        32,
+        58,
+        656,
+        822
+      ]
+    },
+    {
+      "index": 6,
+      "contentBounds": [
+        63,
+        58,
+        655,
+        822
+      ]
+    },
+    {
+      "index": 7,
+      "contentBounds": [
+        52,
+        61,
+        629,
+        822
+      ]
+    },
+    {
+      "index": 8,
+      "contentBounds": [
+        29,
+        59,
+        662,
+        821
+      ]
+    },
+    {
+      "index": 9,
+      "contentBounds": [
+        57,
+        59,
+        691,
+        821
+      ]
+    },
+    {
+      "index": 10,
+      "contentBounds": [
+        30,
+        59,
+        690,
+        821
+      ]
+    },
+    {
+      "index": 11,
+      "contentBounds": [
+        29,
+        59,
+        691,
+        821
+      ]
+    },
+    {
+      "index": 12,
+      "contentBounds": [
+        29,
+        58,
+        691,
+        730
+      ]
+    },
+    {
+      "index": 13,
+      "contentBounds": [
+        63,
+        58,
+        676,
+        822
+      ]
+    },
+    {
+      "index": 14,
+      "contentBounds": [
+        31,
+        58,
+        690,
+        762
+      ]
+    },
+    {
+      "index": 15,
+      "contentBounds": [
+        29,
+        58,
+        691,
+        740
+      ]
+    }
+  ],
+  "source": "local-source/gate-tower.png",
+  "approval": "待审；未正式接入关卡",
+  "note": "尺寸含画布留白。按segments选段，空格不播放；anchors为相对pivot的游戏坐标，锚点与8fps为暂定接入初值。",
+  "mirror": "右件sx=-1，复用同图及pivot。"
+}

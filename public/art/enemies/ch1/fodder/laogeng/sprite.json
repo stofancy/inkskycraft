@@ -1,0 +1,64 @@
+{
+  "image": "art/enemies/ch1/fodder/laogeng/sprite.png",
+  "columns": 1,
+  "rows": 1,
+  "count": 1,
+  "fps": 0,
+  "mode": "loop",
+  "frameSize": [
+    246,
+    248
+  ],
+  "runtimeSize": [
+    44.324,
+    44.685
+  ],
+  "anchorPixel": [
+    123.0,
+    236
+  ],
+  "pivot": [
+    0.0,
+    20.18
+  ],
+  "anchors": {
+    "root": [
+      0,
+      0
+    ]
+  },
+  "segments": {},
+  "source": "local-source/laogeng-v1.png",
+  "sourceRects": [
+    [
+      102,
+      15,
+      1262,
+      1187
+    ]
+  ],
+  "sourceBoundaryOpaquePixels": [
+    0
+  ],
+  "alphaFloor": 8,
+  "sourceAlignment": null,
+  "sourceJitterPx": null,
+  "frames": [
+    {
+      "index": 0,
+      "contentBounds": [
+        12,
+        12,
+        234,
+        236
+      ],
+      "anchorPixel": [
+        123.0,
+        236
+      ],
+      "opaquePixels": 30636
+    }
+  ],
+  "approval": "待总导演审图；P4-22待接入",
+  "note": "runtimeSize为整张透明单帧的逻辑尺寸；不得再次压缩为主体尺寸。"
+}

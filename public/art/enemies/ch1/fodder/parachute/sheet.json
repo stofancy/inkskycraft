@@ -1,0 +1,218 @@
+{
+  "image": "art/enemies/ch1/fodder/parachute/sheet.png",
+  "columns": 4,
+  "rows": 2,
+  "count": 8,
+  "fps": 10,
+  "mode": "loop",
+  "frameSize": [
+    128,
+    128
+  ],
+  "runtimeSize": [
+    60.235,
+    60.235
+  ],
+  "anchorPixel": [
+    64.0,
+    64.0
+  ],
+  "pivot": [
+    0.0,
+    0.0
+  ],
+  "anchors": {
+    "root": [
+      0,
+      0
+    ]
+  },
+  "segments": {
+    "fall": {
+      "start": 0,
+      "count": 8,
+      "fps": 8,
+      "mode": "loop"
+    }
+  },
+  "source": "local-source/parachute-v1.png",
+  "sourceRects": [
+    [
+      0,
+      0,
+      443,
+      443
+    ],
+    [
+      443,
+      0,
+      887,
+      443
+    ],
+    [
+      887,
+      0,
+      1330,
+      443
+    ],
+    [
+      1330,
+      0,
+      1774,
+      443
+    ],
+    [
+      0,
+      443,
+      443,
+      887
+    ],
+    [
+      443,
+      443,
+      887,
+      887
+    ],
+    [
+      887,
+      443,
+      1330,
+      887
+    ],
+    [
+      1330,
+      443,
+      1774,
+      887
+    ]
+  ],
+  "sourceBoundaryOpaquePixels": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "alphaFloor": 8,
+  "sourceAlignment": "local-source/sheet.json",
+  "sourceJitterPx": 1.0270665394643617,
+  "frames": [
+    {
+      "index": 0,
+      "contentBounds": [
+        22,
+        13,
+        107,
+        116
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 3324
+    },
+    {
+      "index": 1,
+      "contentBounds": [
+        20,
+        9,
+        109,
+        120
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 3556
+    },
+    {
+      "index": 2,
+      "contentBounds": [
+        20,
+        9,
+        109,
+        121
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 3264
+    },
+    {
+      "index": 3,
+      "contentBounds": [
+        22,
+        12,
+        107,
+        117
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 3448
+    },
+    {
+      "index": 4,
+      "contentBounds": [
+        22,
+        13,
+        107,
+        116
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 3511
+    },
+    {
+      "index": 5,
+      "contentBounds": [
+        21,
+        9,
+        109,
+        120
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 3417
+    },
+    {
+      "index": 6,
+      "contentBounds": [
+        20,
+        9,
+        109,
+        120
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 3296
+    },
+    {
+      "index": 7,
+      "contentBounds": [
+        21,
+        14,
+        108,
+        114
+      ],
+      "anchorPixel": [
+        64.0,
+        64.0
+      ],
+      "opaquePixels": 3392
+    }
+  ],
+  "approval": "待总导演审图；P4-22待接入",
+  "note": "runtimeSize为整张透明单帧的逻辑尺寸；不得再次压缩为主体尺寸。"
+}

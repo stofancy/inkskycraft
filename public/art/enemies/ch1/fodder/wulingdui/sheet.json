@@ -1,0 +1,425 @@
+{
+  "image": "art/enemies/ch1/fodder/wulingdui/sheet.png",
+  "columns": 4,
+  "rows": 4,
+  "count": 16,
+  "fps": 10,
+  "mode": "once",
+  "frameSize": [
+    176,
+    192
+  ],
+  "runtimeSize": [
+    176,
+    192
+  ],
+  "anchorPixel": [
+    88,
+    96
+  ],
+  "pivot": [
+    0.0,
+    0.0
+  ],
+  "anchors": {
+    "root": [
+      0,
+      0
+    ],
+    "bombBay": [
+      0,
+      26
+    ],
+    "bombRelease": [
+      0,
+      46
+    ]
+  },
+  "segments": {
+    "flight": {
+      "start": 0,
+      "count": 8,
+      "fps": 10,
+      "mode": "loop"
+    },
+    "bombing": {
+      "start": 8,
+      "count": 8,
+      "fps": 10,
+      "mode": "once",
+      "events": [
+        {
+          "frame": 3,
+          "sheetFrame": 11,
+          "name": "bombRelease"
+        }
+      ]
+    }
+  },
+  "source": "local-source/wulingdui-v1.png",
+  "sourceRects": [
+    [
+      0,
+      0,
+      300,
+      327
+    ],
+    [
+      300,
+      0,
+      600,
+      327
+    ],
+    [
+      600,
+      0,
+      900,
+      327
+    ],
+    [
+      900,
+      0,
+      1200,
+      327
+    ],
+    [
+      0,
+      327,
+      300,
+      655
+    ],
+    [
+      300,
+      327,
+      600,
+      655
+    ],
+    [
+      600,
+      327,
+      900,
+      655
+    ],
+    [
+      900,
+      327,
+      1200,
+      655
+    ],
+    [
+      0,
+      655,
+      300,
+      982
+    ],
+    [
+      300,
+      655,
+      600,
+      982
+    ],
+    [
+      600,
+      655,
+      900,
+      982
+    ],
+    [
+      900,
+      655,
+      1200,
+      982
+    ],
+    [
+      0,
+      982,
+      300,
+      1310
+    ],
+    [
+      300,
+      982,
+      600,
+      1310
+    ],
+    [
+      600,
+      982,
+      900,
+      1310
+    ],
+    [
+      900,
+      982,
+      1200,
+      1310
+    ]
+  ],
+  "sourceBoundaryOpaquePixels": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "alphaFloor": 8,
+  "sourceAlignment": "local-source/sheet.json",
+  "sourceJitterPx": 1.4142135623730951,
+  "frames": [
+    {
+      "index": 0,
+      "contentBounds": [
+        23,
+        41,
+        154,
+        151
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "opaquePixels": 5246
+    },
+    {
+      "index": 1,
+      "contentBounds": [
+        22,
+        41,
+        155,
+        151
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "opaquePixels": 5324
+    },
+    {
+      "index": 2,
+      "contentBounds": [
+        22,
+        41,
+        155,
+        151
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "opaquePixels": 5287
+    },
+    {
+      "index": 3,
+      "contentBounds": [
+        22,
+        41,
+        156,
+        151
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "opaquePixels": 5329
+    },
+    {
+      "index": 4,
+      "contentBounds": [
+        23,
+        41,
+        154,
+        151
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "opaquePixels": 5334
+    },
+    {
+      "index": 5,
+      "contentBounds": [
+        23,
+        41,
+        154,
+        151
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "opaquePixels": 5407
+    },
+    {
+      "index": 6,
+      "contentBounds": [
+        24,
+        41,
+        152,
+        151
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "opaquePixels": 5337
+    },
+    {
+      "index": 7,
+      "contentBounds": [
+        23,
+        40,
+        154,
+        151
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "opaquePixels": 5356
+    },
+    {
+      "index": 8,
+      "contentBounds": [
+        22,
+        41,
+        155,
+        151
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "opaquePixels": 5378
+    },
+    {
+      "index": 9,
+      "contentBounds": [
+        22,
+        41,
+        155,
+        151
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "opaquePixels": 5518
+    },
+    {
+      "index": 10,
+      "contentBounds": [
+        21,
+        47,
+        156,
+        145
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "opaquePixels": 5701
+    },
+    {
+      "index": 11,
+      "contentBounds": [
+        21,
+        38,
+        156,
+        153
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "opaquePixels": 5966
+    },
+    {
+      "index": 12,
+      "contentBounds": [
+        22,
+        35,
+        155,
+        158
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "opaquePixels": 5550
+    },
+    {
+      "index": 13,
+      "contentBounds": [
+        21,
+        32,
+        156,
+        161
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "opaquePixels": 5751
+    },
+    {
+      "index": 14,
+      "contentBounds": [
+        21,
+        41,
+        156,
+        150
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "opaquePixels": 5509
+    },
+    {
+      "index": 15,
+      "contentBounds": [
+        20,
+        42,
+        156,
+        151
+      ],
+      "anchorPixel": [
+        88,
+        96
+      ],
+      "opaquePixels": 5465
+    }
+  ],
+  "approval": "待总导演审图；P4-22待接入",
+  "note": "runtimeSize为整张透明单帧的逻辑尺寸；不得再次压缩为主体尺寸。",
+  "anchorPixels": {
+    "root": [
+      88,
+      96
+    ],
+    "bombBay": [
+      88,
+      122
+    ],
+    "bombRelease": [
+      88,
+      142
+    ]
+  },
+  "targetBodySize": [
+    130,
+    110
+  ]
+}
