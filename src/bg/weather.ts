@@ -63,3 +63,17 @@ vec4 skyWeather(vec2 base, vec3 tone, vec3 ink, float wet, float rain) {
   return vec4(c, a + r * (1.0 - a));
 }
 `;
+
+// 朝阳斜光束：自右上射向左下，只随时间缓慢游移，不跟卷轴；中路淡、右侧强。
+export const SKY_RAYS = `
+vec4 skyRays(vec2 base) {
+  vec2 dir = normalize(vec2(-.62, -.78));
+  float across = dot(base, vec2(-dir.y, dir.x));
+  float r = vnoise(vec2(across * .011 + uTime * .05, 3.0)) * vnoise(vec2(across * .027 - uTime * .03, 9.0));
+  r = smoothstep(.16, .55, r);
+  float fall = pow(clamp(1.0 - length(base - vec2(1000.0, 1300.0)) / 1500.0, 0.0, 1.0), 1.5);
+  float side = smoothstep(.2, .9, abs(base.x - 450.0) / 450.0);
+  float a = r * fall * mix(.22, 1.0, side) * .34;
+  return vec4(hexc(0xffdf9a) * a, a * .35);
+}
+`;
