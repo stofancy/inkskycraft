@@ -20,7 +20,9 @@ void main() {
   float spawn = clamp(aA.w > 0.0 ? aC.x / 0.14 : 1.0, 0.0, 1.0);
   // 出生放大回弹：先胀到 1.8 倍，过冲收到 0.9 倍，再回到 1
   float grow = 1.0 + 0.8 * exp(-aC.x * 16.0) * cos(aC.x * 26.0);
-  float ext = 3.0 * max(grow, 1.0);       // 四边形半径 = size * ext，留出光晕与符纹环
+  int sh = int(aB.x + 0.5) - 16;
+  bool lng = sh == 1 || sh == 2 || sh == 5 || sh == 7 || sh == 8;
+  float ext = (lng ? 4.6 : 3.0) * max(grow, 1.0);       // 四边形半径 = size * ext，留出光晕与符纹环
   vec2 local = corner * aA.w * ext;
   float c = cos(aA.z), s = sin(aA.z);
   vec2 p = aA.xy + vec2(local.x * c - local.y * s, local.x * s + local.y * c);
@@ -91,26 +93,29 @@ void main() {
     vec3 cHot = mix(base * 1.5 + 0.35, vec3(2.8, 2.6, 2.3), 0.6);
     vec3 cWhite = vec3(2.8, 2.7, 2.5);
     float sp = smoothstep(160.0, 420.0, vTrail);
-    float dE, rr, wt = 0.0;
+    float dE, rr, wh = -1.0, tA = 0.0, Wd = 1.0;
+    vec3 tC = base;
     float Lf = 1.0, Lt = 1.0, W = 1.0;
     bool spin = true;
-    if (shape == 1) { Lf = 1.1; Lt = 2.9; W = 0.52; }
-    else if (shape == 2) { Lf = 1.6; Lt = 2.4; W = 0.34; }
-    else if (shape == 5) { Lf = 1.0; Lt = 2.5; W = 0.7; }
-    else if (shape == 7) { Lf = 1.3; Lt = 1.5; W = 0.7; }
-    else if (shape == 8) { Lf = 0.85; Lt = 2.4; W = 0.85; }
+    if (shape == 1) { Lf = 1.3; Lt = 4.2; W = 0.62; }
+    else if (shape == 2) { Lf = 1.7; Lt = 4.4; W = 0.4; }
+    else if (shape == 5) { Lf = 1.15; Lt = 3.6; W = 0.78; }
+    else if (shape == 7) { Lf = 1.35; Lt = 3.2; W = 0.72; }
+    else if (shape == 8) { Lf = 1.0; Lt = 3.0; W = 0.9; }
     else spin = false;
     if (spin) {
-      Lt = min(Lt * mix(1.0, 1.15, sp), 2.95);
-      float x = p.x;
-      float u = x >= 0.0 ? x / Lf : -x / Lt;
-      float fk = shape == 8 ? 0.8 + 0.4 * noise(vec2(u * 4.0 - uTime * 18.0, vC.z * 40.0)) : 1.0;
-      float w = x >= 0.0 ? W * sqrt(max(1.0 - u * u, 0.0)) : W * pow(max(1.0 - u, 0.0), 1.1) * fk;
-      if (x >= 0.0) dE = (length(vec2(x / Lf, p.y / W)) - 1.0) * min(Lf, W);
-      else if (u >= 1.0) dE = length(vec2((u - 1.0) * Lt, p.y));
-      else dE = (abs(p.y) - w) * 0.85;
-      rr = abs(p.y) / max(w, 0.08);
-      wt = x >= 0.0 ? 0.0 : u;
+      // 弹头：前半椭圆加圆后背，实体加描边；弹尾：本色渐隐光迹，软边，不描边
+      Lt = min(Lt * mix(1.0, 1.1, sp), 4.45);
+      float x = p.x, ex = x >= 0.0 ? Lf : W * 1.1;
+      Wd = W;
+      dE = (length(vec2(x / ex, p.y / W)) - 1.0) * min(ex, W);
+      rr = length(vec2(x / ex, p.y / W));
+      wh = length(vec2((x - 0.05) / (0.6 * Lf + 0.2), p.y / (0.5 * W)));
+      float u = clamp(-x / Lt, 0.0, 1.0);
+      float fk = shape == 8 ? 0.75 + 0.5 * noise(vec2(u * 4.0 - uTime * 18.0, vC.z * 40.0)) : 1.0;
+      float tw = max(W * (1.0 - u) * 1.1 * fk, 0.05);
+      tA = step(x, 0.3) * exp(-pow(abs(p.y) / tw, 2.0) * 2.5) * pow(1.0 - u, 0.8);
+      tC = mix(cBody, base * 0.95, smoothstep(0.0, 0.6, u));
     } else if (shape == 3) {
       float a = age * 5.0 + vC.z * 6.28; float cs = cos(a), sn = sin(a);
       dE = sdStar(mat2(cs, -sn, sn, cs) * p, 1.15, 0.5);
@@ -119,13 +124,14 @@ void main() {
     else { dE = length(p) - 1.0; rr = length(p); }
     float ae = fwidth(dE) * 1.2;
     float bodyE = smoothstep(ae, -ae, dE);
-    float inkE = 1.0 - smoothstep(0.16, 0.16 + ae * 2.0, dE);
-    float shadowE = exp(-max(dE, 0.0) * 2.2) * 0.4 * (1.0 - 0.5 * wt);
-    float rim = smoothstep(-0.14, -0.02, dE);
+    float inkE = 1.0 - smoothstep(0.2, 0.2 + ae * 2.0, dE);
+    float shadowE = exp(-max(dE, 0.0) * 2.2) * (spin ? 0.22 : 0.4);
+    float rim = smoothstep(-0.12, -0.02, dE);
     vec3 f = mix(cBody * 0.75, cBody, smoothstep(1.0, 0.7, rr));
-    f = mix(f, cHot, smoothstep(0.72, 0.4, rr) * (1.0 - 0.6 * wt));
-    f = mix(f, cWhite, smoothstep(0.5, 0.2, rr) * (1.0 - 0.75 * wt));
-    f = mix(f, base * 0.35, rim * 0.7);
+    if (spin) f = mix(f, cHot, smoothstep(0.9, 0.5, rr) * 0.5);
+    else f = mix(f, cHot, smoothstep(0.72, 0.4, rr));
+    f = mix(f, cWhite, spin ? smoothstep(1.0, 0.55, wh) : smoothstep(0.5, 0.2, rr));
+    f = mix(f, base * 0.35, rim * (spin ? 0.5 : 0.7));
     vec3 emit = vec3(0.0);
     float ringA = 0.0;
     if (shape == 6) {
@@ -136,11 +142,17 @@ void main() {
       ringA = clamp(band * (0.4 + 0.6 * seg) + tick, 0.0, 1.0);
       emit += cBody * ringA * 1.4;
     }
+    float tailAlpha = 0.0;
+    if (spin) {
+      float halo = exp(-max(dE, 0.0) / (0.8 * Wd + 0.2)) * 0.5;
+      emit += (tC * tA + base * 1.4 * halo) * (1.0 - inkE);
+      tailAlpha = (tA * 0.75 + halo * 0.15) * (1.0 - inkE);
+    }
     float fl = max(0.0, 1.0 - vC.x / 0.12);
     emit += vec3(2.6, 2.3, 1.9) * fl * fl * exp(-dot(p, p) * 0.9);
     float inkA = max(inkE, shadowE);
     vec3 rgb = f * bodyE * AE + vec3(0.012, 0.006, 0.01) * max(inkA - bodyE, 0.0) * AE + emit * AE;
-    o = vec4(max(rgb, vec3(0.0)), clamp(max(inkA, ringA * 0.5) * AE, 0.0, 1.0));
+    o = vec4(max(rgb, vec3(0.0)), clamp(max(max(inkA, ringA * 0.5), tailAlpha) * AE, 0.0, 1.0));
     return;
   }
   float body = smoothstep(aa, -aa, d);
