@@ -10,7 +10,8 @@
 
 ## 试玩与视频
 
-- **[立即在线试玩](https://inkskycraft.pages.dev/)** · Cloudflare Pages 免费静态托管
+- **[正式版试玩](https://inkskycraft.pages.dev/)** · 对应 `v2` / GitHub `main`
+- **[Beta 最新开发版](https://beta.inkskycraft.pages.dev/)** · 对应 `p4-int3` / GitHub [`dev`](https://github.com/stofancy/inkskycraft/tree/dev)
 - **[观看三章试玩实录 · MP4，约 37 秒，含游戏原声](https://inkskycraft.pages.dev/showcase/gameplay.mp4)**
 - 录屏包含实际浏览器画面、战斗 HUD、三色武器、自动射击与泼墨。游戏启动时需要加载美术和音频，首次打开请稍候。
 
