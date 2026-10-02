@@ -80,47 +80,52 @@ void main() {
 
   float aa = fwidth(d) * 1.2;
   if (en) {
-    // 敌弹：整颗是一个温度梯度（中心近白 → 亮黄 → 橙 → 饱和本色 → 深色墨边）；
-    // 泪滴尾巴是半透明抖动的火焰；弹下垫柔和墨影压暗浅色背景，亮芯靠明暗对比出冲击力。
+    // 敌弹：白亮芯 + 本色外焰 + 暗色细描边。拉长类是两头收尖的能量弹（芯沿长轴、尾端渐细），
+    // 圆类是白热芯硬边弹，flame 是圆头加短火尾。弹下垫窄墨影，亮背景上也能一眼看清。
     p /= vC.w;
     float AE = vC.y;
     vec3 base = vB.yzw;
     float lum = dot(base, vec3(0.3, 0.59, 0.11));
     base = clamp(mix(vec3(lum), base, 1.9), 0.0, 1.4) * 0.9;
-    float warm = clamp(base.r - base.b * 0.6, 0.0, 1.0);
-    base.g *= mix(1.0, 0.72, warm * step(0.45, base.g));
-    vec3 cWhite = vec3(2.8, 2.6, 2.2);
-    vec3 cYel = mix(base * 1.5 + 0.25, vec3(1.35, 1.1, 0.4), warm * 0.85);
-    vec3 cOrg = mix(base * 1.25, vec3(1.2, 0.48, 0.05), warm * 0.6);
-    vec3 cEdge = base * 0.85;
-    bool tear = shape == 1 || shape == 2 || shape == 5 || shape == 7 || shape == 8;
-    float dE, rr, sT = 0.0, nT = 1.0;
-    if (tear) {
-      float Lt = mix(2.3, 3.2, smoothstep(160.0, 420.0, vTrail));
-      vec2 q = p - vec2(0.8, 0.0);
-      if (q.x >= 0.0) { dE = length(q) - 1.0; rr = length(q); }
-      else {
-        sT = clamp(-q.x / Lt, 0.0, 1.5);
-        float n = noise(vec2(sT * 5.0 - uTime * 16.0, vC.z * 40.0));
-        float w = pow(max(1.0 - sT, 0.0), 1.5) * (1.0 + 0.45 * (n - 0.5) * sT * 2.0);
-        dE = sT >= 1.0 ? length(vec2(-q.x - Lt, q.y)) : (abs(q.y) - w) * 0.9;
-        rr = mix(abs(q.y) / max(w, 0.06), 1.0, sT * 0.7);
-        nT = smoothstep(sT * 0.55, sT * 0.55 + 0.3, noise(vec2(q.y * 3.0 + vC.z * 20.0, q.x * 4.0 - uTime * 22.0)));
-      }
+    vec3 cBody = base * 1.2 + 0.08;
+    vec3 cHot = mix(base * 1.5 + 0.35, vec3(2.8, 2.6, 2.3), 0.6);
+    vec3 cWhite = vec3(2.8, 2.7, 2.5);
+    float sp = smoothstep(160.0, 420.0, vTrail);
+    float dE, rr, wt = 0.0;
+    float Lf = 1.0, Lt = 1.0, W = 1.0;
+    bool spin = true;
+    if (shape == 1) { Lf = 1.1; Lt = 2.9; W = 0.52; }
+    else if (shape == 2) { Lf = 1.6; Lt = 2.4; W = 0.34; }
+    else if (shape == 5) { Lf = 1.0; Lt = 2.5; W = 0.7; }
+    else if (shape == 7) { Lf = 1.3; Lt = 1.5; W = 0.7; }
+    else if (shape == 8) { Lf = 0.85; Lt = 2.4; W = 0.85; }
+    else spin = false;
+    if (spin) {
+      Lt = min(Lt * mix(1.0, 1.15, sp), 2.95);
+      float x = p.x;
+      float u = x >= 0.0 ? x / Lf : -x / Lt;
+      float fk = shape == 8 ? 0.8 + 0.4 * noise(vec2(u * 4.0 - uTime * 18.0, vC.z * 40.0)) : 1.0;
+      float w = x >= 0.0 ? W * sqrt(max(1.0 - u * u, 0.0)) : W * pow(max(1.0 - u, 0.0), 1.1) * fk;
+      if (x >= 0.0) dE = (length(vec2(x / Lf, p.y / W)) - 1.0) * min(Lf, W);
+      else if (u >= 1.0) dE = length(vec2((u - 1.0) * Lt, p.y));
+      else dE = (abs(p.y) - w) * 0.85;
+      rr = abs(p.y) / max(w, 0.08);
+      wt = x >= 0.0 ? 0.0 : u;
+    } else if (shape == 3) {
+      float a = age * 5.0 + vC.z * 6.28; float cs = cos(a), sn = sin(a);
+      dE = sdStar(mat2(cs, -sn, sn, cs) * p, 1.15, 0.5);
+      rr = length(p) / 1.15;
     } else if (shape == 4) { float rg = abs(length(p) - 0.8) / 0.22; dE = (rg - 1.0) * 0.22; rr = rg; }
     else { dE = length(p) - 1.0; rr = length(p); }
     float ae = fwidth(dE) * 1.2;
-    float tailA = tear ? (1.0 - clamp(sT, 0.0, 1.0)) * 0.85 * nT + (sT <= 0.0 ? 0.15 : 0.0) : 1.0;
-    if (tear && sT <= 0.0) tailA = 1.0;
-    float bodyE = smoothstep(ae, -ae, dE) * tailA;
-    float inkE = (1.0 - smoothstep(0.27, 0.27 + ae * 2.0, dE)) * mix(1.0, 0.45, clamp(sT, 0.0, 1.0));
-    float shadowE = exp(-max(dE, 0.0) * 1.4) * 0.55 * mix(1.0, 0.5, clamp(sT, 0.0, 1.0));
-    vec3 f = cEdge;
-    f = mix(f, cOrg, smoothstep(0.95, 0.62, rr));
-    f = mix(f, cYel, smoothstep(0.72, 0.46, rr));
-    f = mix(f, cWhite, smoothstep(0.5, 0.3, rr));
-    f *= mix(1.0, 0.5, clamp(sT, 0.0, 1.0));
-    float haloE = exp(-max(dE, 0.0) * 3.0) * (1.0 - bodyE) * 0.45 * (tear ? (1.0 - clamp(sT, 0.0, 1.0)) : 1.0);
+    float bodyE = smoothstep(ae, -ae, dE);
+    float inkE = 1.0 - smoothstep(0.16, 0.16 + ae * 2.0, dE);
+    float shadowE = exp(-max(dE, 0.0) * 2.2) * 0.4 * (1.0 - 0.5 * wt);
+    float rim = smoothstep(-0.14, -0.02, dE);
+    vec3 f = mix(cBody * 0.75, cBody, smoothstep(1.0, 0.7, rr));
+    f = mix(f, cHot, smoothstep(0.72, 0.4, rr) * (1.0 - 0.6 * wt));
+    f = mix(f, cWhite, smoothstep(0.5, 0.2, rr) * (1.0 - 0.75 * wt));
+    f = mix(f, base * 0.35, rim * 0.7);
     vec3 emit = vec3(0.0);
     float ringA = 0.0;
     if (shape == 6) {
@@ -129,7 +134,7 @@ void main() {
       float seg = step(0.0, sin(ang * 5.0));
       float tick = smoothstep(0.1, 0.0, abs(r0 - 1.72)) * step(0.88, sin(ang * 12.0 - uTime * 3.0) * 0.5 + 0.5);
       ringA = clamp(band * (0.4 + 0.6 * seg) + tick, 0.0, 1.0);
-      emit += cYel * ringA * 1.4;
+      emit += cBody * ringA * 1.4;
     }
     float fl = max(0.0, 1.0 - vC.x / 0.12);
     emit += vec3(2.6, 2.3, 1.9) * fl * fl * exp(-dot(p, p) * 0.9);
