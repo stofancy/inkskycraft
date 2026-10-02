@@ -174,7 +174,7 @@ export class Player {
       for (let i = 0; i < n; i++) {
         const k = n === 1 ? 0 : i / (n - 1) - 0.5;
         const a = -Math.PI / 2 + k * spread;
-        this.shots.push({ x: g.x + k * 26, y: g.y + Math.abs(k) * 14, vx: Math.cos(a) * 1500, vy: Math.sin(a) * 1500, color: 'red', dmg: 1.25,  age: 0, dead: false, target: null,pierce:boost?1:0,hits:new Set() });
+        this.shots.push({ x: g.x + k * 26, y: g.y + Math.abs(k) * 14, vx: Math.cos(a) * 1500, vy: Math.sin(a) * 1500, color: 'red', dmg: 1.25, kind: 0, age: 0, dead: false, target: null,pierce:boost?1:0,hits:new Set() });
       }
       if (this.sfxCd <= 0) { w.audio.sfx('shot_red', { vol: 0.5 }); this.sfxCd = 0.09; }
     }
