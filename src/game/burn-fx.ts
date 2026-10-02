@@ -27,9 +27,9 @@ export function burnEmit(w: { fx: World['fx'] }, e: Enemy, age: number, dt: numb
   const s = burnStrength(age), fx = w.fx, rng = Math.random, r = e.radius, k = Math.max(0.7, Math.min(2, r / 28));
   // 纸龙特殊处理：火焰缩小到 0.4 倍，朱红暗金色，粒子减半
   const isPaper = e.def.sprite.startsWith('pd-');
-  const sizeScale = isPaper ? 0.4 : 0.5; // 纸龙 0.4 倍，其他 0.5 倍
-  const rMul = isPaper ? 1.4 : 1.6, gMul = isPaper ? 0.35 : 1.5, bMul = isPaper ? 0.12 : 1.4;
-  const r1Mul = isPaper ? 0.65 : 1.0, g1Mul = isPaper ? 0.38 : 0.55, b1Mul = isPaper ? 0.08 : 0.4;
+  const sizeScale = isPaper ? 0.9 : 0.5; // 纸龙体型大，火苗 0.9 倍才看得出是火；其他 0.5 倍
+  const rMul = isPaper ? 1.4 : 1.6, gMul = isPaper ? 0.7 : 1.5, bMul = isPaper ? 0.12 : 1.4;
+  const r1Mul = isPaper ? 0.65 : 1.0, g1Mul = isPaper ? 0.45 : 0.55, b1Mul = isPaper ? 0.08 : 0.4;
   const rate = isPaper ? 0.5 : 0.6; // 纸龙减半，其他 0.6 倍
   const n = (baseRate: number) => {
     const v = baseRate * rate * k * dt;
