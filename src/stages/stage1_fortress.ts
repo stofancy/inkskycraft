@@ -1,3 +1,4 @@
+import { volley } from './stage1_rhythm';
 // 第一章大场面主体：空中堡垒。本体是场景图，4 座炮塔与 2 条钳臂是独立敌机；两条钳臂都断后开舱，雷石落下。
 // 分件坐标取自 studio/jobs/ART-14/layout.png，本体 1080x540 按 0.5 显示，下列偏移相对本体中心。
 import type { Co,G } from '../game/api';
@@ -48,20 +49,21 @@ export function startFortress(g:G,seconds:number):Fortress{
    body.x=f.x;body.y=f.y;stone.x=f.x;stone.y=f.y+32;stone.alpha=f.open?0:1;bay.x=f.x;bay.y=f.y+32;bay.alpha=f.open?1:0;
    for(const o of turrets){const e=o.e;if(e.dead){o.ov.dead=true;continue;}
     e.x=f.x+o.t.ox;e.y=f.y+o.t.oy;e.vx=e.vy=0;e.invulnerable=!here;o.ov.x=e.x;o.ov.y=e.y;
-    const dt=o.next-t,ch=normal(g)?.9:FORTRESS.fire.charge;
+    let dt=o.next-t;const ch=normal(g)?.9:FORTRESS.fire.charge;
+    if(here&&dt<ch&&!e.data.volleyReady){if(!volley(e,g,o.t.kind==='inner'?'aim':'area',o.t.kind==='inner'?5:7,ch)){o.next=t+ch;continue;}e.data.volleyReady=true;o.next=t+ch;dt=ch;}
     e.charging=here&&dt<ch&&dt>0;o.ov.alpha=e.charging?1:0;o.ov.glow=e.charging?1.2+.6*Math.sin(t*20):0;
     if(here&&dt<=0){const inner=o.t.kind==='inner',sx=e.x,sy=e.y+30;
      if(normal(g)&&g.bulletCount()<55){
-      if(inner)g.fan(sx,sy,g.aim(sx,sy),Math.round(3/g.difficulty.count),.22,170/w.enemyBulletSpeed,{shape:'crystal',color:'amber'});
-      else for(const off of [-.6,-.3,.3,.6])g.shoot(sx,sy,Math.PI/2+off,95/w.enemyBulletSpeed,{shape:'orb',color:'magenta'});
-     }else if(!normal(g)&&g.bulletCount()<56){if(inner)g.fan(sx,sy,g.aim(sx,sy),3,.22,170,{shape:'crystal',color:'amber'});else g.fan(sx,sy,Math.PI/2,5,.7,140,{shape:'orb',color:'magenta'});}
-     g.fx.burst(sx,sy,8,70,[1.5,.7,.2]);o.next=t+(inner?FORTRESS.fire.inner:FORTRESS.fire.outer);}}
+      if(inner)g.fan(sx,sy,g.aim(sx,sy),Math.round(3/g.difficulty.count),.22,170/w.enemyBulletSpeed,{shape:'crystal',color:'amber',life:5});
+      else for(const off of [-.6,-.3,.3,.6])g.shoot(sx,sy,Math.PI/2+off,95/w.enemyBulletSpeed,{shape:'orb',color:'magenta',life:7});
+     }else if(!normal(g)&&g.bulletCount()<56){if(inner)g.fan(sx,sy,g.aim(sx,sy),3,.22,170,{shape:'crystal',color:'amber',life:5});else g.fan(sx,sy,Math.PI/2,5,.7,140,{shape:'orb',color:'magenta',life:7});}
+     g.fx.burst(sx,sy,8,70,[1.5,.7,.2]);e.data.volleyReady=false;o.next=t+(inner?FORTRESS.fire.inner:FORTRESS.fire.outer);}}
    const sway=Math.sin(t*.9)*.06;
    for(const o of clamps){const e=o.e;if(e.dead){o.ring.dead=true;continue;}
     e.x=f.x+o.c.ox;e.y=f.y+o.c.oy;e.vx=e.vy=0;e.angle=o.c.side*sway;e.invulnerable=!(here&&t>=FORTRESS.arriveAt+4);
     o.ring.x=e.x;o.ring.y=e.y+30;o.ring.alpha=e.invulnerable?0:.5+.4*Math.sin(t*6);e.glow=e.invulnerable?1:1.5+.5*Math.sin(t*6);}
    // 钳臂合拢：露出弱点后每 7 秒（左右错开）从钳口放一道扫向身前的光刃，金线预警 1.3 秒。
-   for(const o of clamps){const e=o.e;if(e.dead||e.invulnerable||t-FORTRESS.arriveAt<o.next)continue;o.next=t-FORTRESS.arriveAt+FORTRESS.clampSlam.gap;
+   for(const o of clamps){const e=o.e;if(e.dead||e.invulnerable||t-FORTRESS.arriveAt<o.next)continue;if(!volley(e,g,'area',FORTRESS.clampSlam.hold,FORTRESS.clampSlam.warn*g.difficulty.warn))continue;o.next=t-FORTRESS.arriveAt+FORTRESS.clampSlam.gap;
     g.laser(e.x,e.y+30,Math.PI/2+o.c.side*.75,{warn:FORTRESS.clampSlam.warn,duration:FORTRESS.clampSlam.hold,width:12,length:600,color:'red',sweep:-o.c.side*.55,follow:e});}
    if(!prompted&&here&&t>=FORTRESS.arriveAt+4){prompted=true;g.caption('','打断钳臂',4);}
    if(!f.open&&clamps.every(o=>o.e.dead)){f.open=true;f.openX=f.x;f.openY=f.y+32;openAt=t;g.fx.flash(.35);w.fx.shake(.6);w.hitstop(.1);g.sfx('explode_boss',{vol:.8});}

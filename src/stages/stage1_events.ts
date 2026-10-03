@@ -1,3 +1,4 @@
+import { formation } from './stage1_rhythm';
 // 第一章分段：出港、第一波、屏障、劫机、喘息、大场面、急行、关前；中间接纸龙，末尾接铜雀。
 import type { Co,G } from '../game/api';
 import type { Enemy,EnemyDef } from '../game/enemy';
@@ -16,7 +17,7 @@ export function routeState(g:G):RouteState{const ship=(g as World).createEscort(
 function emit(g:G,s:RouteState,id:string,_replace=false):boolean {if(s.events.includes(id))return true;s.events.push(id);sayEvent(g,id);return true;}
 export function* conversation(g:G,s:RouteState,...ids:string[]):Co{for(const id of ids)if(!s.events.includes(id))s.events.push(id);yield* director(g).conversation(...ids);}
 function join(g:G,id:'chiyan'|'laodun'):boolean{const c=(g as G & {companions:{onChange:(id:string,joined:boolean)=>void}}).companions;const hook=c.onChange;c.onChange=()=>{};try{return g.joinCompanion(id);}finally{c.onChange=hook;}}
-function spawn(g:G,def:EnemyDef,x:number,y:number,data:Record<string,unknown>={}):Enemy{return g.spawn(def,x,y,e=>{e.data.contentRole='normal';if(def===NetPost||def===Bomber)e.hp=e.maxHp=def.hp/g.difficulty.hp;Object.assign(e.data,data);});}
+function spawn(g:G,def:EnemyDef,x:number,y:number,data:Record<string,unknown>={}):Enemy{return g.spawn(def,x,y,e=>{e.data.contentRole='normal';if(def===NetPost||def===Bomber)e.hp=e.maxHp=def.hp/g.difficulty.hp;Object.assign(e.data,formation(g,def.name??def.sprite),data);});}
 function defeated(e:Enemy|undefined):boolean{return !!e?.dead&&e.hp<=0;}
 function clear(g:G,preserveFodder=false):void{for(const e of g.liveEnemies())if(!e.def.boss&&(!preserveFodder||!e.data.fodder))g.remove(e);g.clearBullets();}
 function* run(g:G,seconds:number,update:(elapsed:number)=>void):Co{const start=g.t;while(g.t-start<seconds){update(g.t-start);yield;}}
@@ -67,6 +68,7 @@ type Plan={at:number;go:(g:G)=>void}[];
 /** 按秒出场：到点且对白未暂停时执行；最后 6 秒不再出新敌，到时清场。 */
 function* timeline(g:G,seconds:number,plan:Plan,each?:(t:number)=>void):Co{
  const w=g as World,start=g.t;let i=0;
+ plan=[...plan].sort((a,b)=>a.at-b.at);
  while(g.t-start<seconds){const t=g.t-start;while(i<plan.length&&t>=plan[i].at&&!w.chapterDialogue?.spawnPaused){plan[i++].go(g);}each?.(t);yield;}
 }
 const bark=(g:G,id:string):Plan[number]=>({at:0,go:()=>{director(g).event(id);}});
@@ -121,10 +123,16 @@ export function* battery(g:G,s:RouteState):Co{
  const bombers=(g:G)=>{for(let i=0;i<3;i++)spawn(g,Bomber,250+i*200,-80-i*40,{noSupplementFire:true,attack:i===0?'oil':i===2?'rocket':undefined,attackDelay:normal(g)?i*.6:0});};
  const plan:Plan=[
   {at:0,go:seq(bombers,sweepTop(4))},{at:6,go:g=>{director(g).event('E07.rockWarningShown');}},
+  {at:4,go:sweepWave(5,450,620)},
   {at:8,go:seq(sweepSide(-1,4),sweepSide(1,4))},
   {at:11,go:g=>{fort=startFortress(g,56);emit(g,s,'E08.batteryCargoShown');g.drop('bomb',450,700);g.caption('','拦下空中堡垒',4);}},
+  {at:14,go:sweepWave(5,450,640)},{at:19,go:sweepSide(1,5)},
+  {at:24,go:seq(sweepTop(4,250,300),turtle(650))},{at:29,go:sweepWave(5,450,640)},
+  {at:34,go:seq(sweepSide(-1,5),kiteGlide(false,1))},
   {at:38,go:seq(bombers,sweepTop(5,300,500))},
-  {at:50,go:seq(stopGo(-1),stopGo(1,200))},
+  {at:43,go:seq(sweepWave(5,450,640),craneRow)},
+  {at:48,go:seq(sweepSide(1,5),shieldSquad(1,300))},
+  {at:53,go:seq(sweepTop(5),scout(180,300))},{at:58,go:sweepSide(-1,5)},
  ];
  const each=(t:number)=>{
   if(fort&&openedAt<0&&fort.open){openedAt=t;stone=g.scene('sky_rock',fort.openX,fort.openY);stone.layer='front';stone.glow=1.5;stone.sx=stone.sy=.9;tow=g.scene('e_kite',stone.x+110,stone.y-40);tow.sx=tow.sy=1.4;tow.layer='air';emit(g,s,'E08.transportDirectionShown');}
@@ -139,17 +147,17 @@ export function* rush(g:G,s:RouteState):Co{
  const plan:Plan=[
   {at:2,go:seq(chaseBehind(3),lowTarget(LowCannon,-1))},
   {at:5,go:lowTarget(LowBallista,1)},
-  {at:8,go:sweepSide(1,2)},
+  {at:8,go:seq(sweepSide(1,5),kiteGlide(false,-1))},
   {at:9,go:lowTarget(LowEaveGunner,-1)},
   {at:11,go:chaseBehind(3)},
   {at:13,go:lowTarget(LowCannon,1)},
-  {at:14,go:seq(sweepLaser(1,400),sweepSide(-1,2))},
+  {at:14,go:sweepWave(5,450,620)},
   {at:17,go:lowTarget(LowBallista,-1)},
-  {at:20,go:shieldSquad(1,600)},
+  {at:20,go:seq(shieldSquad(1,600),sweepSide(-1,4))},
   {at:21,go:seq(chaseBehind(2),lowTarget(LowEaveGunner,1))},
-  {at:25,go:seq(sweepSide(-1,2),sweepSide(1,2),lowTarget(LowCannon,-1))},
+  {at:25,go:seq(sweepSide(-1,4),sweepSide(1,4),lowTarget(LowCannon,-1))},
   {at:28,go:lowTarget(LowBallista,1)},
-  {at:30,go:chaseBehind(3)},{at:32,go:drop('ink',450)},
+  {at:30,go:seq(chaseBehind(5),turtle(300))},{at:32,go:drop('ink',450)},
  ];
  yield* timeline(g,36,plan);clear(g);
 }
@@ -160,7 +168,8 @@ export function* gate(g:G,s:RouteState):Co{
  const silhouette=g.scene('b_sparrow_body',450,-250);silhouette.sx=silhouette.sy=.35;silhouette.alpha=.65;silhouette.layer='air';
  const cannons=[spawn(g,LowCannon,112,-180),spawn(g,LowCannon,788,-180)];
  g.scrollSpeed(80,1.8);
- while(bridge.y<300){bridge.y=Math.min(300,-180+w.scroll-start);silhouette.y=bridge.y-70;yield;}
+ sweepWave(4,450,620)(g);let secondWave=false;
+ while(bridge.y<300){bridge.y=Math.min(300,-180+w.scroll-start);silhouette.y=bridge.y-70;if(!secondWave&&bridge.y>40){secondWave=true;sweepSide(1,4)(g);}yield;}
  // 停靠后景物锁在同一地面坐标，首领的空战卷轴不带走石桥。
  s.low!.stop=w.scroll;g.scrollSpeed(0);
  for(const e of cannons)e.y=bridge.y;

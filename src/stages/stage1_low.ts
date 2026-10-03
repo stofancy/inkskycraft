@@ -1,3 +1,4 @@
+import { attackTurn, formation } from './stage1_rhythm';
 import { normal, speed } from './ordinary';
 import type { Co, G } from '../game/api';
 import type { Enemy, EnemyDef } from '../game/enemy';
@@ -54,10 +55,11 @@ export const LowCannon:EnemyDef={normalHp:[72,'M'],
   e.run((function*():Co{for(;;){barrel.angle=(normal(g)&&e.charging?e.data.lockedAngle:Math.atan2(g.player.y-e.y,g.player.x-e.x))+Math.PI/2;yield;}})());
   yield* visible(e);yield* g.wait(normal(g)?.2:.65);
   while(e.y<1120){
+   const narrow=((e.data.volleyCount=(e.data.volleyCount??-1)+1)+(e.data.variant??0))%2===1;yield* attackTurn(e,g,narrow?'aim':'area',narrow?5:7,.6);
    const locked=Math.atan2(g.player.y-e.y,g.player.x-e.x);e.data.lockedAngle=locked;e.charging=true;g.fx.charge(e.x,e.y,22,.6,[1.2,.25,.55]);yield* g.wait(.6);
    if(e.charging){const a=normal(g)?locked:Math.atan2(g.player.y-e.y,g.player.x-e.x);
     if(normal(g)){barrel.offY=2;e.run((function*():Co{yield* g.wait(.15);barrel.offY=-7.8;})());}
-    for(const offset of [-.18,0,.18])g.shoot(e.x+Math.cos(a)*37,e.y+Math.sin(a)*37,a+offset,speed(g,normal(g)?100:145),{shape:'orb',color:'magenta',size:9});}
+    for(const offset of narrow?[-.08,.08]:[-.3,0,.3])g.shoot(e.x+Math.cos(a)*37,e.y+Math.sin(a)*37,a+offset,speed(g,normal(g)?(narrow?170:100):145),{shape:narrow?'rice':'orb',color:narrow?'amber':'magenta',size:9,life:narrow?5:7});}
    e.charging=false;yield* g.wait(normal(g)?2.2:2.4);
   }
  }
@@ -65,8 +67,8 @@ export const LowCannon:EnemyDef={normalHp:[72,'M'],
 export const LowBallista:EnemyDef={normalHp:[52,'M'],
  name:'弩车',sprite:'low_ballista',hp:65,score:550,ground:true,onDeath:wreck,
  *ai(e,g){prepare(e);yield* visible(e);
-  while(e.y<1080){e.frame=0;e.charging=true;const a=yield* aimWarning(e,g,1);
-   if(e.charging){e.frame=1;g.shoot(e.x,e.y,a,speed(g,normal(g)?260:420),{shape:'needle',color:'magenta',size:11});}
+  while(e.y<1080){yield* attackTurn(e,g,'aim',5,1);e.frame=0;e.charging=true;const a=yield* aimWarning(e,g,1);
+   if(e.charging){e.frame=1;const twin=((e.data.volleyCount=(e.data.volleyCount??-1)+1)+(e.data.variant??0))%2;for(const off of twin?[-.08,.08]:[0])g.shoot(e.x,e.y,a+off,speed(g,normal(g)?260:420),{shape:'needle',color:'magenta',size:11,life:5});}
    e.charging=false;yield* g.wait(normal(g)?2:2.2);
   }
  }
@@ -79,13 +81,13 @@ export const LowEaveGunner:EnemyDef={normalHp:[40,'M'],
   w.root.run((function*():Co{while(roof.y<1340){roof.y=offset+w.scroll-35;yield;}roof.dead=true;})());
   yield* visible(e);yield* g.wait(normal(g)?.3:.5);
   while(e.y<1100){
-   e.invulnerable=false;e.frame=1;e.charging=true;
+   yield* attackTurn(e,g,'aim',5,normal(g)?.8:1);e.invulnerable=false;e.frame=1;e.charging=true;
    const a=yield* aimWarning(e,g,normal(g)?.8:1);
-   if(e.charging)g.shoot(e.x,e.y,a,speed(g,normal(g)?240:270),{shape:'needle',color:'magenta',size:9});
+   if(e.charging){const twin=((e.data.volleyCount=(e.data.volleyCount??-1)+1)+(e.data.variant??0))%2;for(const off of twin?[-.12,.12]:[0])g.shoot(e.x,e.y,a+off,speed(g,normal(g)?240:270),{shape:'needle',color:'magenta',size:9,life:5});}
    yield* g.wait(normal(g)?.8:.6);e.charging=false;e.invulnerable=true;e.frame=0;yield* g.wait(1.4);
   }
  }
 };
 export const lowTarget=(def:EnemyDef,side:-1|1)=>(g:G)=>g.spawn(def,side<0?112:788,-55,e=>{
- e.data.contentRole='normal';e.data.lowGround=true;e.data.noSupplementFire=true;
+ Object.assign(e.data,formation(g,def.name??def.sprite));e.data.contentRole='normal';e.data.lowGround=true;e.data.noSupplementFire=true;
 });

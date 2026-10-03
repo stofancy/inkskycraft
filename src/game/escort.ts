@@ -53,11 +53,11 @@ export class EscortShip {
   for(const b of this.w.bullets.list)if(!b.dead&&b.delay<=0&&this.vessels.some(s=>Math.abs(b.x-s.x)<width+b.radius&&Math.abs(b.y-s.y)<height+b.radius)){b.dead=true;this.hit(field?b.data[field]??damage:damage);}
  }
  update(dt:number):void{
+  this.warnings=this.warnings.filter(v=>!v.dead);
   if(this.scene.dead){this.vessels.forEach(s=>s.dead=true);return;}
   if(this.follow&&this.vessels.length){this.followUpdate(dt);if(!this.protected)this.absorbBullets(85*this.shipScale/.85,115*this.shipScale/.85);this.finishUpdate(dt);return;}
   this.scene.sx=this.scene.sy=this.shipScale;this.scene.rot=Math.sin(this.w.real*.35)*.018;
   if(!this.protected)this.absorbBullets(85,115);
-  this.warnings=this.warnings.filter(v=>!v.dead);
   if(this.warnings.length&&!this.rescuing){const nearby=this.warnings.find(v=>Math.hypot(v.x-this.scene.x,v.y-this.scene.y)<180);if(nearby)this.scene.x=Math.max(140,Math.min(760,this.scene.x+(nearby.x>=this.scene.x?-1:1)*60*dt));}
   this.finishUpdate(dt);
  }

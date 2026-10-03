@@ -1,3 +1,4 @@
+import { volley, formation } from './stage1_rhythm';
 // P4-22 第一章炮灰：复用普通敌机预算，短气泡独立于通讯队列。
 import { normal } from './ordinary';
 import type { World } from '../game/world';
@@ -85,7 +86,7 @@ export class FodderChapter {
  }
  spawn(name:FodderName,x:number,y:number,data:Record<string,unknown>={}):Enemy|null{
   if(this.w.chapterDialogue?.spawnPaused||this.w.density.count(this.w.enemies)>=this.w.density.limit(this.w.stageIndex))return null;
-  const e=this.w.spawn(this.def(name),x,y,e=>{e.hp=e.maxHp=e.def.hp/this.w.difficulty.hp;e.data.contentRole='normal';e.data.noSupplementFire=true;e.data.fodder=name;Object.assign(e.data,data);e.tint=CH1_FODDER_ART[name].tint;});
+  const e=this.w.spawn(this.def(name),x,y,e=>{e.hp=e.maxHp=e.def.hp/this.w.difficulty.hp;e.data.contentRole='normal';e.data.noSupplementFire=true;e.data.fodder=name;Object.assign(e.data,formation(this.w,name),data);e.tint=CH1_FODDER_ART[name].tint;});
   const a:Actor={name,e,state:'enter',at:this.w.real,next:this.w.real+.8,count:0,target:data.target as Enemy|undefined};if(name==='吴领队')e.scaleX=e.scaleY=1.2;this.actors.push(a);this.spawns.push({name,event:this.event,at:this.w.real});this.bubble(name,name==='大牛'&&this.w.player.x>=450?'06':'01',e);
   return e;
  }
@@ -103,7 +104,7 @@ export class FodderChapter {
    case 'S2':for(let i=0;i<4;i++)add('egret',300+i*65,620+i*15).alpha=.5;this.schedule('钱耗',5,260,180);this.schedule('老鸹',18,810,620);this.schedule('小铃',24,100,160);break;
    case 'S3':this.schedule('周网',10,150,40);break;
    case 'S4':add('leaves',420,580);this.schedule('赵怂',6,720,320);this.schedule('大牛',13,200,430);this.schedule('二牛',normal(this.w)?13.8:15,700,430);break;
-   case 'S6':add('flag',450,860).layer='front';for(let i=0;i<4;i++)add('lamp',90+i*225,650);this.schedule('阿豆',24,650,280);this.schedule('麻三',26,450,200,()=>({target:this.w.liveEnemies().find(e=>e.def.name==='堡垒钳臂')}));this.schedule('吴领队',30,450,-80);break;
+   case 'S6':this.schedule('阿豆',24,650,280);this.schedule('麻三',26,450,200,()=>({target:this.w.liveEnemies().find(e=>e.def.name==='堡垒钳臂')}));this.schedule('吴领队',30,450,-80);break;
    case 'S7':this.schedule('小铃',10,100,160);break;
   }
  }
@@ -112,7 +113,7 @@ export class FodderChapter {
  splash(x:number,y:number){this.w.fx.burst(x,y,14,100,[.6,.85,.9],.6);this.record('环境','splash',{x,y});}
  update(){const w=this.w,dt=w.dt,now=w.real;
   const shotSpeed=(n:number)=>normal(w)?n/w.enemyBulletSpeed:n;
-  this.bubbles=this.bubbles.filter(b=>this.retainBubble(b));this.maxBubbles=Math.max(this.maxBubbles,this.bubbles.length);this.maxEnemies=Math.max(this.maxEnemies,w.density.count(w.enemies));this.maxBullets=Math.max(this.maxBullets,w.bulletCount());
+  this.bubbles=this.bubbles.filter(b=>this.retainBubble(b));this.maxBubbles=Math.max(this.maxBubbles,this.bubbles.length);this.maxEnemies=Math.max(this.maxEnemies,w.density.count(w.enemies));if(!w.liveEnemies().some(e=>e.def.boss))this.maxBullets=Math.max(this.maxBullets,w.bulletCount());
   for(const a of this.actors){const e=a.e;if(e.dead||e.data.densityQueued||e.sealed>0||e.stunned>0)continue;const now=normal(w)?(e.data.fodderClock=(e.data.fodderClock??a.at)+dt):w.real;
    const move=(x:number,y:number,speed:number)=>{const dx=x-e.x,dy=y-e.y,d=Math.hypot(dx,dy),step=Math.min(d,speed*dt);if(d){e.x+=dx/d*step;e.y+=dy/d*step;}return d<=step+1;};
    if(a.name==='周网'){
@@ -127,7 +128,7 @@ export class FodderChapter {
    }else if(a.name==='老鸹'){
     const phase=(now-a.at)%5;e.data.peek=phase<1.8;e.invulnerable=!e.data.peek;e.alpha=e.data.peek?1:.3;e.data.glint=phase<.8;
     if(normal(w)&&phase<.8&&e.data.peekCount!==a.count){e.data.peekCount=a.count;const p=this.route.ship.scene;e.data.crowAngle=Math.atan2(p.y-e.y,p.x-e.x);w.laser(e.x,e.y,e.data.crowAngle,{warn:.8/w.difficulty.warn,duration:0,width:2,color:'amber'});}
-    if(a.count<3&&phase>=.8&&phase<1.8&&a.next<=now){a.count++;a.next=a.at+a.count*5+.8;const self=this,ship=this.route.ship,p=ship.scene;if(w.bulletCount()<60){const shot=w.shoot(e.x,e.y,normal(w)?e.data.crowAngle:Math.atan2(p.y-e.y,p.x-e.x),shotSpeed(normal(w)?240:300),{shape:'needle',color:'white',update(b){if(!ship.protected&&Math.abs(b.x-p.x)<=100+b.radius&&Math.abs(b.y-p.y)<=135+b.radius){ship.hit(4);self.bubble(a.name,'02',e);self.record(a.name,'shipShot',{damage:4,count:a.count});if(!e.data.shipHitSaid){e.data.shipHitSaid=true;self.reaction(a.name);}return false;}}});shot.data.fodder=1;}else w.density.skippedShots++;w.fx.burst(e.x,e.y,5,40,[2,2,2]);this.record(a.name,'coldShot');}
+    if(a.count<3&&phase>=.8&&phase<1.8&&a.next<=now){a.count++;a.next=a.at+a.count*5+.8;const self=this,ship=this.route.ship,p=ship.scene;if(w.bulletCount()<60&&volley(e,w,'aim',5)){const shot=w.shoot(e.x,e.y,normal(w)?e.data.crowAngle:Math.atan2(p.y-e.y,p.x-e.x),shotSpeed(normal(w)?240:300),{shape:'needle',color:'white',life:5,update(b){if(!ship.protected&&Math.abs(b.x-p.x)<=100+b.radius&&Math.abs(b.y-p.y)<=135+b.radius){ship.hit(4);self.bubble(a.name,'02',e);self.record(a.name,'shipShot',{damage:4,count:a.count});if(!e.data.shipHitSaid){e.data.shipHitSaid=true;self.reaction(a.name);}return false;}}});shot.data.fodder=1;}else w.density.skippedShots++;w.fx.burst(e.x,e.y,5,40,[2,2,2]);this.record(a.name,'coldShot');}
     if(a.count>=3&&phase>=1.8){w.remove(e);this.record(a.name,'left');}
    }else if(a.name==='小铃'){
     const x=940,y=1080;e.data.smoke=true;
@@ -137,28 +138,28 @@ export class FodderChapter {
     e.data.x0??=e.x;e.x=e.data.x0+Math.sin((now-a.at)*.9+(a.name==='二牛'?Math.PI:0))*70;
     if(a.state==='enter'&&now>=a.next){const p=w.player;a.count++;e.data.target='player';e.data.lockedX=p.x;e.data.lockedY=p.y;e.data.lockedAngle=Math.atan2(p.y-e.y,p.x-e.x);e.data.lockAt=now;e.charging=true;a.state='aim';a.next=now+.6;if(normal(w))w.laser(e.x,e.y,e.data.lockedAngle,{warn:.6/w.difficulty.warn,duration:0,width:2,color:'amber'});
      this.bubble(a.name,e.data.angry?'04':a.name==='大牛'&&p.x>=450?'06':'01',e);this.record(a.name,'aimLock',{target:e.data.target,x:p.x});}
-    else if(a.state==='aim'&&now>=a.next){if(e.charging&&w.bulletCount()+Math.max(1,Math.round(Math.round(2/w.difficulty.count)*w.difficulty.count))<=60){const self=this;const shots=w.fan(e.x,e.y+20,e.data.lockedAngle,Math.round(2/w.difficulty.count),normal(w)?.24:.12,shotSpeed(normal(w)?170:190),{shape:'rice',color:'amber',update(b){if(b.y>=e.data.lockedY){if(Math.abs(b.x-e.data.lockedX)>20||Math.hypot(w.player.x-e.data.lockedX,w.player.y-e.data.lockedY)>45){self.splash(b.x,b.y);self.bubble(a.name,'02',e);const other=self.actors.find(n=>n.e!==e&&!n.e.dead&&['大牛','二牛'].includes(n.name));if(other&&a.name==='大牛'){self.bubble(other.name,'03',other.e);}return false;}}}});e.data.firedAt=now;e.data.shots=shots.length;this.record(a.name,'fire');}e.charging=false;a.state='enter';a.next=now+(e.data.angry?2.5:3)-.6;}
+    else if(a.state==='aim'&&now>=a.next){if(e.charging&&volley(e,w,'aim',5)&&w.bulletCount()+Math.max(1,Math.round(Math.round(2/w.difficulty.count)*w.difficulty.count))<=60){const self=this;const shots=w.fan(e.x,e.y+20,e.data.lockedAngle,Math.round(2/w.difficulty.count),normal(w)?.24:.12,shotSpeed(normal(w)?170:190),{shape:'rice',color:'amber',life:5,update(b){if(b.y>=e.data.lockedY){if(Math.abs(b.x-e.data.lockedX)>20||Math.hypot(w.player.x-e.data.lockedX,w.player.y-e.data.lockedY)>45){self.splash(b.x,b.y);self.bubble(a.name,'02',e);const other=self.actors.find(n=>n.e!==e&&!n.e.dead&&['大牛','二牛'].includes(n.name));if(other&&a.name==='大牛'){self.bubble(other.name,'03',other.e);}return false;}}}});e.data.firedAt=now;e.data.shots=shots.length;this.record(a.name,'fire');}e.charging=false;a.state='enter';a.next=now+(e.data.angry?2.5:3)-.6;}
    }else if(a.name==='赵怂'){
-    if(a.state==='enter'){e.data.x0??=e.x;e.x=e.data.x0+Math.sin((now-a.at)*1.1)*90;if(now>=(e.data.nextShot??=now+(normal(w)?.8:1.5))){e.data.nextShot=now+2.6;if(w.bulletCount()<60)w.fan(e.x,e.y,w.aim(e.x,e.y),Math.round(3/.7),.4,shotSpeed(170),{shape:'rice',color:'cyan'});}}
+    if(a.state==='enter'){e.data.x0??=e.x;e.x=e.data.x0+Math.sin((now-a.at)*1.1)*90;if(now>=(e.data.nextShot??=now+(normal(w)?.8:1.5))){e.data.nextShot=now+2.6;if(w.bulletCount()<60&&volley(e,w,'aim',5))w.fan(e.x,e.y,w.aim(e.x,e.y),Math.round(3/.7),.4,shotSpeed(170),{shape:'rice',color:'cyan',life:5});}}
     if(a.state==='enter'&&e.hp/e.maxHp<=.6){a.state='flag';a.at=now;this.bubble(a.name,'02',e);this.record(a.name,'whiteFlag');}
     if(a.state==='flag'){if(Math.hypot(w.player.x-e.x,w.player.y-e.y)<250&&e.data.trickAt===undefined){e.data.trickAt=now+(normal(w)?.6:1);if(normal(w)){e.data.trickAngle=w.aim(e.x,e.y);w.fx.charge(e.x,e.y,20,.6,[1.4,.8,.3]);}}
-     if(e.data.trickAt!==undefined&&now>=e.data.trickAt){if(w.bulletCount()<60)w.shoot(e.x,e.y,normal(w)?e.data.trickAngle:w.aim(e.x,e.y),normal(w)?shotSpeed(220):200/w.difficulty.speed,{shape:'rice',color:'cyan'});else w.density.skippedShots++;this.bubble(a.name,'03',e);a.state='tricked';this.record(a.name,'trickShot');}
+     if(e.data.trickAt!==undefined&&now>=e.data.trickAt){if(w.bulletCount()<60&&volley(e,w,'aim',5))w.shoot(e.x,e.y,normal(w)?e.data.trickAngle:w.aim(e.x,e.y),normal(w)?shotSpeed(220):200/w.difficulty.speed,{shape:'rice',color:'cyan',life:5});else w.density.skippedShots++;this.bubble(a.name,'03',e);a.state='tricked';this.record(a.name,'trickShot');}
      else if(now-a.at>=3){a.state='leave';this.record(a.name,'peacefulExit');}}
     if(a.state==='tricked'||a.state==='leave'){move(e.x,0,200);if(e.y<=1)w.remove(e);}
    }else if(a.name==='吴领队'){
     if(e.data.releaseAt&&!e.data.fodderReleaseSaid){this.bubble(a.name,'02',e);e.data.fodderReleaseSaid=true;}
-    if(e.hpFrac<=.3&&a.rage===undefined){a.rage=now;e.data.rage=true;this.bubble(a.name,'03',e);const s=this.route.ship.scene;a.warnings=(normal(w)?[-250,0,250]:[-45,0,45]).map(d=>({x:s.x+d,y:s.y,started:now,dead:false}));this.route.ship.warnings.push(...a.warnings);this.record(a.name,'rageWarn');}
+    if(e.hpFrac<=.3&&a.rage===undefined&&volley(e,w,'area',6,1.2)){a.rage=now;e.data.rage=true;this.bubble(a.name,'03',e);const s=this.route.ship.scene;a.warnings=(normal(w)?[-250,0,250]:[-45,0,45]).map(d=>({x:s.x+d,y:s.y,started:now,dead:false}));this.route.ship.warnings.push(...a.warnings);this.record(a.name,'rageWarn');}
     if(a.rage!==undefined&&now-a.rage>=1.2&&a.state!=='rageDone'){a.state='rageDone';a.warnings!.forEach(v=>{v.dead=true;w.spawn(AirBomb,e.x,e.y,b=>{b.data.contentRole='hazard';b.data.noSupplementFire=true;b.data.landX=v.x;b.data.landY=v.y;});});this.record(a.name,'rageBombs',{count:3,warning:now-a.rage});}
    }else if(a.name==='麻三'){
     const t=a.target;if(t&&!t.dead&&!t.data.cargoOpen){const side=w.player.x-t.x;if(Math.abs(side)>70&&a.state!=='exposed'&&now>=(e.data.nextExposure??0)){a.state='exposed';a.exposedUntil=now+2;this.record(a.name,'exposed');}
      if(a.state==='exposed'&&now>=(a.exposedUntil??0)){a.state='cover';e.data.nextExposure=now+.8;}move(t.x+(a.state==='exposed'?Math.sign(side||1)*105:0),t.y-90,120);e.data.covered=a.state!=='exposed';
     }else {e.data.covered=false;move(e.x,320,120);}
     if(normal(w)&&!e.data.covered&&now>=a.next-.4&&e.data.tellAt!==a.next){a.next=Math.max(a.next,now+.4);e.data.tellAt=a.next;e.data.shotAngle=w.aim(e.x,e.y);w.fx.charge(e.x,e.y,18,.4,[1.4,.8,.3]);}
-    if(now>=a.next&&(!normal(w)||(!e.data.covered&&e.data.tellAt===a.next))){if(w.bulletCount()<60)w.shoot(e.x,e.y,normal(w)?e.data.shotAngle:w.aim(e.x,e.y),shotSpeed(normal(w)?170:190),{shape:'rice',color:'cyan'});else w.density.skippedShots++;if(e.data.covered)this.bubble(a.name,'02',e);a.next=now+3;}
+    if(now>=a.next&&(!normal(w)||(!e.data.covered&&e.data.tellAt===a.next))){if(w.bulletCount()<60&&volley(e,w,'aim',5))w.shoot(e.x,e.y,normal(w)?e.data.shotAngle:w.aim(e.x,e.y),shotSpeed(normal(w)?170:190),{shape:'rice',color:'cyan',life:5});else w.density.skippedShots++;if(e.data.covered)this.bubble(a.name,'02',e);a.next=now+3;}
    }else if(a.name==='阿豆'){
     if(a.state==='enter'&&e.data.fodderHit){a.state='flee';a.at=now;}
     if(normal(w)&&a.state==='enter'&&now>=a.next-.3&&e.data.tellAt!==a.next){e.data.tellAt=a.next;e.data.shotAngle=w.aim(e.x,e.y);w.fx.charge(e.x,e.y,18,.3,[1.4,.8,.3]);}
-    if(a.state==='enter'&&now>=a.next){if(w.bulletCount()<60)w.shoot(e.x,e.y,normal(w)?e.data.shotAngle:w.aim(e.x,e.y),shotSpeed(normal(w)?165:180),{shape:'rice',color:'cyan'});else w.density.skippedShots++;a.next=now+3;}
+    if(a.state==='enter'&&now>=a.next){if(w.bulletCount()<60&&volley(e,w,'aim',5))w.shoot(e.x,e.y,normal(w)?e.data.shotAngle:w.aim(e.x,e.y),shotSpeed(normal(w)?165:180),{shape:'rice',color:'cyan',life:5});else w.density.skippedShots++;a.next=now+3;}
     if(a.state==='flee'||now-a.at>=3){a.state='flee';if(move(e.x,20,200)){this.bubble(a.name,'03',e,true);this.reaction(a.name);this.record(a.name,'escaped');w.remove(e);}}
    }
   }
@@ -167,7 +168,6 @@ export class FodderChapter {
  environment(){const w=this.w,now=w.real,ship=this.route.ship,by=(key:string)=>this.decor.filter(s=>s.sprite===CH1_DECOR_ART[key].sprite&&!s.dead),stroke=w.brush.lastStroke;
   if(this.event==='S2'){for(const s of by('egret'))s.frame=Math.floor(now*8)%4;}
   else if(this.event==='S4'){if(stroke&&stroke.id!==this.stroke){this.stroke=stroke.id;if(stroke.form==='圈'||stroke.form==='封'){this.leafPause=now+1;this.record('环境','leavesStopped');}}if(now>this.leafPause)this.leafAngle+=w.dt*.5;for(const s of by('leaves'))s.rot=this.leafAngle;}
-  else if(this.event==='S6'){for(const s of by('flag')){s.x=ship.scene.x;s.y=ship.scene.y-85;s.sx=ship.warnings.some(v=>v.x>=ship.scene.x)?1:-1;s.frame=Math.floor(now*8)%4;}}
   for(const b of ship.bombLog)if(b.explodeAt!==undefined&&!(b as typeof b & {splash?:boolean}).splash){(b as typeof b & {splash?:boolean}).splash=true;this.splash(b.x,b.y);}
  }
  draw(){const w=this.w,r=w.r,rect=r.playCss,c=this.c;Object.assign(this.canvas.style,{left:`${rect.x}px`,top:`${rect.y}px`,width:`${rect.w}px`,height:`${rect.h}px`});c.clearRect(0,0,900,1200);

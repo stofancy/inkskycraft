@@ -1,3 +1,4 @@
+import { attackTurn } from './stage1_rhythm';
 // 第一章实体攻击：沿用敌人生命周期、受击和图集；所有玩家伤害统一进入 hit。
 import type { Enemy, EnemyDef } from '../game/enemy';
 import type { G, Co } from '../game/api';
@@ -19,6 +20,8 @@ function projectile(g:G,kind:string,x:number,y:number,hp:number,ai:(e:Enemy,g:G)
 }
 /** 预警状态存在机体上，中断、死亡时一起撤销。 */
 function* telegraph(e:Enemy,g:G,a:Attack,seconds:number):Generator<unknown,boolean,unknown>{
+ const life:Record<string,number>={hook:2,blade:3,mine:10,oil:3.5,rocket:5,line:5,slash:.3};
+ yield* attackTurn(e,g,a.kind==='hook'||a.kind==='slash'?'aim':'area',life[a.kind]??5,seconds);
  const serial=e.interruptSerial;e.data.ch1Attack=a;e.charging=true;
  yield* g.wait(seconds);const ok=e.charging&&serial===e.interruptSerial&&!e.dead;
  e.charging=false;delete e.data.ch1Attack;return ok;
@@ -96,7 +99,7 @@ export function closeSlash(e:Enemy,g:G):void{e.run((function*():Co{
 export function* kiteLine(e:Enemy,g:G):Co{
  const other=e.data.linePartner as Enemy;yield* e.moveTo(e.data.lineX,300,1.5);while(!other.dead&&other.y<290)yield;
  if(other.dead)return;const a:Attack={kind:'line',warn:true,partner:other};
- if(!(yield* telegraph(e,g,a,.6)))return;a.warn=false;e.data.ch1Attack=a;let t=0;
+ if(!(yield* telegraph(e,g,a,.8)))return;a.warn=false;e.data.ch1Attack=a;let t=0;
  while(t<5&&!other.dead){t+=g.dt;e.y=300+t*105;e.x=e.data.lineX+Math.sin(t*.8)*60;other.x=e.x+360;other.y=e.y;
   if(segDist2(g.player.x,g.player.y,e.x,e.y,other.x,other.y)<(6+(g as World).player.hitR)**2)hurt(g);yield;
  }delete e.data.ch1Attack;other.data.lineDone=true;

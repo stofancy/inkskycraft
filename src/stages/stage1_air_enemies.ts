@@ -1,3 +1,4 @@
+import { attackTurn, approach } from './stage1_rhythm';
 import { normal, speed, count, visible, charge } from './ordinary';
 import { oilAttack,rocketAttack } from './stage1_attacks';
 // 第一章空战新增敌人；友方目标只通过 EscortShip 获取。
@@ -38,18 +39,19 @@ export const AirBomb:EnemyDef={normalHp:[10,'F'],name:'轰炸机炸弹',sprite:C
  },onDeath(e){e.data.warning&&(e.data.warning.dead=true);if(e.data.bombLog)e.data.bombLog.destroyed=true;}};
 export const Bomber:EnemyDef={normalHp:[140,'M'],name:'浮石林轰炸机',sprite:CH1_AIR_ART.bomber.atlas,hp:170,score:900,
  *ai(e,g){const ship=(g as World).escort!,art=CH1_AIR_ART.bomber;
-  if(e.data.attack){e.data.noSupplementFire=true;e.data.manualFrame=true;const fly=new SpritePlayback(art.segments.flight);e.run((function*():Co{for(;;){fly.update(g.dt);e.frame=art.segments.flight.start+fly.frame;yield;}})());if(normal(g)){e.run(e.moveTo(e.x,310,2));yield* visible(e,g);yield* g.wait((e.data.attack==='oil'?.55:.5)+(e.data.attackDelay??0));}else yield* e.moveTo(e.x,310,2.5);for(let i=0;i<2;i++){if(e.data.attack==='oil')yield* oilAttack(e,g);else yield* rocketAttack(e,g);yield* g.wait(4);}yield* e.moveTo(e.x<450?-180:1080,200,2);g.remove(e);return;}e.data.noSupplementFire=true;e.data.manualFrame=true;e.vy=90;
+  if(e.data.attack){e.data.noSupplementFire=true;e.data.manualFrame=true;const fly=new SpritePlayback(art.segments.flight);e.run((function*():Co{for(;;){fly.update(g.dt);e.frame=art.segments.flight.start+fly.frame;yield;}})());if(normal(g)){e.run(approach(e,g,e.x,310,2));yield* visible(e,g);yield* g.wait((e.data.attack==='oil'?.55:.5)+(e.data.attackDelay??0));}else yield* e.moveTo(e.x,310,2.5);for(let i=0;i<2;i++){if((e.data.attack==='oil')===(i===0))yield* oilAttack(e,g);else yield* rocketAttack(e,g);yield* e.moveBy((e.data.variant??0)%2?-100:100,50,1);yield* g.wait(3);}yield* e.moveTo(e.x<450?-180:1080,200,2);g.remove(e);return;}e.data.noSupplementFire=true;e.data.manualFrame=true;e.vy=90;
   if(normal(g)){
+   e.stop();e.run(approach(e,g,e.x,360,2));
    const flight=new SpritePlayback(art.segments.flight);e.run((function*():Co{for(;;){flight.update(g.dt);if(!e.data.bayOpen)e.frame=art.segments.flight.start+flight.frame;yield;}})());
    yield* visible(e,g);yield* g.wait(.3+(e.data.attackDelay??0));
    for(let round=0;round<2;round++){
-    e.data.bayOpen=true;e.data.bayOpenedAt=g.real;yield* charge(e,g,.6);
+    yield* attackTurn(e,g,'area',6,.9);e.data.bayOpen=true;e.data.bayOpenedAt=g.real;yield* charge(e,g,.6);
     const bombing=new SpritePlayback(art.segments.bombing,event=>{if(event.name!=='bombRelease')return;
      e.data.releaseAt=g.real;e.data.releaseFrame=art.segments.bombing.start+event.frame;g.sfx('bomber_release');ship.bomberReleases.push({frame:e.data.releaseFrame,opened:e.data.bayOpenedAt,at:g.real});
      const x=ship.scene.x,y=ship.scene.y;
      for(const dx of [0,round%2?-260:260])g.spawn(AirBomb,e.x+dx*.2,e.y+30,b=>{b.data.contentRole='hazard';b.data.noSupplementFire=true;b.data.landX=Math.max(60,Math.min(840,x+dx));b.data.landY=y;});
     });
-    let t=0;while(t<1.4){e.frame=art.segments.bombing.start+bombing.frame;bombing.update(g.dt);t+=g.dt;yield;}e.data.bayOpen=false;yield* g.wait(2.2);
+    let t=0;while(t<1.4){e.frame=art.segments.bombing.start+bombing.frame;bombing.update(g.dt);t+=g.dt;yield;}e.data.bayOpen=false;yield* e.moveBy((round+(e.data.variant??0))%2?-120:120,40,1);yield* g.wait(1.2);
    }
    yield* e.moveTo(e.x<450?-180:1080,250,2);g.remove(e);return;
   }
