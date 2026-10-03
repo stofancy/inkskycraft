@@ -482,7 +482,6 @@ function* paper(e:Enemy,g:G):Co {
       sl.active=true;r.stampProgress=0;r.stampH=1;r.stampHp=1;pick();st='fly';t0=clock(g);
       sl.x=fx0=clamp(Math.random()*780+60,60,840);sl.y=fy0=Math.random()*200+520;
       hit=g.spawn({sprite:'pd-register',hp:STAMP_HP,radius:70,hitPriority:70,score:0,noCollide:true},sl.x,sl.y-60);hit.alpha=.02;hit.data.contentRole='prop';hit.data.copperPart=true;hit.data.noSupplementFire=true;e.data.stampHit=hit;
-      d?.short('PD.seal.start','纸龙','大印落下。划掉清单上的条目，或者用执笔圈住大印把它封碎。');
      }
     }else{
      const ts=clock(g)-t0,at=pos(tgt);

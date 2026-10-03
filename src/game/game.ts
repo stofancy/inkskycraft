@@ -16,8 +16,9 @@ import { TALENTS } from './progression';
 import { filterSkills } from './skills';
 import { filterBrushForms } from './brush-shape';
 import type { TestRunOptions } from './test-options';
+import { ChapterCrawl } from '../ui/chapter-crawl';
 
-type State = 'loading' | 'title' | 'playing' | 'paused' | 'continue' | 'results' | 'gameover' | 'ending' | 'growth';
+type State = 'loading' | 'title' | 'crawl' | 'playing' | 'paused' | 'continue' | 'results' | 'gameover' | 'ending' | 'growth';
 
 export interface DebugOpts {
   stage?: number;
@@ -43,6 +44,8 @@ export class Game implements UIEvents {
   private restMode: 'talent' | 'inkScore' = 'talent';
   private cheatDeadline=0;
   private cheatBuffer='';
+  private crawl: ChapterCrawl | null = null;
+  private skipCrawl = false;
   private acceptCheat(code:string):void {
     if(this.state!=='playing'||performance.now()>this.cheatDeadline)return;
     const token:Record<string,string>={ArrowUp:'U',ArrowDown:'D',ArrowLeft:'L',ArrowRight:'R',KeyB:'B',KeyA:'A'};
@@ -61,7 +64,7 @@ export class Game implements UIEvents {
     public settings: Settings, hiScore: number, readonly debug: DebugOpts = {},
   ) {
     this.world = new World(r, audio, ui, input);
-    input.onKey=code=>this.acceptCheat(code);
+    input.onKey=code=>{if(this.state==='crawl')this.skipCrawl=true;else this.acceptCheat(code);};
     this.world.hiScore = hiScore;
     this.world.setDifficulty(loadDifficulty(debug.diff));
     this.world.onGameOver = () => this.toContinue();
@@ -170,7 +173,6 @@ export class Game implements UIEvents {
     if (!talents.length) { w.progression.pendingChoices = Math.max(0, w.progression.pendingChoices - 1); w.restLabel = ''; w.ui.popup(w.player.x, w.player.y - 70, '天赋已学全', 'info'); return; }
     if (this.debug.bot) {if(talents[0])w.progression.choose(talents[0].id);w.restLabel='';return;}
     this.restMode='talent';this.state='growth';
-    if(w.progression.talents.size===0)w.say('算盘','平静','三项挑一项，照着示意行动就会生效。',3);
     this.ui.screen('growth', {choiceTitle:`天赋 · ${label}`,choiceHint:'看图标和说明，选一项；之后按条件自动生效',choices:talents.map(t=>({id:t.id,name:t.name,description:t.description,detail:t.route,preview:t.preview,icon:t.icon}))});
   }
 
@@ -187,6 +189,7 @@ export class Game implements UIEvents {
   // ------------------------------------------------------------ 流程
 
   toTitle(): void {
+    this.crawl?.dispose();this.crawl=null;
     this.stageRequest++;
     this.testRun=null;
     this.state = 'title';
@@ -197,6 +200,7 @@ export class Game implements UIEvents {
   }
 
   async startStage(i: number, test?: TestRunOptions, interlude = false): Promise<void> {
+    this.crawl?.dispose();this.crawl=null;this.skipCrawl=false;
     const w = this.world;
     const def = test?.chapter===4 ? FINAL_TEST_STAGE : this.debug.stage === 0 && !test ? TEST_STAGE : this.stages[i];
     const request = ++this.stageRequest;
@@ -248,6 +252,11 @@ export class Game implements UIEvents {
       yield* wait(2);
       game.toResults(def);
     })());
+    // 正式开章先读旁白；测试、URL 直达/快进及 flow 自动操作沿用直接入口。
+    if(!test&&this.debug.stage===undefined&&!this.debug.skip&&!this.debug.bot){
+      this.crawl=new ChapterCrawl(def.index);
+      this.state='crawl';
+    }
   }
 
   private toResults(def: StageDef): void {
@@ -298,6 +307,16 @@ export class Game implements UIEvents {
     if(this.state==='playing'&&w.brush.active&&inp.down('brush')&&!w.dialoguePaused&&!w.bossCombat.inputLocked) this.audio.sfx('brush_loop',{vol:.5});
     else this.audio.stopSfx?.('brush_loop');
     switch (this.state) {
+      case 'crawl':
+        this.idle(dt);
+        if(this.crawl!.update(dt)||this.skipCrawl||inp.pressed('confirm')){
+          this.crawl!.dispose();this.crawl=null;this.skipCrawl=false;
+          this.input.blockBrushUntilRelease();
+          inp.consume('pause');inp.consume('confirm');inp.consume('back');
+          this.cheatDeadline=performance.now()+10000;
+          this.state='playing';
+        }
+        break;
       case 'playing':
         if (inp.pressed('pause')&&!w.dialoguePaused) {
           this.state = 'paused';this.audio.stopSfx?.('brush_loop');
