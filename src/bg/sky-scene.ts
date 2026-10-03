@@ -34,38 +34,27 @@ export function drawFalls(r: Renderer, name: string, x: number, y: number, sx: n
   });
 }
 
-// 纯景物，无碰撞。远石更小、更淡、更慢；同组两块之间保留垂下的墨线铁链。
+// 远景每屏约八块，中景约五组；近景地标由 stage1-scroll 提交。
+// 浮石、链索与流水都收在两岸，中央 x=270..630 留给淡云。
 export function drawSkyStones(r: Renderer, scroll: number, time: number): void {
   const layers = [
-    { ids: ['sky_rock-small-shard', 'sky_rock-small-root'], speed: .10, alpha: .24, scale: .85, period: 440 },
-    { ids: ['sky_rock-medium-pine', 'sky_rock-medium-vine'], speed: .24, alpha: .48, scale: .90, period: 630 },
-    { ids: ['sky_rock-large-pine', 'sky_rock-large-root'], speed: .46, alpha: .90, scale: 1.10, period: 880 },
+    { ids: ['sky_rock-small-shard', 'sky_rock-small-root'], speed: .10, alpha: .22, scale: .85, period: 300 },
+    { ids: ['sky_rock-medium-pine', 'sky_rock-medium-vine'], speed: .24, alpha: .46, scale: .80, period: 480 },
   ];
-  // 先画全部投在云海上的淡影（光自右上来，影落左下），再画石，避免大石的影盖住远石。
-  for (const shadowPass of [true, false]) layers.forEach((l, depth) => {
-    if (shadowPass && depth === 0) return;
+  layers.forEach((l, depth) => {
     const drift = scroll * l.speed;
-    const first = Math.floor((drift + depth * 130 - 1500) / l.period);
-    const last = Math.ceil((drift + depth * 130 + 380) / l.period);
-    for (let row = first; row <= last; row++) {
-      const side = ((row % 2) + 2) % 2;
-      const x = side ? 680 : 120;
-      const y = drift - row * l.period + depth * 130;
-      const bob = Math.sin(time * (.055 + depth * .025) + row * 2.7) * (4 + depth * 3);
-      const a = { x: x + Math.sin(row * 7.3) * 34, y: y + bob };
-      const b = { x: x + (side ? -145 : 165), y: y + 95 + bob };
-      if (shadowPass) {
-        for (const [i, p] of [a, b].entries()) r.ground.add(l.ids[i], {
-          x: p.x - 38 * l.scale, y: p.y + 46 * l.scale, sx: l.scale * 1.06, sy: l.scale * 1.06,
-          r: .35, g: .45, b: .65, alpha: l.alpha * .32,
-        });
-        continue;
-      }
-      r.ground.add('sky_chain-gate', { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 - 22 * l.scale,
-        sx: (b.x - a.x) / 620, sy: .42 * l.scale, rot: Math.atan((b.y - a.y) / (b.x - a.x)), alpha: l.alpha * .7 });
-      for (const [i, p] of [a, b].entries()) {
-        r.ground.add(l.ids[i], { ...p, sx: l.scale, sy: l.scale, alpha: l.alpha });
-        if (depth === 2) drawFalls(r, l.ids[i].slice(4), p.x, p.y, l.scale, l.scale, l.alpha, time, row * 2 + i);
+    for (let row = Math.floor((drift - 1500) / l.period); row <= Math.ceil((drift + 250) / l.period); row++) {
+      for (let side = 0; side < 2; side++) {
+        const seed = row * 2 + side;
+        const x = (side ? 790 : 110) + Math.sin(seed * 4.1) * 22;
+        const y = drift - row * l.period + side * l.period * .46 + Math.sin(time * .18 + seed) * 4;
+        const id = l.ids[((seed % 2) + 2) % 2];
+        r.ground.add(id, { x, y, sx: l.scale, sy: l.scale, alpha: l.alpha });
+        if (depth === 1) {
+          const dx = side ? -62 : 62;
+          r.ground.add('sky_chain-gate', { x: x + dx / 2, y: y + 38, sx: dx / 620, sy: .32, rot: .45, alpha: .22 });
+          r.ground.add('sky_rock-small-root', { x: x + dx, y: y + 88, sx: .78, sy: .78, alpha: .34 });
+        }
       }
     }
   });

@@ -23,10 +23,9 @@ void main() {
   float d = (base.x - xc) / wr;
   float river = exp(-d * d * 1.5);
   float fy = ry + uTime * 20.0;
-  vec2 fq = vec2(d * 2.2, fy * .0105);
-  fq += (vec2(fbm(fq * 1.6 + uTime * .03, 3), fbm(fq * 1.6 + 9.0, 3)) - .5) * 1.5;
-  float ridge = 1.0 - abs(2.0 * fbm(fq * vec2(1.7, .8) + 3.0, 4) - 1.0);
-  float streak = smoothstep(.62, .92, ridge);
+  // 宽缓的云雾沿航路流动，避免高频山脊白纹形成大理石状硬边。
+  vec2 fq = vec2(d * .65, fy * .0025);
+  float streak = smoothstep(.20, .78, fbm(fq + vec2(uTime * .015, 3.0), 3));
 
   vec3 col = mix(hexc(0xb3c6e0), hexc(0xdde6f1), fbm(base * .0022 + vec2(0., uScroll * .0002), 3));
   vec3 lit = hexc(0xfff7ea);
@@ -59,8 +58,8 @@ void main() {
     if (l == 0) {
       // 云河铺在远层之上、中近层之下
       vec3 bed = mix(hexc(0x93abd2), hexc(0xbccde6), .5 + .5 * sin(fy * .004));
-      col = mix(col, bed, river * .85);
-      col = mix(col, mix(hexc(0xffffff), gold, sunk * .35), streak * river * .8);
+      col = mix(col, bed, river * .35);
+      col = mix(col, mix(hexc(0xffffff), gold, sunk * .35), streak * river * .18);
     }
   }
   col = mix(col, col * vec3(1.05, 1.0, .92), sunk * .4);
