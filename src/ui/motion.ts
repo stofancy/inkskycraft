@@ -1,4 +1,4 @@
-/** 界面动效真源：曲线、幅度、错峰、生命周期与并发动效预算。见 studio/specs/motion.md。 */
+/** 界面动效真源：曲线、幅度、错峰、生命周期与并发动效预算。 */
 export const CURVES = {
   cubic: (t: number) => 1 - Math.pow(1 - t, 3),
   exponential: (t: number) => t >= 1 ? 1 : 1 - Math.pow(2, -10 * t),

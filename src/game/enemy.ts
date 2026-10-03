@@ -14,7 +14,7 @@ export type ExplosionSize = 's' | 'm' | 'l' | 'xl';
 export interface EnemyDef {
   /** 名字（Boss 血条显示用）。 */
   name?: string;
-  /** 精灵 id（见 DESIGN.md 4.B）。 */
+  /** 精灵 id。 */
   sprite: string;
   hp: number;
   /** 普通道中出生时的最终 HP；L 轻型、M 中型、F 固定。 */
