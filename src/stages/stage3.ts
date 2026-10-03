@@ -5,6 +5,9 @@ import { STAGE3_EXTRA, LightningPillar } from './stage3_extra';
 import { waveCheckpoint } from './checkpoints';
 import { Kun,Peng } from './stage3_boss';
 import { Leigong } from './stage3_leigong';
+import type { World } from '../game/world';
+import { ChapterDialogue,director } from './dialogue1';
+import { CH3_LINES } from './dialogue3_data';
 const TYPES=[Drum,Lancer,Wingfort,Hornet,Kite,...STAGE3_EXTRA];
 const CHAPTERS=['穿过雷场','雷公','鲲','鹏'];
 // 原十二波各展开教学、交叉、场景互动、组合验收：四章各三组、每组四段。
@@ -23,15 +26,29 @@ function* encounter(g:G,index:number):Co{
  if(prop&&!prop.dead)g.remove(prop);
 }
 export const STAGE3:StageDef={index:3,title:'第三章 · 天门',subtitle:'闯过雷场，飞过天门',name:'雷场',bg:'stage3',music:'stage3',content:{baselineBodies:100,normalBodies:400,baselineTypes:5,enemyTypes:TYPES.map(t=>t.name!),encounters:48,chapters:CHAPTERS},
- *script(g:G){if(!g.seekingCheckpoint){g.card(this.title,this.subtitle);yield* g.wait(3);while(g.cardActive)yield;}let growthSlot=0;for(let c=0;c<4;c++){if(c===2)g.music('stage4',1);g.bg(0,c/3,5);g.bg(2,c/3,8);g.bg(4,1+c*.2,4);if(!g.seekingCheckpoint){g.caption('',CHAPTERS[c],2);g.caption('','',.01);}for(let i=0;i<12;i++){if(!g.checkpoint(waveCheckpoint(c*12+i)))continue;g.scrollSpeed([80,80,150,60][i%4],1.8);yield* encounter(g,c*12+i);if(growthSlot<3&&g.t>=[60,180,300][growthSlot])yield* g.growthChoice(++growthSlot);}if(!g.seekingCheckpoint)yield* g.waitClear(8);if(c===1 && g.checkpoint('LEIGONG')){g.scrollSpeed(25,2);yield* g.boss(Leigong,450,-180,{startPhase:g.testBossPhase('LEIGONG')});}if(!g.seekingCheckpoint)yield* g.milestone(CHAPTERS[c]);}
- if(g.checkpoint('KUN')){g.scrollSpeed(25,2);g.caption('','',.01);yield* g.boss(Kun,450,-420,{subtitle:'鲲鹏 · 天门守卫',transition:true,startPhase:g.testBossPhase('KUN')});}if(g.checkpoint('PENG'))yield* g.boss(Peng,450,250,{warning:false,startPhase:g.testBossPhase('PENG')});g.bg(0,0,4);g.bg(3,0,4);g.bg(4,.6,4);g.caption('','',.01);yield* g.wait(2);
+ *script(g:G){
+  const w=g as World;w.chapterDialogue=new ChapterDialogue(w,CH3_LINES);
+  if(!g.seekingCheckpoint){g.card(this.title,this.subtitle);yield* g.wait(3);while(g.cardActive)yield;yield* director(g).conversation('C3.open');}
+  let growthSlot=0;
+  for(let c=0;c<4;c++){
+   if(c===2)g.music('stage4',1);g.bg(0,c/3,5);g.bg(2,c/3,8);g.bg(4,1+c*.2,4);
+   if(!g.seekingCheckpoint){g.caption('',CHAPTERS[c],2);g.caption('','',.01);if(c===2)yield* director(g).conversation('C3.gateSeen');}
+   for(let i=0;i<12;i++){if(!g.checkpoint(waveCheckpoint(c*12+i)))continue;g.scrollSpeed([80,80,150,60][i%4],1.8);yield* encounter(g,c*12+i);if(growthSlot<3&&g.t>=[60,180,300][growthSlot])yield* g.growthChoice(++growthSlot);}
+   if(!g.seekingCheckpoint)yield* g.waitClear(8);
+   if(c===1 && g.checkpoint('LEIGONG')){g.scrollSpeed(25,2);yield* g.boss(Leigong,450,-180,{startPhase:g.testBossPhase('LEIGONG')});yield* director(g).conversation('C3.leigongDown');}
+   if(!g.seekingCheckpoint)yield* g.milestone(CHAPTERS[c]);
+  }
+  if(g.checkpoint('KUN')){g.scrollSpeed(25,2);g.caption('','',.01);yield* g.boss(Kun,450,-420,{subtitle:'鲲鹏 · 天门守卫',transition:true,startPhase:g.testBossPhase('KUN')});}
+  if(g.checkpoint('PENG')){yield* g.boss(Peng,450,250,{warning:false,startPhase:g.testBossPhase('PENG')});yield* director(g).conversation('C3.gateOpen');}
+  g.bg(0,0,4);g.bg(3,0,4);g.bg(4,.6,4);g.caption('','',.01);yield* g.wait(2);
  }};
 
 /** 独立第四章尚未重写；测试菜单复用现有鲲鹏终战，正式关卡注册不变。 */
 export const FINAL_TEST_STAGE: StageDef = { ...STAGE3, index:4, name:'鲲鹏终战', music:'stage4',
  *script(g:G){
+  const w=g as World;w.chapterDialogue=new ChapterDialogue(w,CH3_LINES);
   g.bg(0,1);g.bg(2,1);g.bg(4,1.6);
   if(g.checkpoint('KUN'))yield* g.boss(Kun,450,-420,{transition:true,startPhase:g.testBossPhase('KUN')});
-  if(g.checkpoint('PENG'))yield* g.boss(Peng,450,250,{warning:false,startPhase:g.testBossPhase('PENG')});
+  if(g.checkpoint('PENG')){yield* g.boss(Peng,450,250,{warning:false,startPhase:g.testBossPhase('PENG')});yield* director(g).conversation('C3.gateOpen');}
  }
 };

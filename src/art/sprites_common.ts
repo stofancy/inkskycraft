@@ -68,11 +68,22 @@ function glowMissileItem(ctx: CanvasRenderingContext2D): void {
 }
 
 // ============ 道具 ============
+// 场内墨锭沿用图集初始化烘焙；HUD 图标的黑底和方框留在界面里。
+function drawInkItem(ctx: CanvasRenderingContext2D): void {
+  ctx.save();ctx.rotate(Math.PI / 6);
+  const body = rectPath(-9, -15, 18, 30, 2);
+  litFill(ctx, body, [-9, -15, 18, 30], '#746650', '#302d2a', '#15110e', {seed:6,blots:2});
+  bevel(ctx, body, '#e0be78', '#302016', 1, 2);
+  inkOutline(ctx, body, 1.4, PAL.ink, 9);
+  ctx.strokeStyle='#b99a5d';ctx.lineWidth=1;ctx.stroke(rectPath(-6,-12,12,24,1));
+  glyph(ctx, '墨', 0, 0, 12, '#e9d6a6');
+  ctx.restore();
+}
 const ITEMS: SpriteDef[] = [
   { id: 'item_missile', w: 40, h: 40, radius: 16, draw: drawMissileItem, glow: glowMissileItem },
   { id: 'item_p', w: 36, h: 36, radius: 16, image: '/art/icons/items/power.png' },
   { id: 'item_bomb', w: 36, h: 36, radius: 16, image: '/art/icons/items/bomb.png' },
-  { id: 'item_ink', w: 36, h: 36, radius: 16, image: '/art/icons/items/inkstone.png' },
+  { id: 'item_ink', w: 36, h: 36, radius: 16, draw: drawInkItem },
   { id: 'item_medal', w: 36, h: 36, radius: 16, image: '/art/icons/items/gold-seal.png' },
 ];
 
