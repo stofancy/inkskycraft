@@ -1,54 +1,94 @@
 import type { Co, G } from '../game/api';
+import type { EnemyDef } from '../game/enemy';
 import type { StageDef } from './types';
-import { Drum,Hornet,Kite,Lancer,Wingfort } from './stage3_enemies';
-import { STAGE3_EXTRA, LightningPillar } from './stage3_extra';
-import { waveCheckpoint } from './checkpoints';
+import { Drum,Hornet,Lancer,Wingfort } from './stage3_enemies';
+import { ThunderRay,CloudSpider,WhaleCalf,JadeShuttle,LightningPillar } from './stage3_extra';
 import { Kun,Peng } from './stage3_boss';
 import { Leigong } from './stage3_leigong';
 import type { World } from '../game/world';
 import { ChapterDialogue,director } from './dialogue1';
 import { CH3_LINES } from './dialogue3_data';
-const TYPES=[Drum,Lancer,Wingfort,Hornet,Kite,...STAGE3_EXTRA];
-const CHAPTERS=['穿过雷场','雷公','鲲','鹏'];
-// 原十二波各展开教学、交叉、场景互动、组合验收：四章各三组、每组四段。
-export const STAGE3_ENCOUNTERS=Array.from({length:48},(_,i)=>({chapter:Math.floor(i/12),sourceWave:Math.floor(i/4),mode:i%4,bodies:i%12<4?9:8}));
-function* encounter(g:G,index:number):Co{
- const q=STAGE3_ENCOUNTERS[index],base=(q.chapter*3+Math.floor(index%12/4))%15;
- const n=Math.max(1,Math.round(q.bodies*g.difficulty.quantity));
- const prop=q.mode===2?g.spawn(LightningPillar,index%2?180:720,410,e=>{e.data.contentRole='prop';}):null;
- for(let i=0;i<n;i++){
-  const t=q.mode===0?base:q.mode===1?(base+i%2)%15:q.mode===2?(base+5+i%2)%15:(base+i%3+9)%15;
-  const x=q.mode===0?160+(i%5)*145:q.mode===1?(i%2?700:200)+(Math.floor(i/2)%3-1)*45:q.mode===2?(prop&&!prop.dead?450:200)+(i%3-1)*100:130+(i%5)*160;
-  g.spawn(TYPES[t],x,-45,e=>{e.data.contentRole='normal';e.data.encounter=index;e.data.oldX=g.player.x;e.data.weakLabel??='射击发亮部件';});
-  yield* g.wait((q.mode===0?.34:q.mode===1?.42:.5)*Math.min(1,1.25/g.difficulty.quantity));
- }
- yield* g.wait(5.7);
- if(prop&&!prop.dead)g.remove(prop);
+import { showTianmen,openTianmen } from './stage3_scene';
+export { openTianmen } from './stage3_scene';
+const TYPES=[Hornet,Lancer,Drum,Wingfort,ThunderRay,CloudSpider,WhaleCalf,JadeShuttle];
+export const STAGE3_ENCOUNTERS=[
+ {id:'C3.ENTRY',label:'雷场入口',seconds:45},
+ {id:'C3.DRUMS',label:'雷鼓阵',seconds:45},
+ {id:'LEIGONG',label:'雷公',seconds:75},
+ {id:'C3.GATE',label:'云开见门',seconds:25},
+ {id:'KUN',label:'巨鲲',seconds:60},
+ {id:'PENG',label:'展鹏',seconds:50},
+ {id:'C3.LETTERING',label:'题字开门',seconds:60},
+];
+type Cue=readonly [seconds:number,type:EnemyDef,x:number,y?:number];
+// 每次只有一组占区和一组瞄准；组合首招相隔 0.6 秒，数量不乘旧刷怪倍率。
+const ENTRY:Cue[]=[
+ [0,Hornet,310],[3,Hornet,590],[6,Lancer,260],[9,Lancer,640],
+ [12,LightningPillar,280,700],[13,Hornet,650],[16,Lancer,380],
+ [20,Hornet,240],[20.15,Lancer,660],[24,Hornet,660],[24.15,Lancer,240],
+ [28,Hornet,340],[28.15,Lancer,590],[32,Hornet,590],[32.15,Lancer,310],
+ [36,Hornet,270],[36.15,Lancer,630],[40,Hornet,620],[40.15,Lancer,280],
+];
+const DRUMS:Cue[]=[
+ [0,Drum,300],[0,LightningPillar,300,700],[1.15,Hornet,650],[4.15,Hornet,570],
+ [8,ThunderRay,250],[13,CloudSpider,610],
+ [18,Drum,600],[18,LightningPillar,600,700],[19.15,Hornet,250],[22.15,Hornet,350],
+ [26,ThunderRay,240],[26.6,CloudSpider,630],
+ [32,Wingfort,450],[40,Hornet,250],[40.15,Lancer,650],
+];
+const GATE:Cue[]=[[8,WhaleCalf,330],[14,JadeShuttle,640],[19,WhaleCalf,610],[19.7,JadeShuttle,260]];
+function clearField(g:G):void{
+ for(const e of g.liveEnemies())if(!e.def.boss)g.remove(e);
+ g.clearBullets();
 }
-export const STAGE3:StageDef={index:3,title:'第三章 · 天门',subtitle:'闯过雷场，飞过天门',name:'雷场',bg:'stage3',music:'stage3',content:{baselineBodies:100,normalBodies:400,baselineTypes:5,enemyTypes:TYPES.map(t=>t.name!),encounters:48,chapters:CHAPTERS},
+function* runCues(g:G,cues:readonly Cue[],seconds:number,start=g.t):Co{
+ for(const [at,type,x,y=80] of cues){
+  while(g.t-start<at)yield;
+  if(type===LightningPillar)for(const e of g.liveEnemies())if(e.def===LightningPillar)g.remove(e);
+  g.spawn(type,x,y,e=>{e.data.contentRole=type===LightningPillar?'prop':'normal';e.data.noSupplementFire=true;});
+ }
+ while(g.t-start<seconds)yield;
+ clearField(g);
+}
+function init(g:G):void{const w=g as World;w.chapterDialogue=new ChapterDialogue(w,CH3_LINES);}
+export const STAGE3:StageDef={index:3,title:'第三章 · 天门',subtitle:'闯过雷场，飞过天门',name:'雷场',bg:'stage3',music:'stage3',content:{baselineBodies:100,normalBodies:[...ENTRY,...DRUMS,...GATE].filter(c=>c[1]!==LightningPillar).length,baselineTypes:5,enemyTypes:TYPES.map(t=>t.name!),encounters:7,chapters:STAGE3_ENCOUNTERS.map(s=>s.label)},
  *script(g:G){
-  const w=g as World;w.chapterDialogue=new ChapterDialogue(w,CH3_LINES);
+  init(g);
   if(!g.seekingCheckpoint){g.card(this.title,this.subtitle);yield* g.wait(3);while(g.cardActive)yield;yield* director(g).conversation('C3.open');}
-  let growthSlot=0;
-  for(let c=0;c<4;c++){
-   if(c===2)g.music('stage4',1);g.bg(0,c/3,5);g.bg(2,c/3,8);g.bg(4,1+c*.2,4);
-   if(!g.seekingCheckpoint){g.caption('',CHAPTERS[c],2);g.caption('','',.01);if(c===2)yield* director(g).conversation('C3.gateSeen');}
-   for(let i=0;i<12;i++){if(!g.checkpoint(waveCheckpoint(c*12+i)))continue;g.scrollSpeed([80,80,150,60][i%4],1.8);yield* encounter(g,c*12+i);if(growthSlot<3&&g.t>=[60,180,300][growthSlot])yield* g.growthChoice(++growthSlot);}
-   if(!g.seekingCheckpoint)yield* g.waitClear(8);
-   if(c===1 && g.checkpoint('LEIGONG')){g.scrollSpeed(25,2);yield* g.boss(Leigong,450,-180,{startPhase:g.testBossPhase('LEIGONG')});yield* director(g).conversation('C3.leigongDown');}
-   if(!g.seekingCheckpoint)yield* g.milestone(CHAPTERS[c]);
+  if(g.checkpoint('C3.ENTRY')){g.bg(2,0);g.scrollSpeed(80,1);yield* runCues(g,ENTRY,45);}
+  if(g.checkpoint('C3.DRUMS')){g.bg(2,.28,4);g.scrollSpeed(65,1);yield* runCues(g,DRUMS,45);}
+  if(g.checkpoint('LEIGONG')){
+   g.bg(2,.5,3);g.scrollSpeed(25,2);
+   yield* g.boss(Leigong,450,-180,{startPhase:g.testBossPhase('LEIGONG')});
+   yield* director(g).conversation('C3.leigongDown');clearField(g);
   }
-  if(g.checkpoint('KUN')){g.scrollSpeed(25,2);g.caption('','',.01);yield* g.boss(Kun,450,-420,{subtitle:'鲲鹏 · 天门守卫',transition:true,startPhase:g.testBossPhase('KUN')});}
-  if(g.checkpoint('PENG')){yield* g.boss(Peng,450,250,{warning:false,startPhase:g.testBossPhase('PENG')});yield* director(g).conversation('C3.gateOpen');}
+  if(g.checkpoint('C3.GATE')){
+   g.music('stage4',1);g.bg(2,1,6);g.scrollSpeed(35,2);
+   const start=g.t,gate=showTianmen(g);gate.alpha=0;gate.y=270;
+   for(const x of [340,450,560]){const stone=(g as World).items.spawn('ink',x,520);stone.spriteOverride='c3_thunderstone';}
+   // 前八秒留给拾取；两秒云开时对白冻结画面和攻击。
+   while(g.t-start<2){const k=Math.min(1,(g.t-start)/2);gate.alpha=k;gate.y=270+k*40;yield;}
+   gate.alpha=1;gate.y=310;yield* director(g).conversation('C3.gateSeen');
+   yield* runCues(g,GATE,25,start);
+  }
+  if(g.checkpoint('KUN')){
+   showTianmen(g);g.bg(2,1);g.scrollSpeed(25,2);g.caption('','',.01);
+   yield* g.boss(Kun,450,-420,{subtitle:'鲲鹏 · 天门守卫',transition:true,startPhase:g.testBossPhase('KUN')});
+  }
+  if(g.checkpoint('PENG')){
+   showTianmen(g);g.bg(2,1);
+   // 展鹏与题字属于同一个 Boss 作用域，仍由鹏的击破/题字完成推进。
+   yield* g.boss(Peng,450,250,{warning:false,startPhase:g.testBossPhase('PENG')});
+   g.checkpoint('C3.LETTERING');openTianmen(g);yield* director(g).conversation('C3.gateOpen');
+  }
   g.bg(0,0,4);g.bg(3,0,4);g.bg(4,.6,4);g.caption('','',.01);yield* g.wait(2);
  }};
 
-/** 独立第四章尚未重写；测试菜单复用现有鲲鹏终战，正式关卡注册不变。 */
+/** 独立终战入口也复用同一座门与同一开门函数。 */
 export const FINAL_TEST_STAGE: StageDef = { ...STAGE3, index:4, name:'鲲鹏终战', music:'stage4',
  *script(g:G){
-  const w=g as World;w.chapterDialogue=new ChapterDialogue(w,CH3_LINES);
-  g.bg(0,1);g.bg(2,1);g.bg(4,1.6);
+  init(g);g.bg(0,1);g.bg(2,1);g.bg(4,1.6);showTianmen(g);
   if(g.checkpoint('KUN'))yield* g.boss(Kun,450,-420,{transition:true,startPhase:g.testBossPhase('KUN')});
-  if(g.checkpoint('PENG')){yield* g.boss(Peng,450,250,{warning:false,startPhase:g.testBossPhase('PENG')});yield* director(g).conversation('C3.gateOpen');}
+  if(g.checkpoint('PENG')){yield* g.boss(Peng,450,250,{warning:false,startPhase:g.testBossPhase('PENG')});openTianmen(g);yield* director(g).conversation('C3.gateOpen');}
  }
 };

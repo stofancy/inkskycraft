@@ -1,16 +1,55 @@
 import type { Co } from '../game/api';
 import type { EnemyDef } from '../game/enemy';
-import { ordinary, aim, leave, PI, clamp } from './stage3_enemies';
-export const CloudSail=ordinary('cloudsail','e_cloudsail',75,function*(e,g){e.data.weakWeapon='blue';yield* e.moveTo(e.x,280,1.5);for(let k=0;k<3;k++){g.fx.push(e.x,e.y,120*(e.x<450?1:-1),0,240);for(const n of g.liveEnemies())if(n!==e&&n.data.contentRole==='normal'&&Math.abs(n.x-e.x)<210){n.vx+=(e.x<450?1:-1)*60;n.data.windSide=e.x<450?1:-1;}g.shoot(e.x,e.y,PI/2,90,{color:'cyan',shape:'petal'});yield* e.moveBy(e.x<450?90:-90,30,1.5/g.difficulty.aggression);}yield* leave(e,g);});
-export const SwordCrane=ordinary('swordcrane','e_swordcrane',20,function*(e,g){e.data.weakWeapon='red';yield* e.moveTo(e.x,170,1);for(let k=0;k<2;k++){const target=g.aimTarget(e.x,e.y,true);const x=clamp(target===g.player?(k?900-target.x:target.x):target.x),y=target===g.player?440+k*130:target.y;g.fx.charge(x,y,25,1,[1,.3,.2]);yield* g.wait(1);yield* e.moveTo(x,y,.7);}e.vel(PI/2,230);});
-export const ThunderRay=ordinary('thunderray','e_thunderray',90,function*(e,g){e.data.weakWeapon='blue';e.data.weakLabel='流 · 断蓄雷脊';yield* e.moveTo(e.x,250,1.5);for(let k=0;k<3;k++){g.fx.charge(e.x,e.y,70,1,[.2,1,1]);yield* g.wait(1);g.laser(e.x,e.y,PI/2,{warn:1,duration:.4,width:8,color:'cyan',follow:e});yield* g.wait(2/g.difficulty.aggression);}yield* leave(e,g);});
-export const MagnetRing=ordinary('magnetring','e_magnetring',70,function*(e,g){e.data.weakWeapon='purple';yield* e.moveTo(e.x,260,1.5);for(let k=0;k<3;k++){e.data.bodyPhase='吸弹';g.fx.charge(e.x,e.y,90,1,[1,.5,1]);for(let j=0;j<3;j++){const a=j*PI*2/3;g.shoot(e.x+Math.cos(a)*95,e.y+Math.sin(a)*95,a+PI,80,{color:'magenta',shape:'orb',life:4,update:b=>{if(Math.hypot(b.x-e.x,b.y-e.y)<22){b.angle=PI/2;b.speed=105;b.data.released=1;}if(!b.data.released)b.angle=Math.atan2(e.y-b.y,e.x-b.x);}});}yield* g.wait(1);e.data.bodyPhase='释弹';g.fan(e.x,e.y,PI/2,3,1.1,105,{color:'magenta',shape:'orb'});yield* e.moveBy(k%2?100:-100,30,1.4/g.difficulty.aggression);}yield* leave(e,g);});
-const End:EnemyDef={sprite:'s3_node',hp:18,noCollide:true,score:150};
-export const CloudSpider=ordinary('cloudspider','e_cloudspider',80,function*(e,g){e.data.weakWeapon='purple';yield* e.moveTo(e.x,230,1.5);const ns=[-90,90].map(x=>g.attach(e,End,[x,60]));ns.forEach(n=>{n.data.weakWeapon='purple';n.data.linkTo=e.id;n.data.contentRole='part';});for(let k=0;k<3;k++){if(ns.every(n=>!n.dead))g.laser(ns[0].x,ns[0].y,0,{length:180,warn:1,duration:1,width:7,color:'magenta',follow:ns[0]});yield* g.wait(2.4/g.difficulty.aggression);}yield* leave(e,g);});
-export const WhaleCalf=ordinary('whalecalf','e_whalecalf',95,function*(e,g){e.data.weakWeapon='blue';yield* e.moveTo(e.x,280,1.8);for(let k=0;k<3;k++){e.data.bodyPhase='吸';g.fx.charge(e.x,e.y+20,100,1,[.2,1,1]);yield* g.wait(1);e.data.bodyPhase='吐';g.shoot(e.x,e.y+25,aim(e,g),120,{color:'cyan',shape:'big'});yield* g.wait(1.9/g.difficulty.aggression);}yield* leave(e,g);});
-export const JadeShuttle=ordinary('jadeshuttle','e_jadeshuttle',18,function*(e,g){yield* e.moveTo(e.x,220,1);const target=g.aimTarget(e.x,e.y,true),x=clamp(target.x),y=target===g.player?500:target.y;g.fx.charge(x,y,24,1,[.2,1,1]);yield* g.wait(1);yield* e.moveTo(x,y,.8);g.fx.charge(e.x,e.y,22,1,[.2,1,1]);yield* g.wait(1);yield* e.moveTo(900-x,220,.8);e.vel(-PI/2,210);});
-export const Balance=ordinary('balance','e_balance',200,function*(e,g){e.data.weakWeapon='red';yield* e.moveTo(e.x,240,2);for(let k=0;k<3;k++){e.angle=(k%2?1:-1)*.18;const x=e.x+(k%2?95:-95);g.fx.charge(x,e.y+60,30,1,[1,.6,.2]);yield* g.wait(1);g.laser(x,e.y+60,PI/2,{warn:1,duration:.7,width:12,color:'amber'});yield* g.wait(2/g.difficulty.aggression);}yield* leave(e,g);});
-export const Lawblade=ordinary('lawblade','e_lawblade',22,function*(e,g){e.data.weakWeapon='purple';yield* e.moveTo(e.x,230,1);for(let k=0;k<2;k++){const target=g.aimTarget(e.x,e.y,true),old=clamp(target.x),y=target===g.player?570:target.y;g.fx.charge(old,y,35,1,[1,.3,.3]);yield* g.wait(1);yield* e.moveTo(old,y,.7);g.ring(e.x,e.y,4,70,{color:'magenta',shape:'orb'});yield* e.moveTo(clamp(old+180*(k?1:-1)),280,.8);}yield* leave(e,g);});
-export const Sunwheel=ordinary('sunwheel','e_sunwheel',90,function*(e,g){e.data.weakWeapon='blue';yield* e.moveTo(e.x<450?110:790,300,1.5);for(let k=0;k<3;k++){e.data.bodyPhase='停轮核心';g.fx.charge(e.x,e.y,45,1,[1,.8,.2]);yield* g.wait(1);e.data.bodyPhase='滚轮';g.laser(e.x,e.y,PI/2+(e.x<450?-.18:.18),{warn:1,duration:.6,width:7,color:'amber',follow:e});yield* e.moveBy(0,65,1.3/g.difficulty.aggression);}yield* leave(e,g);});
-export const STAGE3_EXTRA=[CloudSail,SwordCrane,ThunderRay,MagnetRing,CloudSpider,WhaleCalf,JadeShuttle,Balance,Lawblade,Sunwheel];
-export const LightningPillar:EnemyDef={name:'引雷柱',sprite:'s3_pillar',hp:75,noCollide:true,score:400,drops:'ink',*ai(e,g){e.data.contentRole='prop';e.data.weakWeapon='blue';e.data.weakLabel='流 · 靠近引雷后离开';for(let k=0;k<4;k++){yield* g.wait(1);if(Math.abs(g.player.x-e.x)<100){g.fx.charge(e.x,e.y,65,1,[.2,1,1]);yield* g.wait(1);if(e.dead)return;g.laser(e.x,0,PI/2,{warn:1,duration:.2,width:14,color:'cyan'});for(const n of g.liveEnemies())if(n.data.bodyPhase==='fin'&&Math.abs(n.x-e.x)<160)g.damage(n,180,n.x,n.y,false,'ink');yield* g.wait(2/g.difficulty.aggression);}}g.remove(e);}};
+import { ordinary, leave, PI, clamp } from './stage3_enemies';
+import { charge, visible } from './ordinary';
+import { lockLine } from './stage3_scene';
+
+export const ThunderRay=ordinary('thunderray','e_thunderray',90,function*(e,g){
+ e.data.weakWeapon='blue';e.vel(PI/2,190);yield* visible(e,g);e.stop();
+ e.run(e.moveTo(e.x,270,.8));e.charging=true;e.data.bodyPhase='蓄雷';
+ g.laser(e.x,e.y,PI/2,{warn:1/g.difficulty.warn,duration:.4,width:8,color:'cyan',follow:e});
+ yield* g.wait(1.4);e.charging=false;e.data.bodyPhase='露背';e.data.weakLabel='收雷露背，趁现在打';
+ yield* g.wait(2);yield* leave(e,g);
+});
+const End:EnemyDef={sprite:'c3_web-end',hp:18,normalHp:[18,'L'],noCollide:true,score:150};
+export const CloudSpider=ordinary('cloudspider','e_cloudspider',80,function*(e,g){
+ e.data.weakWeapon='purple';e.vel(PI/2,190);yield* visible(e,g);e.stop();
+ const ns=[-90,90].map(x=>g.attach(e,End,[x,45]));
+ ns.forEach(n=>{n.data.weakWeapon='purple';n.data.linkTo=e.id;n.data.contentRole='part';});
+ e.run(e.moveTo(e.x,390,.8));
+ const web=g.laser(ns[0].x,ns[0].y,0,{length:180,warn:1/g.difficulty.warn,duration:1,width:7,color:'magenta',follow:ns[0]});
+ try {for(let t=0;t<2;t+=g.dt){if(ns.some(n=>n.dead)){web.kill();break;}yield;}}
+ finally {web.kill();}
+ yield* leave(e,g);
+});
+export const WhaleCalf=ordinary('whalecalf','e_whalecalf',95,function*(e,g){
+ e.data.weakWeapon='blue';e.vel(PI/2,190);yield* visible(e,g);e.stop();e.run(e.moveTo(e.x,270,.8));
+ yield* g.wait(.2);const target={...g.aimTarget(e.x,e.y)};e.data.bodyPhase='吸气';
+ yield* charge(e,g,.8);e.charging=false;e.data.bodyPhase='吐';
+ g.shoot(e.x,e.y+25,Math.atan2(target.y-e.y-25,target.x-e.x),120,{color:'cyan',shape:'big'});
+ yield* g.wait(1.9);yield* leave(e,g);
+});
+export const JadeShuttle=ordinary('jadeshuttle','e_jadeshuttle',18,function*(e,g){
+ e.vel(PI/2,190);yield* visible(e,g);e.stop();
+ const origin={x:e.x,y:180},target=g.aimTarget(e.x,e.y),locked={x:clamp(target.x),y:Math.min(920,target.y)};
+ e.run(e.moveTo(origin.x,origin.y,.6));yield* lockLine(e,g,locked,.9);
+ yield* e.moveTo(locked.x,locked.y,.5,'linear');
+ yield* lockLine(e,g,origin,.8);yield* e.moveTo(origin.x,origin.y,.5,'linear');e.vel(-PI/2,210);
+});
+export const STAGE3_EXTRA=[ThunderRay,CloudSpider,WhaleCalf,JadeShuttle];
+
+export const LightningPillar:EnemyDef={name:'引雷柱',sprite:'s3_pillar',hp:60,normalHp:[60,'F'],noCollide:true,score:400,drops:'ink',*ai(e,g):Co{
+ e.hp=e.maxHp=60;e.data.contentRole='prop';e.data.weakWeapon='blue';e.data.weakLabel='靠近亮线后撤开，引雷击鼓';
+ while(!e.dead){
+  yield* g.until(()=>Math.hypot(g.player.x-e.x,g.player.y-e.y)<180);
+  e.charging=true;
+  // 光束锚在柱身向上打；摧毁柱子时引擎同步撤销预告及雷束。
+  const bolt=g.laser(e.x,e.y,-PI/2,{warn:1/g.difficulty.warn,duration:.25,width:18,color:'cyan',follow:e});
+  try {
+   yield* g.wait(1);if(e.dead)return;e.charging=false;g.bgFlash(.3);g.sfx('thunder');
+   for(const n of g.liveEnemies())if((n.def.sprite==='e_drum'||n.data.bodyPhase==='fin')&&n.y<e.y&&Math.abs(n.x-e.x)<n.radius*Math.abs(n.scaleX)+18)g.damage(n,180,n.x,n.y,false,'ink');
+   yield* g.wait(.25);
+  } finally {bolt.kill();e.charging=false;}
+  yield* g.wait(2);
+ }
+}};
