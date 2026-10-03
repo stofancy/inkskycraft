@@ -415,8 +415,12 @@ export class Player {
         r.air.add('player_missile', { x: s.x, y: s.y, rot: Math.atan2(s.vy, s.vx) + Math.PI / 2, glow: 1.5 });
         continue;
       }
-      const size = (w.skills.boosted ? 1.65 : 1) * (s.color === 'red' ? 5.2 : 4.2);
-      const c = s.color === 'red' ? [1.8,.38,.035] : s.color === 'blue' ? [.04,.85,.72] : [.65,.12,1.4];
+      if (s.color === 'red') {
+        r.shots.add('player_shot_red', { x: s.x, y: s.y, rot: Math.atan2(s.vy, s.vx) + Math.PI / 2, glow: 1.2 });
+        continue;
+      }
+      const size = (w.skills.boosted ? 1.65 : 1) * 4.2;
+      const c = s.color === 'blue' ? [.04,.85,.72] : [.65,.12,1.4];
       r.bullets.add(s.x, s.y, Math.atan2(s.vy,s.vx), size, 9, c[0], c[1], c[2], s.age, 1, .5, Math.hypot(s.vx,s.vy));
     }
     if (!this.alive) return;

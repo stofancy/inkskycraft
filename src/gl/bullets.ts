@@ -22,9 +22,7 @@ void main() {
   int sh = int(aB.x + 0.5) % 16;
   bool lng = sh == 1 || sh == 2 || sh == 5 || sh == 7 || sh == 8;
   float ext = (lng ? 3.4 : 3.0) * max(grow, 1.0);       // 四边形半径 = size * ext，留出光晕与符纹环
-  bool red = int(aB.x + 0.5) == 9 && aB.y > aB.z * 2.0 && aB.y > aB.w * 2.0;
-  // 朱弹尾焰向后延伸约一倍半弹身长度，包围框只扩展飞行轴。
-  vec2 unit = red ? vec2(mix(-11.0, 3.0, corner.x * 0.5 + 0.5), corner.y * 1.3) : corner * ext;
+  vec2 unit = corner * ext;
   vec2 local = unit * aA.w;
   float c = cos(aA.z), s = sin(aA.z);
   vec2 p = aA.xy + vec2(local.x * c - local.y * s, local.x * s + local.y * c);
@@ -56,30 +54,6 @@ void main() {
   vec2 p=vP/(enemy?vC.w:1.0);
   vec3 col=vB.yzw;
   if(!enemy && shape==9) {
-    if(col.r > col.g * 2.0 && col.r > col.b * 2.0) {
-      // 5.2 单位半径对应约 26×9 像素实体，尾焰约 44 像素；照参考图一，黄白亮芯占满弹身。
-      float back=clamp((-p.x-2.5)/8.5,0.0,1.0);
-      float width=.88*mix(.62,1.0,smoothstep(-2.5,.8,p.x));
-      float head=sqrt(max(0.0,1.0-pow(max(p.x-1.65,0.0)/.85,2.0)));
-      float rim=width*head;
-      float span=(1.0-smoothstep(2.3,2.6,p.x))*smoothstep(-2.6,-2.2,p.x);
-      float body=(1.0-smoothstep(rim-.22,rim+.12,abs(p.y)))*span;
-      float flicker=sin(p.x*2.4+vC.x*28.0)*.04*back;
-      float tailWidth=.6*pow(1.0-back,.8);
-      float tail=(1.0-smoothstep(max(0.0,tailWidth-.2),tailWidth+.12,abs(p.y+flicker)))
-        * pow(1.0-back,1.4)*(1.0-smoothstep(-2.5,-1.9,p.x));
-      // 外圈橙色软辉，让弹身边缘发光而不是硬边。
-      float glow=exp(-pow(max(abs(p.y)-rim,0.0)/.32,2.0))*span*.42;
-      float solid=max(body,tail);
-      float alpha=max(solid,glow)*vC.y;
-      vec3 shell=mix(vec3(.85,.2,.02),vec3(1.0,.5,.06),smoothstep(-4.0,1.5,p.x));
-      float coreWidth=mix(.3,.78,smoothstep(-2.4,1.0,p.x));
-      float core=exp(-pow(p.y/coreWidth,2.0)*1.2)
-        * smoothstep(-3.6,-1.2,p.x)*(1.0-smoothstep(2.2,2.6,p.x));
-      vec3 fc=mix(shell,vec3(1.0,.97,.8),clamp(core*1.1,0.0,1.0));
-      o=vec4((fc*solid+vec3(1.0,.45,.05)*glow*(1.0-solid))*vC.y+vec3(.35,.3,.15)*core*solid*vC.y,alpha);
-      return;
-    }
     // 短梭形亮芯与橙/青/紫软辉；alpha=0，在现有预乘混合中纯加色。
     vec2 q=vec2(p.x/2.4,p.y/.65);
     float body=exp(-dot(q,q)*2.4);
