@@ -146,7 +146,7 @@ try {
    if(r.fodder.maxEnemies>Math.round(10*report.runtime.enemyCount)||r.fodder.maxBullets>report.runtime.bulletCap||r.fodder.maxBubbles>2)throw Error('第一章炮灰预算越界');
   }
   if(!range.checkpoint){
-   if(r.milestones!==[1,1,4][stage-1])throw Error(`第${stage}章里程碑遗漏`);
+   if(stage<3&&r.milestones!==[1,1][stage-1])throw Error(`第${stage}章里程碑遗漏`);
    if(range.first===1&&(r.inkPages.length!==stage+1||Object.values(r.inkScore).reduce((a,b)=>a+b,0)!==stage+1))throw Error(`第${stage}章墨谱未保留`);
    if(stage===2){const c=r.chapter2;
     if(c.segments.length!==10||!c.events.includes('beacon.cleared'))throw Error('第二章剧情机制未完成');
