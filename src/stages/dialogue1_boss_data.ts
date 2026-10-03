@@ -1,4 +1,4 @@
-// 第一章台词：studio/dialogue/ch1-claude/lines.md 第四稿，按表内顺序。
+// 第一章台词：local-source/lines.md 第四稿，按表内顺序。
 import type { Line } from './dialogue1';
 export const BOSS_LINES:Line[]=[
  {"id":"CH1.B03.01","trigger":"B-5.1-聚形完成","speaker":"雷公","emotion":"calm","text":"拆了我的网，还打伤我的人。朱雀镖局？好，那就让你们见识见识我的纸龙。","memory":false,"pause":true},

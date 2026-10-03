@@ -1,6 +1,6 @@
 import { volley } from './stage1_rhythm';
 // 第一章大场面主体：空中堡垒。本体是场景图，4 座炮塔与 2 条钳臂是独立敌机；两条钳臂都断后开舱，雷石落下。
-// 分件坐标取自 studio/jobs/ART-14/layout.png，本体 1080x540 按 0.5 显示，下列偏移相对本体中心。
+// 分件坐标取自 local-source/layout.png，本体 1080x540 按 0.5 显示，下列偏移相对本体中心。
 import type { Co,G } from '../game/api';
 import type { Enemy,EnemyDef } from '../game/enemy';
 import type { Scenery } from '../game/scenery';

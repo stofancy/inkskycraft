@@ -1,4 +1,4 @@
-// 第三章台词，逐字对应 studio/dialogue/ch3-claude/lines.md。
+// 第三章台词，逐字对应 local-source/lines.md。
 import type { Line } from './dialogue1';
 export const CH3_LINES:Line[]=[
  {"id":"C3.S01.01","trigger":"C3.open","speaker":"墨鸢","emotion":"calm","text":"前面那片紫色的云，就是雷场了。云里一直在打雷，你们听。","memory":false,"pause":true,"identity":"认路的机械鸟"},

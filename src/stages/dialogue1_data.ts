@@ -1,4 +1,4 @@
-// 第一章台词：studio/dialogue/ch1-claude/lines.md 第四稿，按表内顺序。
+// 第一章台词：local-source/lines.md 第四稿，按表内顺序。
 import type { Line } from './dialogue1';
 export const CH1_LINES:Line[]=[
  {"id":"CH1.D01","trigger":"CH1.dispatch","speaker":"小满","emotion":"smug","text":"各位乡亲，坐稳啦！我是朱雀镖局的小满，这一路由我来护送大家去天门。云梭跟紧我，咱们出发！","memory":false,"pause":true,"identity":"朱雀镖局的镖师"},

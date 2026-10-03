@@ -1,4 +1,4 @@
-// 原文：studio/specs/story.md「每关开头的旁白滚屏」。
+// 原文：docs/story.md「每关开头的旁白滚屏」。
 const CHAPTERS = [
   {
     "title": "第一章 出镖",

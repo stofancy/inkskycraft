@@ -1,4 +1,4 @@
-// 第二章台词（2026-10-03 按 studio/specs/story.md 重写）。气泡键名是代码里的敌机种类，显示名见 CH2_NAME。
+// 第二章台词（2026-10-03 按 docs/story.md 重写）。气泡键名是代码里的敌机种类，显示名见 CH2_NAME。
 import type { Line } from './dialogue1';
 export const CH2_LINES:Line[]=[
  {id:"C2.S01.01",trigger:"C2.P1.riverNight",speaker:"小满",emotion:'alarmed',text:"这就是蜃海啊……雾好大，前面什么都看不清。",memory:false,pause:true,identity:"朱雀镖局的镖师"},

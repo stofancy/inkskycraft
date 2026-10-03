@@ -23,7 +23,7 @@ for (let i = 0; i < args.length; i++) {
 }
 options.jobs = Number(options.jobs);
 if (!Number.isInteger(options.jobs) || options.jobs < 1 || options.jobs > 8) throw new Error('--jobs 必须为 1..8');
-const cast = JSON.parse(await readFile(join(root, 'studio/assets/voice-cast.json'), 'utf8'));
+const cast = JSON.parse(await readFile(join(root, 'docs/assets/voice-cast.json'), 'utf8'));
 async function loadTS(file) {
   // Node 24 去除类型后读取数据导出，保留字符串和对象结构，不用正则拆台词。
   const source = await readFile(join(root, file), 'utf8');
@@ -44,7 +44,7 @@ for (const [key, cues] of Object.entries(fodder.FODDER_TEXT)) for (const [cue, t
   add({ id: `CH1.FODDER.${key}.${cue}`, speaker: cue === 'R' ? text[0] : fodder.FODDER_NAME[key], text: cue === 'R' ? text[1] : text, emotion: cue === 'R' ? 'calm' : 'alarmed' }, sources[3]);
 }
 for (const [key, cues] of Object.entries(ch2.CH2_BUBBLES)) for (const [cue, text] of Object.entries(cues)) add({ id: `CH2.BUBBLE.${key}.${cue}`, speaker: ch2.CH2_NAME[key], text, emotion: 'calm' }, sources[2]);
-for (const [id, line] of Object.entries(cast.combat)) add({ id, ...line }, 'studio/assets/voice-cast.json', 'combat');
+for (const [id, line] of Object.entries(cast.combat)) add({ id, ...line }, 'docs/assets/voice-cast.json', 'combat');
 const ids = new Set();
 for (const line of lines) { if (ids.has(line.id)) throw new Error(`重复 id：${line.id}`); ids.add(line.id); }
 if (options.role && !lines.some(l => l.speaker === options.role || cast.roles[l.speaker].alias === options.role)) throw new Error(`角色没有台词：${options.role}`);
@@ -58,11 +58,11 @@ if (options.samples) {
     samplePairs.push({ ...test, line });
   }
   lines.splice(0, lines.length, ...samplePairs.map(({ name, emotion, line }) => ({
-    ...line, id: `${name}-tuned`, emotion, sourceId: line.id, file: `studio/assets/voice-tests/${name}-tuned.ogg`,
+    ...line, id: `${name}-tuned`, emotion, sourceId: line.id, file: `.shots/voice-tests/${name}-tuned.ogg`,
   })));
   ids.clear(); for (const line of lines) ids.add(line.id);
 }
-const directory = join(root, options.samples ? 'studio/assets/voice-tests' : 'public/audio/voice/dialogue'), indexPath = join(directory, 'index.json');
+const directory = join(root, options.samples ? '.shots/voice-tests' : 'public/audio/voice/dialogue'), indexPath = join(directory, 'index.json');
 let index = { version: 1, lines: {} };
 try { index = JSON.parse(await readFile(indexPath, 'utf8')); } catch (e) { if (e.code !== 'ENOENT') throw e; }
 function recipe(line) {
@@ -105,7 +105,7 @@ if (options.samples) {
   for (const { name, label, line } of samplePairs) {
     const previous = original.lines[line.id];
     if (!previous || previous.text !== line.text || previous.voice !== cast.roles[line.speaker].voice) throw new Error(`试听旧版与当前台词/音色不符：${line.id}`);
-    const file = `studio/assets/voice-tests/${name}-current.ogg`;
+    const file = `.shots/voice-tests/${name}-current.ogg`;
     await copyFile(join(root, line.file), join(root, file));
     index.lines[`${name}-current`] = { ...previous, id: `${name}-current`, file, sourceId: line.id, label, variant: 'current' };
   }

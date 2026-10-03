@@ -1,5 +1,5 @@
 import { formation } from './stage1_rhythm';
-// 第一章杂鱼出场表：按事件和秒数出，每种杂鱼第一次出现时单独亮相（见 studio/specs/fodder-patterns.md）。
+// 第一章杂鱼出场表：按事件和秒数出，每种杂鱼第一次出现时单独亮相（见 docs/fodder-patterns.md）。
 import { normal } from './ordinary';
 import type { Co,G } from '../game/api';
 import { RouteHornet,RouteCrane,RouteKite,RouteTurtle,RouteScout,RouteShield,RouteInspector,LiftingArm } from './stage1_enemies';
