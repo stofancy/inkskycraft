@@ -13,21 +13,17 @@ interface DamageState { scars:Scar[]; next:Partial<Record<DamageSource,number>> 
 type RGB = [number, number, number];
 
 interface WaveFx { x: number; y: number; r: number; str: number; t: number; dur: number }
-interface InkDrop { t: number; x: number; y: number; r: number; d: number }
 interface Charger { x: number; y: number; r: number; t: number; dur: number; c: RGB }
 
 const K: Record<ExplosionSize, number> = { s: 1, m: 2, l: 3.4, xl: 5.5 };
-/** 体积火球：最大半径与寿命（按规格）。 */
-const FIRE_R: Record<ExplosionSize, number> = { s: 30, m: 58, l: 110, xl: 290 };
-const FIRE_DUR: Record<ExplosionSize, number> = { s: 0.95, m: 1.3, l: 1.9, xl: 2.9 };
-const NEON: RGB[] = [[0.3, 1.5, 1.9], [1.8, 0.3, 1.4], [0.9, 0.45, 2.0]];
+// 火球粒子的散布半径与寿命；xl 对应 Boss 爆炸。
+const FIRE_R: Record<ExplosionSize, number> = { s: 30, m: 58, l: 100, xl: 180 };
+const FIRE_DUR: Record<ExplosionSize, number> = { s: .5, m: .65, l: .85, xl: 1.15 };
 
 export class FxSystem implements Fx {
   private damageStates = new WeakMap<Enemy,DamageState>();
   private waves: WaveFx[] = [];
   private chargers: Charger[] = [];
-  /** 火球转墨烟时衔接的墨流体 splat（延时）。 */
-  private inkDrops: InkDrop[] = [];
   trauma = 0;
   private downward=0;
   flashAmt = 0;
@@ -81,67 +77,23 @@ export class FxSystem implements Fx {
   }
 
   explosion(x: number, y: number, size: ExplosionSize, palette: ExplosionPalette = 'neon', chapterInk = false): void {
-    const k = K[size];
-    const sk = Math.sqrt(k);
-    const ink = chapterInk || palette === 'ink';
-    const cold = !chapterInk && palette === 'cyan', electric = !chapterInk && palette === 'violet';
-    const color: RGB = cold ? [0.12,1.6,1.05] : electric ? [1.2,0.25,1.8] : [2.2,1.2,0.32];
-    // 体积火球（主体）：黑体火球 → 受光烟团 → 墨烟；墨系爆炸以墨黑翻卷为主，带朱红余烬
-    const R = FIRE_R[size] * (ink ? 1.1 : 1), dur = FIRE_DUR[size] * (ink ? 1.25 : 1);
-    if (chapterInk) this.r.inkBursts.spawn(this.high.time,x,y,size,this.rr(-.25,.25));
-    else this.r.fireballs.spawn(this.high.time, x, y, R, dur, this.rng.next(), ink ? 1 : 0, palette === 'fire' ? 1.1 : 0.85, palette);
-    if (!cold && !electric) this.inkDrops.push({ t: dur * 0.5, x, y, r: R * 0.5, d: ink ? 0.85 : 0.6 });
-    if (!cold && !electric && k >= 3) for (let i = 0; i < (k >= 5 ? 3 : 1); i++) {
-      const a = this.rng.next() * 6.28, d = R * this.rr(0.25, 0.5);
-      this.inkDrops.push({ t: dur * this.rr(0.42, 0.6), x: x + Math.cos(a) * d, y: y + Math.sin(a) * d, r: R * 0.3, d: 0.5 });
-    }
-    // 点火闪光短促收住，让翻卷体积的明暗面在爆发后显露。
-    this.emitHigh({ x, y, life: 0.10 + 0.008 * k, size: 12 * sk, sizeEnd: 30 * sk, r: color[0], g: color[1], b: color[2], a: 0.65, kind: PK.Dot });
-    if (cold || electric) {
-      this.radial(x,y,this.n(18*k),180*sk,650*sk,{life:cold?0.6:0.35,drag:2.8,size:cold?4:2.4,spin:cold?8:0,r:color[0],g:color[1],b:color[2],r1:color[0]*.18,g1:color[1]*.18,b1:color[2]*.18,kind:cold?PK.Shard:PK.SparkTex});
-    } else if (!ink) {
-      // 火花（HDR 头 + 运动模糊尾）
-      this.radial(x, y, this.n(24 * k), 260 * sk, 900 * sk, { life: 0.6, drag: 3.0, size: 5, r: 1.8, g: 1.0, b: 0.3, r1: .7, g1: .18, b1: .04, kind: PK.SparkTex });
-      // 余烬（上浮）
-      this.radial(x, y, this.n(10 * k), 40 * sk, 220 * sk, { life: 1.6, drag: 1.6, grav: -40, size: 2.2, r: 2.2, g: 0.8, b: 0.18, r1: 0.6, g1: 0.1, b1: 0.02, kind: PK.Ember });
-    } else {
-      // 朱红余烬
-      this.radial(x, y, this.n(14 * k), 50 * sk, 260 * sk, { life: 1.7, drag: 1.5, grav: -30, size: 2.4, r: 2.4, g: 0.24, b: 0.06, r1: 0.6, g1: 0.05, b1: 0.01, kind: PK.Ember });
-    }
-    if (!chapterInk && palette === 'neon') {
-      for (let i = 0; i < this.n(7 * k); i++) {
-        const c = this.rng.pick(NEON);
-        const a = this.rng.next() * 6.28, sp = this.rr(300, 1000) * sk;
-        this.emitHigh({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, drag: 2.5, life: this.rr(0.4, 0.9), size: 3, r: c[0], g: c[1], b: c[2], r1: c[0] * 0.3, g1: c[1] * 0.3, b1: c[2] * 0.3, kind: PK.Spark });
-      }
-    }
-    // 厚甲片沿三维轨迹抛出；少量大的断面带出尺度，细余烬衬托体积主体。
-    this.r.debris.spawn(this.high.time, x, y, sk, this.n((ink ? 3 : 7) * k), this.rng.next(), chapterInk?'ink':palette);
-    // 烟与墨滴（低层）：体积烟团之外的细碎墨点
-    this.radial(x, y, this.n((ink ? 16 : 8) * k), 150 * sk, 520 * sk, { life: 1.2, drag: 4, grav: 160, size: 5 * sk, sizeEnd: 2, r: 0.02, g: 0.018, b: 0.016, a: 0.92, kind: PK.Ink });
-    // 墨流体：一团墨 + 径向冲开 + 余光
-    const fl = this.r.fluid;
-    fl.splat({ x, y, r: 18 * sk + 6, radial: true, vx: 420 * sk, ink: [0.015, 0.012, 0.012, ink ? 0.9 : 0.55], glow: ink ? undefined : [color[0]*.45*sk,color[1]*.45*sk,color[2]*.45*sk] });
-    if (!chapterInk && palette === 'neon' && k >= 2) {
-      const c = this.rng.pick(NEON);
-      fl.splat({ x, y, r: 26 * sk, glow: [c[0] * 0.5, c[1] * 0.5, c[2] * 0.5] });
-    }
-    this.shockwave(x, y, 70 * k, 5 * sk, 0.35 + 0.08 * k);
-    // 大爆炸：短暂热浪扭曲（宽而弱的第二道波）
-    if (k >= 3) this.shockwave(x, y, R * 1.25, k >= 5 ? 5 : 2.4, k >= 5 ? 1.3 : 0.8);
-    // 3D 背景的动态光源
-    const li = ink ? 0.25 : [0.6, 0.9, 1.3, 1.6][['s', 'm', 'l', 'xl'].indexOf(size)];
-    this.r.lights.pulse(x, y, [150, 220, 330, 520][['s', 'm', 'l', 'xl'].indexOf(size)], color[0] * li, color[1] * li, color[2] * li, 0.5 + 0.1 * k);
-    this.shake([0.04, 0.14, 0.32, 0.6][['s', 'm', 'l', 'xl'].indexOf(size)]);
-    if (k >= 3) this.flash(k >= 5 ? 0.07 : 0.025,color);
-    const pan = (x / PLAY_W) * 2 - 1;
-    this.audio.sfx(size === 's' ? 'explode_s' : size === 'm' ? 'explode_m' : size === 'l' ? 'explode_l' : 'explode_boss', { pan: pan * 0.6 });
-    // 形状层沿爆点翻卷：保留体积主体，小中大按同一尺度递增。
-    const shapeColor:RGB = cold ? [.18,.85,.65] : electric ? [.68,.3,.9] : ink ? [1.05,.24,.065] : [1.5,.55,.12];
-    this.radial(x,y,this.n(4*k),25*sk,125*sk,{life:.46,drag:3,size:18*sk,sizeEnd:30*sk,spin:1.1,r:shapeColor[0],g:shapeColor[1],b:shapeColor[2],r1:shapeColor[0]*.3,g1:shapeColor[1]*.2,b1:shapeColor[2]*.2,a:.65,kind:PK.FireShape},10*sk);
-    this.radial(x,y,this.n(3*k),35*sk,110*sk,{life:1.15,drag:2,grav:-22,size:14*sk,sizeEnd:36*sk,spin:.4,r:.095,g:.08,b:.065,a:.48,kind:PK.SmokeShape},14*sk);
-    this.emitHigh({x,y,life:.12,size:25*sk,sizeEnd:36*sk,r:shapeColor[0],g:shapeColor[1],b:shapeColor[2],a:.4,kind:PK.FlareTex});
-    if(cold||electric)this.emitHigh({x,y,life:.32,size:22*sk,sizeEnd:45*sk,rot:this.rr(-1,1),spin:1.2,r:shapeColor[0],g:shapeColor[1],b:shapeColor[2],a:.35,kind:PK.TwirlTex});
+    const k=K[size], sk=Math.sqrt(k), radius=FIRE_R[size], life=FIRE_DUR[size];
+    const cold=palette==='cyan', electric=palette==='violet';
+    const color:RGB=cold?[.18,1.1,.85]:electric?[.95,.3,1.5]:[1.8,.65,.12];
+    // 六层粒子：短闪、翻卷火球、上浮软烟、径向火星、坠落碎片、扩散光环。
+    // 火焰与烟团复用 ParticleSystem 构造时上传的软边图集。
+    this.emitHigh({x,y,life:.09+.01*k,size:radius*.7,sizeEnd:radius*1.3,r:2.4,g:1.7,b:.8,a:.65,kind:PK.FlareTex});
+    this.radial(x,y,this.n(4+1.5*k),35*sk,150*sk,{life,drag:3,size:radius*.45,sizeEnd:radius*.6,spin:1.5,r:.95,g:.85,b:.7,r1:.5,g1:.24,b1:.08,a:.52,kind:PK.FlameTex},radius*.4,.45);
+    this.radial(x,y,this.n(3+3*k),25*sk,85*sk,{life:life+1.1,delay:.02,drag:2.4,grav:-28,size:radius*.4,sizeEnd:radius*.92,spin:.45,r:.28,g:.25,b:.23,r1:.15,g1:.16,b1:.18,a:chapterInk?.63:.55,kind:PK.SmokeShape},radius*.25,.4);
+    this.radial(x,y,this.n(18*k),220*sk,650*sk,{life:.48+.06*k,drag:2.6,grav:70,size:2.6,sizeEnd:.5,r:color[0],g:color[1],b:color[2],r1:.5,g1:.12,b1:.03,kind:PK.Spark},radius*.12);
+    this.radial(x,y,this.n(8*k),50*sk,170*sk,{life:1.1,drag:1.6,grav:-30,size:2.2,sizeEnd:.4,r:1.6,g:.42,b:.05,r1:.35,g1:.06,b1:.01,kind:PK.Ember});
+    this.radial(x,y,this.n(5*k),110*sk,330*sk,{life:.75+.13*k,drag:1.2,grav:280,size:3.5*sk,sizeEnd:1.5,spin:9,r:.32,g:.23,b:.15,kind:PK.Shard},radius*.12);
+    this.emitHigh({x,y,life:.25+.035*k,size:8,sizeEnd:radius*1.9,r:color[0],g:color[1],b:color[2],a:.4,kind:PK.Ring});
+    this.shockwave(x,y,radius*2.1,2.0*sk,.32+.04*k);
+    this.r.lights.pulse(x,y,radius*3.5,color[0]*sk*.35,color[1]*sk*.35,color[2]*sk*.35,.35);
+    this.shake([.04,.14,.32,.6][['s','m','l','xl'].indexOf(size)]);
+    if(k>=3)this.flash(k>=5?.055:.025,color);
+    this.audio.sfx(size==='s'?'explode_s':size==='m'?'explode_m':size==='l'?'explode_l':'explode_boss',{pan:(x/PLAY_W*2-1)*.6});
   }
 
   /** 每个敌人保存本地坐标伤痕；连续武器按来源节流，阻挡保留反弹标识。 */
@@ -155,12 +107,17 @@ export class FxSystem implements Fx {
     const visual=source==='ink'&&inkColor?inkColor:source==='qte'||source==='bomb'?'ink':source;
     const c:RGB=armorHit?[.75,.78,.82]:visual==='blue'?[.1,1.45,1.0]:visual==='purple'?[1.1,.3,1.6]:visual==='red'?[2.0,.45,.06]:source==='companion'?[1.8,.55,.15]:[.7,.34,.12];
     if(!blocked){
-      // 主体形状由 drawDamage 画；少量粒子补上各自材质的飞散。
-      this.radial(x,y,this.n(armorHit?5:enemy.data.copperPart?14:6),armorHit?70:110,armorHit?160:320,{life:armorHit?.22:source==='blue'?.24:.2,drag:5,size:armorHit?2:enemy.data.copperPart?4:2.5,spin:source==='blue'?9:0,r:c[0],g:c[1],b:c[2],kind:PK.Spark});
-      this.radial(x,y,this.n(2),60,180,{life:.22,drag:5,size:8,sizeEnd:4,r:c[0]*.7,g:c[1]*.7,b:c[2]*.7,a:.7,kind:PK.SparkTex});
-      this.emitHigh({x,y,life:.045,size:12,sizeEnd:18,r:c[0]*.7,g:c[1]*.7,b:c[2]*.7,a:.45,kind:PK.FlareTex});
-      if(!armorHit&&visual==='blue')this.emitHigh({x,y,life:.22,size:3,sizeEnd:20,r:.2,g:1.3,b:1.4,a:.32,kind:PK.Ring});
-      if(!armorHit&&visual==='red')this.emit({x,y,vx:this.rr(-45,45),vy:this.rr(-25,40),life:.22,size:2,sizeEnd:1,r:.02,g:.015,b:.012,a:.65,kind:PK.Ink});
+      if(armorHit){
+        this.radial(x,y,this.n(5),70,160,{life:.22,drag:5,size:2,r:c[0],g:c[1],b:c[2],kind:PK.Spark});
+      }else if(visual==='red'){
+        this.radial(x,y,this.n(9),120,360,{life:.24,drag:4,size:2.2,sizeEnd:.4,r:2,g:.65,b:.08,kind:PK.Spark});
+        this.radial(x,y,this.n(3),25,85,{life:.22,drag:3,size:13,sizeEnd:21,spin:2,r:1.4,g:1,b:.8,a:.8,kind:PK.FlameTex},4);
+      }else if(visual==='blue'){
+        this.radial(x,y,this.n(7),130,300,{life:.22,drag:4,size:2.4,sizeEnd:.4,spin:10,r:.1,g:1.3,b:1.1,kind:PK.StarTex});
+      }else if(visual==='purple'){
+        this.radial(x,y,this.n(3),35,130,{life:.12,drag:3,size:14,sizeEnd:6,spin:7,r:1.0,g:.35,b:1.8,kind:PK.SparkTex},7);
+      }else this.hit(x,y,c,4);
+
     }
     const cs=Math.cos(enemy.angle),sn=Math.sin(enemy.angle),dx=x-enemy.x,dy=y-enemy.y;
     const lx=(dx*cs+dy*sn)/(enemy.scaleX||1),ly=(-dx*sn+dy*cs)/(enemy.scaleY||1);
@@ -182,7 +139,21 @@ export class FxSystem implements Fx {
       if(s.armor){
         const fade=Math.max(0,1-age/.22)*enemy.alpha;
         if(fade>0)for(let i=0;i<5;i++){const a=s.angle+i*Math.PI*2/5,from=4+age*80,to=from+12;this.r.ribbonTop.line(x+Math.cos(a)*from,y+Math.sin(a)*from,x+Math.cos(a)*to,y+Math.sin(a)*to,2,RS.Trail,.8,.84,.9,fade);}
-      }else this.r.impact.hit(x,y,s.visual,age,s.blocked,enemy.alpha);
+      }else if(s.blocked)this.r.impact.hit(x,y,s.visual,age,true,enemy.alpha);
+      else if(s.visual==='blue'&&age<.2){
+        const fade=(1-age/.2)*enemy.alpha,angle=enemy.angle+s.angle-.55;
+        const dx=Math.cos(angle)*(18+age*95),dy=Math.sin(angle)*(18+age*95);
+        this.r.ribbonTop.line(x-dx,y-dy,x+dx,y+dy,5,RS.Glow,.06,1.2,.9,fade*.65);
+        this.r.ribbonTop.line(x-dx,y-dy,x+dx,y+dy,1.5,RS.Beam,.7,1.7,1.4,fade);
+      }else if(s.visual==='purple'&&age<.15){
+        const fade=(1-age/.15)*enemy.alpha*(Math.floor(age*55)%2?.5:1);
+        for(let j=0;j<3;j++){
+          const a=s.angle+j*2.094,cs=Math.cos(a),sn=Math.sin(a),pts:number[]=[];
+          for(let i=0;i<5;i++){const along=i*7,side=i%2===0?0:(j%2?5:-5);pts.push(x+cs*along-sn*side,y+sn*along+cs*side);}
+          this.r.ribbonTop.strip(pts,3,RS.Glow,.75,.18,1.5,fade*.7);
+          this.r.ribbonTop.strip(pts,1,RS.Lightning,1.3,.8,2,fade);
+        }
+      }
       if(s.blocked||s.armor)continue;
       this.r.impact.scar(x,y,enemy.angle+s.angle,s.size,s.visual,Math.exp(-age*3.5),enemy.alpha*.85);
     }
@@ -261,11 +232,6 @@ export class FxSystem implements Fx {
 
   /** 每帧更新（dt 为游戏时间，realDt 为真实时间），并写入后处理参数。 */
   update(dt: number, realDt: number, time: number): void {
-    for (const d of this.inkDrops) d.t -= dt;
-    if (this.inkDrops.length && this.inkDrops.some((d) => d.t <= 0)) {
-      for (const d of this.inkDrops) if (d.t <= 0) this.r.fluid.splat({ x: d.x, y: d.y, r: d.r, vx: 50, ink: [0.015, 0.012, 0.012, d.d] });
-      this.inkDrops = this.inkDrops.filter((d) => d.t > 0);
-    }
     for (const w of this.waves) w.t += dt;
     this.waves = this.waves.filter((w) => w.t < w.dur);
     for (const c of this.chargers) {
@@ -304,7 +270,6 @@ export class FxSystem implements Fx {
     this.damageStates = new WeakMap();
     this.waves = [];
     this.chargers = [];
-    this.inkDrops = [];
     this.r.fireballs.clear();
     this.r.inkBursts.clear();
     this.r.debris.clear();

@@ -9,7 +9,6 @@ import { PLAY_H, PLAY_W, type WeaponColor } from '../types';
 import type { Enemy } from './enemy';
 import type { World } from './world';
 import { MAX_POWER } from './items';
-import { PRIMARY_SHOT_FRAME, PRIMARY_HIT_FRAME } from '../art/sprites_player';
 
 interface Shot {
   x: number; y: number; vx: number; vy: number;
@@ -23,13 +22,15 @@ interface Shot {
 
 /** 放电几何与其端点共存；重选目标不会改变缓存链条的拓扑。 */
 interface ThunderBolt extends Bolt { from: Enemy | null; to: Enemy | null }
-interface PrimaryHit { x: number; y: number; color: WeaponColor; target: number; age: number; size: number }
 
-// 显示四级火力，主武器沿用旧八级表的 1、3、6、8 级。
+// 主炮四档；机身装甲沿用原有的外观等级。
 const WEAPON_LEVEL = [1, 3, 6, 8];
-const RED_COUNT = [3, 4, 5, 6, 7, 8, 9, 11];
-const RED_SPREAD = [10, 15, 21, 28, 35, 42, 50, 62];
-const THUNDER_N = [1, 1, 2, 2, 3, 3, 4, 5];
+const RED_COUNT = [3, 5, 7, 9];
+const RED_SPREAD = [6, 12.6, 25, 37];
+const BLUE_HALF_WIDTH = [9, 12, 16, 20];
+const BLUE_DPS = [24, 28, 32, 36];
+const THUNDER_N = [1, 2, 3, 4];
+const THUNDER_DPS = [20, 23, 26, 30];
 
 export class Player {
   x = PLAY_W / 2;
@@ -69,7 +70,6 @@ export class Player {
   readonly hitR = 3.2;
   readonly grazeR = 26;
   private shots: Shot[] = [];
-  private primaryHits: PrimaryHit[] = [];
   private fireCd = 0;
   private missileCd = 0;
   private sfxCd = 0;
@@ -79,7 +79,6 @@ export class Player {
   private boltT = 0;
   private laserOn = 0;
   private beamTilt=0;
-  private focusCharge = 0;
 
   constructor(readonly w: World,readonly echo=false) {}
 
@@ -96,7 +95,6 @@ export class Player {
     const bonus=this.w.companions.weaknessBonus(e);
     const actual=this.w.damage(e,amount,x,y,this.echo,source);
     if(!this.echo)this.w.companions.primaryHit(e,actual,bonus);
-    if(hit)this.hitBurst(x,y,source,e.id);
   }
 
   get sprite(): SpriteInfo {
@@ -117,10 +115,9 @@ export class Player {
     this.armor = 3;
     this.colorChangedAt=-1;this.previousColor=this.color;this.bombT = 0;if(!this.echo)this.w.roll?.reset();
     this.shots = [];
-    this.primaryHits = [];
     this.missileCd = 0;
     this.thunderTargets = [];
-    this.focusCharge=0;this.laserOn=0;this.beamTilt=0;this.beamEndY=-40;this.fireCd=0;this.thunderRetarget=0;this.bolts=[];
+    this.laserOn=0;this.beamTilt=0;this.beamEndY=-40;this.fireCd=0;this.thunderRetarget=0;this.bolts=[];
     if (full) {
       this.lives = this.startLives;
       this.bombs = this.startBombs;
@@ -154,7 +151,7 @@ export class Player {
       this.x = clamp(this.x + inp.axisX * sp * realDt, 26, PLAY_W - 26);
       this.y = clamp(this.y + inp.axisY * sp * realDt, 50, PLAY_H - 36);
       this.bank = approach(this.bank, inp.axisX, 9, realDt);
-      if(inp.pressed('weapon')) { const colors:WeaponColor[]=['red','blue','purple'];this.weapon=colors[(colors.indexOf(this.weapon)+1)%3];this.focusCharge=0;this.thunderTargets=[];w.ui.popup(this.x,this.y-70,{red:'朱',blue:'青',purple:'紫'}[this.weapon],'info'); }
+      if(inp.pressed('weapon')) { const colors:WeaponColor[]=['red','blue','purple'];this.weapon=colors[(colors.indexOf(this.weapon)+1)%3];this.thunderTargets=[];w.ui.popup(this.x,this.y-70,{red:'朱',blue:'青',purple:'紫'}[this.weapon],'info'); }
       if (inp.pressed('bomb')&&!w.bossCombat.inputLocked) this.bomb();
     }
     this.firing = inp.down('shoot') && !inp.down('brush') && this.entering <= 0&&!w.bossCombat.inputLocked;
@@ -167,21 +164,20 @@ export class Player {
 
   // ------------------------------------------------------------ 射击
 
-  get baseThunderTargets(){return THUNDER_N[this.weaponLevel-1];}
-  get thunderDps(){return 20+(this.weaponLevel-1)*34/7;}
+  get baseThunderTargets(){return THUNDER_N[this.power-1];}
+  get thunderDps(){return THUNDER_DPS[this.power-1];}
 
   private beamEndY=-40;
   private fire(dt: number): void {
     const w = this.w;
     this.fireCd -= dt;
     this.missileCd -= dt;
-    this.focusCharge=approach(this.focusCharge,this.weapon==='blue'&&this.focus&&this.firing?1:0,this.focus&&this.firing?1.3:8,dt);
     this.laserOn = this.firing && this.weapon === 'blue' ? Math.min(1, this.laserOn + dt * 8) : Math.max(0, this.laserOn - dt * 10);
     if (!this.firing) {
       this.thunderTargets = [];
       return;
     }
-    const lv = this.weaponLevel,boost=w.skills.boosted;
+    const lv = this.power,boost=w.skills.boosted;
     this.beamTilt=0;
     if (this.weapon === 'red' && this.fireCd <= 0) {
       this.fireCd = 0.105/(boost?1.6:1);
@@ -231,21 +227,9 @@ export class Player {
     }
   }
 
-  /** 实际主炮命中点。分身共用主机池；持续伤害等本轮两帧播完再起下一轮。 */
-  private hitBurst(x:number,y:number,color:WeaponColor,target:number):void{
-    const hits=this.w.player.primaryHits;
-    if(hits.length>=12)return;
-    if(color!=='red'&&hits.some(h=>h.target===target&&h.color===color))return;
-    hits.push({x,y,color,target,age:0,size:this.w.skills.boosted?1.65:1});
-  }
-
   private updateShots(dt: number): void {
     const w = this.w;
-    const lv = this.weaponLevel;
-    if(!this.echo){
-      for(const hit of this.primaryHits)hit.age+=dt;
-      this.primaryHits=this.primaryHits.filter(hit=>hit.age<.16);
-    }
+    const lv = this.power;
     for (const s of this.shots) {
       s.age += dt;
       if (s.missile) {
@@ -301,8 +285,8 @@ export class Player {
     // 青光束：贯穿
     if (this.laserOn > 0 && this.weapon==='blue' && this.firing) {
       const g = this.gun('gun');
-      const hw = (7 + lv * 2.2) * this.laserOn*(w.progression.has('guanri')?1.5:1)*(w.skills.boosted?2:1);
-      const dps = (24+(lv-1)*40/7) * (.82+.18*this.focusCharge)*(w.skills.boosted?1.6:1);
+      const hw = BLUE_HALF_WIDTH[lv-1] * this.laserOn*(w.progression.has('guanri')?1.5:1)*(w.skills.boosted?2:1);
+      const dps = BLUE_DPS[lv-1]*(w.skills.boosted?1.6:1);
       const hits:{e:Enemy;x:number;y:number}[]=[];
       for(const e of w.enemies)if(w.targetable(e,true)&&w.hitSegment(e,g.x,g.y,g.x+Math.tan(this.beamTilt)*(g.y+60),-60,hw))hits.push({e,x:w.hitX,y:w.hitY});
       hits.sort((a,b)=>b.y-a.y);
@@ -317,8 +301,7 @@ export class Player {
     }
     // 雷弧
     if (this.weapon === 'purple' && this.firing) {
-      const n = Math.max(1, this.thunderTargets.length);
-      const per = (20 + (lv-1)*34/7) * (n === 1 ? 1 : 1.25 / n)*(w.skills.boosted?1.6:1);
+      const per = THUNDER_DPS[lv-1]*(w.skills.boosted?1.6:1);
       for (const e of this.thunderTargets) {
         this.primaryDamage(e, per * dt, e.x, e.y + e.radius*.65,'purple');
 
@@ -432,15 +415,9 @@ export class Player {
         r.air.add('player_missile', { x: s.x, y: s.y, rot: Math.atan2(s.vy, s.vx) + Math.PI / 2, glow: 1.5 });
         continue;
       }
-      const speed=Math.hypot(s.vx,s.vy),dx=s.vx/speed,dy=s.vy/speed;
-      const size=w.skills.boosted?1.65:1;
-      r.shotArt.add('player_primary_art',{x:s.x-dx*21*size,y:s.y-dy*21*size,
-        rot:Math.atan2(s.vy,s.vx)+Math.PI/2,frame:PRIMARY_SHOT_FRAME[s.color],sx:42/72*size,sy:42/72*size,glow:0});
-    }
-    if(!this.echo)for(const hit of this.primaryHits){
-      const spread=clamp((hit.age-.06)/.1,0,1),size=hit.size*(1+spread*.55);
-      r.shotArt.add('player_primary_art',{x:hit.x,y:hit.y,frame:PRIMARY_HIT_FRAME[hit.color]+(hit.age>=.06?1:0),
-        sx:size,sy:size,alpha:1-spread,glow:0});
+      const size = (w.skills.boosted ? 1.65 : 1) * (s.color === 'red' ? 5.2 : 4.2);
+      const c = s.color === 'red' ? [1.8,.38,.035] : s.color === 'blue' ? [.04,.85,.72] : [.65,.12,1.4];
+      r.bullets.add(s.x, s.y, Math.atan2(s.vy,s.vx), size, 9, c[0], c[1], c[2], s.age, 1, .5, Math.hypot(s.vx,s.vy));
     }
     if (!this.alive) return;
     let frame = clamp(Math.round((this.bank + 1) * 2), 0, 4);
@@ -467,10 +444,18 @@ export class Player {
     // 青光束
     if (this.laserOn > 0) {
       const g = this.gun('gun');
-      const hw = (7 + this.weaponLevel * 2.2) * this.laserOn*(w.progression.has('guanri')?1.5:1)*(w.skills.boosted?2:1);
-      const flick = 0.9 + 0.1 * Math.sin(time * 90);
-      r.ribbonMid.line(g.x, g.y, g.x+Math.tan(this.beamTilt)*(g.y-this.beamEndY), this.beamEndY, hw * .65 * flick, RS.Glow, 0.02, 0.22, 0.16, 0.09);
-      r.ribbonMid.line(g.x, g.y, g.x+Math.tan(this.beamTilt)*(g.y-this.beamEndY), this.beamEndY, hw * (.12+.1*this.focusCharge), RS.Trail, 0.08, 0.9, 0.85, .22);
+      const level = this.power;
+      const hw = BLUE_HALF_WIDTH[level-1] * this.laserOn*(w.progression.has('guanri')?1.5:1)*(w.skills.boosted?2:1);
+      const endX = g.x+Math.tan(this.beamTilt)*(g.y-this.beamEndY);
+      const flick = .94 + .06 * Math.sin(time * 90);
+      r.ribbonMid.line(g.x,g.y,endX,this.beamEndY,hw*1.6,RS.Glow,.02,.55,.42,.32);
+      r.ribbonMid.line(g.x,g.y,endX,this.beamEndY,hw*flick,RS.Beam,.035,.75,.62,.55);
+      r.ribbonMid.line(g.x,g.y,endX,this.beamEndY,hw*(.16+level*.035),RS.Beam,.55,1.3,1.15,.35+level*.12);
+      // 每升一档，两侧各添一道窄剑光，均落在光束判定宽度内。
+      for(let i=1;i<level;i++)for(const side of [-1,1]){
+        const offset=side*hw*(.34+i*.17),startY=g.y-14-i*9;
+        r.ribbonMid.line(g.x+offset,startY,endX+offset,this.beamEndY,1.0+level*.2,RS.Beam,.25,1.15,.9,.52);
+      }
 
     }
     // 雷弧
@@ -479,11 +464,11 @@ export class Player {
   }
 
   private drawThunder(r: Renderer, time: number): void {
-    const w = this.w, lv = this.weaponLevel;
+    const lv = this.power;
     const g = this.gun('gun');
     if (time - this.boltT >= 0.05 || this.boltT > time) {
       this.boltT = time;
-      const hw = 5.0 + lv * 0.85;
+      const hw = 4.0 + lv * 1.8;
       const set: ThunderBolt[] = [];
       const hits: [number, number][] = [];
       if (this.thunderTargets.length) {
@@ -491,16 +476,16 @@ export class Player {
         this.thunderTargets.forEach((e, i) => {
           const from = i > 0 && Math.hypot(e.x - px, e.y - py) < 320 ? this.thunderTargets[i - 1] : null;
           const fx = from ? px : g.x, fy = from ? py : g.y;
-          set.push({ ...makeBolt(fx, fy, e.x, e.y+e.radius*.65, hw * (i > 0 ? 0.75 : 1), 1 + (lv >> 2)), from, to: e });
+          set.push({ ...makeBolt(fx, fy, e.x, e.y+e.radius*.65, hw * (i > 0 ? 0.75 : 1), lv), from, to: e });
           hits.push([e.x, e.y+e.radius*.65]);
           px = e.x; py = e.y+e.radius*.65;
         });
       } else {
-        const k = 2 + (lv >> 2);
+        const k = lv + 1;
         for (let i = 0; i < k; i++) {
           const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.1;
           const l = 90 + Math.random() * 130;
-          set.push({ ...makeBolt(g.x, g.y - 6, g.x + Math.cos(a) * l, g.y + Math.sin(a) * l, hw * 0.7, Math.random() < 0.5 ? 1 : 0), from: null, to: null });
+          set.push({ ...makeBolt(g.x, g.y - 6, g.x + Math.cos(a) * l, g.y + Math.sin(a) * l, hw * 0.7, lv), from: null, to: null });
         }
       }
       this.bolts.unshift(set);
@@ -530,18 +515,18 @@ export class Player {
           });
           t = { pts: move(pts), w: t.w };
         }
-        const phase = this.boltT * 12 + bi * 2.7;
         // 余像仅留下弱紫辉，主形保留单次放电的清晰体积。
         if (gi > 0) {
           r.ribbonMid.strip(t.pts, t.w.map(x => x * 2.3), RS.Glow, 0.25, 0.035, 0.6, 0.11);
           continue;
         }
         r.ribbonMid.strip(t.pts, t.w.map(x => x * 3.8), RS.Glow, 0.33, 0.06, 0.78, 0.28);
-        r.thunder.path(t.pts, t.w.map(x=>x*.35), .18, phase);
+        r.ribbonMid.strip(t.pts,t.w.map(x=>x*.62),RS.Beam,.48,.08,1.3,.55+lv*.1);
+        r.ribbonMid.strip(t.pts,t.w.map(x=>x*.16),RS.Beam,1.1,.85,1.9,.4+lv*.12);
         for (let j = 0; j < branches.length; j++) {
           const br = branches[j];
-          r.ribbonMid.strip(br.pts, br.w.map(x => x * 3), RS.Glow, 0.35, 0.06, 0.8, 0.045);
-          r.thunder.path(br.pts, br.w.map(x=>x*.5), 0.2, phase + j * 1.6, true);
+          r.ribbonMid.strip(br.pts, br.w.map(x => x * 3), RS.Glow, 0.35, 0.06, 0.8, 0.18+lv*.04);
+          r.ribbonMid.strip(br.pts,br.w.map(x=>x*.8),RS.Beam,.85,.35,1.7,.5+lv*.1);
         }
         const n = t.pts.length / 2;
         for (let i = 2; i < n - 2; i += 5) {
