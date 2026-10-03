@@ -52,9 +52,11 @@ export class Density {
   const attack=group.attacks.get(context.attack)??{context,size:0};attack.size+=shots.length;group.attacks.set(context.attack,attack);this.batches.set(Scope.current,group);
  }
  finishBossBatch(stage:number,bullets:readonly Bullet[]):void{
-  const cap=DENSITY_LIMITS[stage]?.bossBullets??Infinity,groups=[...(this.batches?.values()??[])];this.batches=null;
+  const defaultCap=DENSITY_LIMITS[stage]?.bossBullets??Infinity,groups=[...(this.batches?.values()??[])];this.batches=null;
   const pending=new Set(groups.flatMap(g=>g.shots)),existing=bullets.filter(b=>!b.dead&&!pending.has(b)).length;let used=existing;
   for(const group of groups){
+   // 纸龙的新弹形按整组保留；普通难度目标峰值 80～120 发。
+   const cap=[...group.attacks.values()].some(a=>a.context.boss==='纸龙')?112:defaultCap;
    const alive=group.shots.filter(b=>!b.dead);if(!alive.length)continue;
    const rejected=used+alive.length>cap;
    for(const a of group.attacks.values())this.recordAttack(a.context,a.size,used,cap,rejected,alive.length);

@@ -28,6 +28,8 @@ export class Input implements InputState {
   /** 两次 poll 之间按下又松开的键也要记一次 pressed。 */
   private tapped = new Set<Action>();
   resetSerial = 0;
+  /** 所有键盘/鼠标按下次数；自动重复和长按不累计。 */
+  pressSerial = 0;
   pointer = { x: 450, y: 600, inside: false };
   pointerSamples: number[] = [];
   private mouse = new Set<Action>();
@@ -42,6 +44,8 @@ export class Input implements InputState {
     target.addEventListener('keydown', (e) => {
       if (KEYMAP[e.code]) e.preventDefault();
       if (e.repeat) return;
+      if(this.keys.has(e.code))return;
+      this.pressSerial++;
       this.keys.add(e.code);
       if(e.code==='Space'){this.pointerSamples=[];if(this.pointer.inside)this.pointerSamples.push(this.pointer.x,this.pointer.y);}
       this.onKey?.(e.code);
@@ -52,6 +56,7 @@ export class Input implements InputState {
     target.addEventListener('keyup', (e) => this.keys.delete(e.code));
     target.addEventListener('blur', () => { this.keys.clear(); this.tapped.clear(); this.mouse.clear(); this.pointerSamples=[]; this.pointer.inside=false; this.resetSerial++; });
     target.addEventListener('pointerdown', () => this.gesture());
+    target.addEventListener('mousedown', () => { this.pressSerial++; });
   }
 
   /** Canvas 的 CSS 战场矩形同时供渲染和鼠标定位使用。 */

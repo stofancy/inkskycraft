@@ -174,7 +174,7 @@ interface PaperRig {
  battle?:PaperBattle; open:boolean; bare:number; stampProgress:number;
  seal:{active:boolean;row:number;x:number;y:number;start:number;lit:number}; sealed:boolean[]; taught:boolean; stampHp:number; stampH:number; lockShip:{i:number;x:number;y:number}|null; struggleAt:number;
  shipHp:number[];
- fly:{on:boolean;hist:{x:number;y:number}[]};
+ fly:{on:boolean;posed:boolean};
 }
 function paperRig(e:Enemy,g:G):PaperRig {
  const surface=(sprite:string,order=0,priority=0):EnemyDef=>({sprite,hp:1e9,radius:0,noCollide:true,drawOrder:order,hitPriority:priority});
@@ -183,7 +183,7 @@ function paperRig(e:Enemy,g:G):PaperRig {
  const tail=g.attach(bodies[9],surface('pd-tail',-14),'tail');
  const stamp=g.spawn({...decorative('pd-stamp',7)},450,160);stamp.scaleX=stamp.scaleY=4.2;stamp.alpha=0;
  const claws=[1,5].flatMap(i=>[-1,1].map(side=>({side,part:g.attach(bodies[i],surface('pd-claw',-2,20),side<0?'clawL':'clawR'),broken:false,at:0,x:0,y:0})));
- const r:PaperRig={bodies,exposure:{selected:[],at:0,phase:0,state:'rest'},eye,tail,stamp,claws,rows:[],burns:[],chains:[],wings:[],core:eye,get controller(){return this.rows.find(a=>a.part.hp>0)?.part??e;},open:false,bare:0,stampProgress:0,seal:{active:false,row:-1,x:450,y:900,start:0,lit:-1},sealed:[false,false],taught:false,stampHp:1,stampH:1,lockShip:null,struggleAt:-9,fly:{on:false,hist:[]},shipHp:[100]};
+ const r:PaperRig={bodies,exposure:{selected:[],at:0,phase:0,state:'rest'},eye,tail,stamp,claws,rows:[],burns:[],chains:[],wings:[],core:eye,get controller(){return this.rows.find(a=>a.part.hp>0)?.part??e;},open:false,bare:0,stampProgress:0,seal:{active:false,row:-1,x:450,y:900,start:0,lit:-1},sealed:[false,false],taught:false,stampHp:1,stampH:1,lockShip:null,struggleAt:-9,fly:{on:false,posed:false},shipHp:[100]};
  for(const p of [e,...bodies,eye,tail,...claws.map(a=>a.part)]){
   p.scaleX=p.scaleY=PAPER_SCALE;
   p.phaseLock=true;p.data.contentRole='part';p.data.bossOwner=e;p.data.copperPart=true;p.data.damageTarget=e;p.data.damageBonus=1;p.data.hitArmor=true;p.data.noSupplementFire=true;
@@ -240,6 +240,7 @@ function paperDamage(e:Enemy,w:World,r:PaperRig):()=>void {
  });
  w.damage=function(part,amount,x=part.x,y=part.y,quiet=false,source='neutral',ink={}){
   if(part!==e&&part.data.bossOwner!==e)return original.call(w,part,amount,x,y,quiet,source,ink);
+  if(r.battle?.damageClaw(part,amount,source))return amount;
   if(e.invulnerable||part.dead||part.data.targetDisabled||part.data.paperSubmerged||amount<=0)return 0;
   if(armor.has(part)&&!part.data.paperOpen&&source!=='qte'){
    // 朱火仍可烧纸甲并触发既有「纸甲烧透」，闭鳞期间不转伤。
@@ -266,41 +267,31 @@ function paperDamage(e:Enemy,w:World,r:PaperRig):()=>void {
  };
  return ()=>{w.damage=original;for(const undo of restore)undo();};
 }
+function smoothTail(age:number,begin:number,strike:number,rest:number){const t=clamp(age/begin,0,1),u=clamp((age-begin-strike)/rest,0,1);return t*t*(3-2*t)*(1-u*u*(3-2*u));}
 function* paperPose(e:Enemy,g:G,r:PaperRig):Co {
  let previous=clock(g);
  for(;;){
   const dt=world(g).dialoguePaused?0:Math.max(0,Math.min(.05,clock(g)-previous));previous=clock(g);
-  const f=r.fly,h=f.hist;
+  const f=r.fly;
   if(f.on)r.battle?.tick(dt);
-  const neck=e.anchor('neck');
-  if(!h.length){for(let x=neck.x-1800;x<neck.x;x+=12)h.push({x,y:neck.y});h.push(neck);}
-  {const last=h[h.length-1];
-   if(Math.hypot(neck.x-last.x,neck.y-last.y)>=2)h.push(neck);
-   let i=h.length-1,cursor=neck;
-   // 定长弦保证相邻铜套管叠压；后面的节先画，颈部压住尾部。
-   const back=(from:{x:number;y:number},length:number)=>{
-    while(i>=0){const end=h[i],dx=end.x-cursor.x,dy=end.y-cursor.y;
-     if(Math.hypot(end.x-from.x,end.y-from.y)>=length){
-      const ox=cursor.x-from.x,oy=cursor.y-from.y,A=dx*dx+dy*dy,B=ox*dx+oy*dy,C=ox*ox+oy*oy-length*length;
-      const u=(-B+Math.sqrt(Math.max(0,B*B-A*C)))/A;
-      cursor={x:cursor.x+dx*u,y:cursor.y+dy*u};return cursor;
-     }
-     cursor=end;i--;
-    }
-    const a=h[0],b=h[1],dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy)||1;
-    cursor={x:from.x+dx/d*length,y:from.y+dy/d*length};return cursor;
-   };
-   let joint=neck;
-   r.bodies.forEach(b=>{
-    const top=b.info.anchors.jointIn,bottom=b.info.anchors.jointOut;
-    const end=back(joint,(bottom[1]-top[1])*b.scaleY);
-    b.angle=Math.atan2(end.y-joint.y,end.x-joint.x)-PI/2;
-    b.x=joint.x;b.y=joint.y;const root=b.local(...top);b.x+=joint.x-root.x;b.y+=joint.y-root.y;joint=end;
-   });
-   let margin=0;while(i>0&&margin<200){margin+=Math.hypot(h[i].x-h[i-1].x,h[i].y-h[i-1].y);i--;}
-   if(i>1)h.splice(0,i-1);
-   r.tail.syncToParent();r.eye.syncToParent();
-  }
+  // 每节保留自己的朝向；折返时也从上一帧的关节连续转动。
+  let joint=e.anchor('neck'),parentAngle=e.angle;
+  r.bodies.forEach((b,i)=>{
+   if(!f.posed)b.angle=e.angle+PI;
+   const battle=r.battle,tail=battle?.enabled&&battle.move==='tail';
+   const swing=tail?smoothTail(battle.age,battle.wind+battle.warn,battle.strike,battle.rest)*Math.sin(battle.progress*PI*2-i*.22)*.2*(i/9):0;
+   const end=b.anchor('jointOut'),base=parentAngle+(i===0?PI:0);
+   const follow=f.posed?Math.atan2(end.y-joint.y,end.x-joint.x)-PI/2:base;
+   const bend=Math.atan2(Math.sin(follow-base),Math.cos(follow-base));
+   const desired=base+clamp(bend,-1.15,1.15)+swing;
+   const delta=Math.atan2(Math.sin(desired-b.angle),Math.cos(desired-b.angle));
+   b.angle+=clamp(delta*(1-Math.exp(-dt*10)),-2.8*dt,2.8*dt);
+   b.x=joint.x;b.y=joint.y;const root=b.local(...b.info.anchors.jointIn);
+   b.x+=joint.x-root.x;b.y+=joint.y-root.y;
+   joint=b.anchor('jointOut');parentAngle=b.angle;
+  });
+  f.posed=true;
+  r.tail.syncToParent();r.eye.syncToParent();
   for(const a of r.claws){if(!a.broken){
    const anchor=a.part.parent!.info.anchors[a.side<0?'clawL':'clawR'];a.part.offX=anchor[0];a.part.offY=anchor[1];a.part.followRot=true;a.part.scaleX=a.part.scaleY=1.35;
    a.part.offRot=-a.side*(.7+.08*Math.sin(g.presentationTime*2));a.part.syncToParent();
@@ -410,7 +401,7 @@ function* paper(e:Enemy,g:G):Co {
  r.battle=new PaperBattle(w,e,r);w.bossCombat.beginBattle(e);presentationPose(e,paperPose(e,g,r));g.scrollSpeed(25,2);
  const restoreDamage=paperDamage(e,w,r);
  const escort=w.escort,updateShips=escort?.update;
- if(escort&&updateShips)escort.update=function(dt){updateShips.call(this,dt);if(r.lockShip){const s=this.vessels[r.lockShip.i];if(s){s.x=r.lockShip.x;s.y=r.lockShip.y;}}};
+ if(escort&&updateShips)escort.update=function(dt){updateShips.call(this,dt);if(r.lockShip){const s=this.vessels[r.lockShip.i];if(s){s.x=r.lockShip.x;s.y=r.lockShip.y;}}r.battle?.holdPosition();};
  const start=Math.min(3,e.data.startPhase??1),surfaces=[e,...r.bodies,r.tail];
  const begin=(index:number,name:string)=>{e.data.phaseIndex=index;if(r.battle)r.battle.enabled=true;e.data.phaseStartedClock=clock(g);e.data.phaseTitle=name;e.data.phaseTitleUntil=g.real+1.2;e.data.action=name;event(e,`phase-${index}`,g);mode(g,name,'打血时间');};
  const route=(target:Enemy)=>{for(const p of surfaces)p.data.damageTarget=target;};
@@ -421,7 +412,7 @@ function* paper(e:Enemy,g:G):Co {
   }r.burns=r.burns.filter(b=>now<b.until);
  };
  const transition=function*(bare=false):Co{
-  e.invulnerable=true;if(r.battle)r.battle.enabled=false;g.clearBullets(false);r.exposure.state='rest';r.exposure.selected=[];for(const b of r.bodies){b.frame=0;b.glow=0;b.data.paperOpen=false;}r.open=false;r.eye.data.targetDisabled=true;r.burns=[];
+  e.invulnerable=true;if(r.battle){r.battle.releaseGrip(false);r.battle.enabled=false;}g.clearBullets(false);r.exposure.state='rest';r.exposure.selected=[];for(const b of r.bodies){b.frame=0;b.glow=0;b.data.paperOpen=false;}r.open=false;r.eye.data.targetDisabled=true;r.burns=[];
   for(const p of [e,...r.bodies])copperBreak(e,g,p);
   mode(g,'纸片烧落','对白演出');
   yield* presentWait(g,1.5,t=>{if(bare){r.bare=t;for(const p of [e,...r.bodies,r.tail])p.alpha=Math.max(.02,1-t);}});
@@ -429,7 +420,7 @@ function* paper(e:Enemy,g:G):Co {
  };
  try{
   e.invulnerable=true;mode(g,'放出纸龙','对白演出');
-  e.x=-190;e.y=320;e.angle=-PI/2;e.stop();r.fly.hist.length=0;
+  e.x=-190;e.y=320;e.angle=-PI/2;e.stop();r.fly.posed=false;
   g.caption('风筝帮','放线——让龙乘风！',3);
   // 颈根从画外拖出整条路径，尾部最后入镜。
   yield* presentWait(g,start===1?5:3,t=>{e.x=-190+1120*t;e.y=320+150*Math.sin(t*PI);e.angle=Math.atan2(150*PI*Math.cos(t*PI),1120)-PI/2;r.battle?.entrance(t);});

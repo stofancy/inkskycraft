@@ -1,6 +1,11 @@
 // 共用自动驾驶只给输入，不直接结算破招或改 HP；笔画经过逐按钮鼠标事件/识别。
 export function bossInput(g,s){
  const w=g.world,q=w.bossCombat.qte,inp=g.input,F=window.__forced;
+ const grip=w.bossE?.data.paperBattle?.grip;
+ if(grip?.victim.kind==='player'){
+  if(w.real-(s.paperTapAt??-1)>.16){s.paperTapAt=w.real;window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyJ',bubbles:true}));window.dispatchEvent(new KeyboardEvent('keyup',{code:'KeyJ',bubbles:true}));}
+  s.target=null;return;
+ }
  if(!q){
   const owner=e=>e.data.bossOwner??w.bossCombat.owner(e);
   const candidates=w.enemies.filter(e=>{
@@ -9,12 +14,12 @@ export function bossInput(g,s){
    // 纸甲转伤由当前开合状态控制；独立血量的部件仍可直接受击。
    if(b?.data.paperSimple){
     if(e.data.paperSubmerged||e.x<35||e.x>865||e.y<60||e.y>1090)return false;
-    if((e===b||target!==e)&&!e.data.paperOpen)return false;
+    if((e===b||target!==e)&&!e.data.paperOpen&&!e.data.paperGrip)return false;
    }
    return w.fodder?.canDamage(e,w.player.weapon)!==false&&w.chapter2?.damageAllowed(e,w.player.weapon)!==false;
   });
   // 优先独立受击部件与开放弱点，距离打破同级平局；图片名和挂点名不参与。
-  const rank=e=>(owner(e)?1000:0)+(e.data.paperOpen?300:0)+(e.data.damageTarget===e?400:0)+(e.data.hitArmor===false?100:0)+(e.def.hitPriority??0)-Math.abs(e.x-w.player.x)*.05-(owner(e)?.data.paperSimple?Math.hypot(e.x-w.player.x,e.y+140-w.player.y)*.1:0);
+  const rank=e=>(e.data.paperGrip?3000:0)+(owner(e)?1000:0)+(e.data.paperOpen?300:0)+(e.data.damageTarget===e?400:0)+(e.data.hitArmor===false?100:0)+(e.def.hitPriority??0)-Math.abs(e.x-w.player.x)*.05-(owner(e)?.data.paperSimple?Math.hypot(e.x-w.player.x,e.y+140-w.player.y)*.1:0);
   candidates.sort((a,b)=>rank(b)-rank(a));
   const t=candidates[0];s.target=t??null;
   if(t){
