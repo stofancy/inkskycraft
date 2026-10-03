@@ -28,3 +28,16 @@ export const CH3_BOSS_SPRITES: SpriteDef[] = [
     ctx.beginPath();ctx.moveTo(0,-60);ctx.lineTo(0,60);ctx.stroke();
   } },
 ];
+
+// 鲲鹏七件原图在图集初始化时一次加载；战斗、变形及题字只调整骨架。
+const kp='art/bosses/ch3/kunpeng/';
+CH3_BOSS_SPRITES.push(
+ {id:'kp-sign',w:90,h:36,radius:0,draw(c){c.fillStyle='#665023';c.font='19px InkskyFangsong,serif';c.textAlign='center';c.textBaseline='middle';c.fillText('朱雀镖局',0,0);}},
+ {id:'kp-body',w:252,h:532,radius:0,image:kp+'body.png'},
+ {id:'kp-head',w:210,h:238,radius:0,image:['head-closed','head-open'].map(n=>kp+n+'.png')},
+ {id:'kp-fin',w:126,h:252,radius:0,image:kp+'fin.png',pivot:[0,-90]},
+ {id:'kp-wing-root',w:392/3,h:294,radius:0,sheet:{image:kp+'wing.png',columns:3,rows:1,count:3,fps:1,mode:'once'},pivot:[34.7,-21]},
+ {id:'kp-wing-tip',w:392/3,h:294,radius:0,sheet:{image:kp+'wing.png',columns:3,rows:1,count:3,fps:1,mode:'once'},pivot:[-392/6,-21]},
+ {id:'kp-core',w:76,h:76,radius:32,image:['core','core-cracked'].map(n=>kp+n+'.png')},
+ {id:'kp-joint',w:62,h:62,radius:27,draw(c){c.fillStyle='#244953';c.strokeStyle='#c9a268';c.lineWidth=3;c.beginPath();c.arc(0,0,16,0,Math.PI*2);c.fill();c.stroke();c.strokeStyle='#84ddd8';c.lineWidth=2;c.beginPath();c.ellipse(0,0,10,6,0,0,Math.PI*2);c.stroke();}},
+);

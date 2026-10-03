@@ -1,6 +1,19 @@
 // 共用自动驾驶只给输入，不直接结算破招或改 HP；笔画经过逐按钮鼠标事件/识别。
 export function bossInput(g,s){
  const w=g.world,q=w.bossCombat.qte,inp=g.input,F=window.__forced;
+ // 终局题字跟随可见字帖，逐笔发鼠标事件；不改笔画进度。
+ const board=w.bossE?.data.lettering;
+ if(board){
+  s.target=null;inp.axisX=inp.axisY=0;
+  const pointer=(type,x,y)=>{const r=g.r.playCss;document.querySelector('#gl').dispatchEvent(new MouseEvent(type,{clientX:r.x+x*r.w/900,clientY:r.y+y*r.h/1200,button:2,buttons:type==='mouseup'?0:2,bubbles:true}));};
+  const path=board.path;if(!path){s.letterStroke=null;return;}
+  if(!s.letterStroke||s.letterStroke.index!==board.stroke){s.letterStroke={index:board.stroke,segment:0,u:0,done:false};pointer('mousedown',path[0],path[1]);return;}
+  const p=s.letterStroke;if(p.done){if(!w.brush.active)s.letterStroke=null;return;}
+  const i=p.segment*2,len=Math.hypot(path[i+2]-path[i],path[i+3]-path[i+1]);p.u=Math.min(1,p.u+4/len);
+  const x=path[i]+(path[i+2]-path[i])*p.u,y=path[i+1]+(path[i+3]-path[i+1])*p.u;pointer('pointermove',x,y);
+  if(p.u>=1){p.segment++;p.u=0;if(p.segment*2>=path.length-2){pointer('mouseup',x,y);p.done=true;}}
+  return;
+ }
  const grip=w.bossE?.data.paperBattle?.grip;
  if(grip?.victim.kind==='player'){
   if(w.real-(s.paperTapAt??-1)>.16){s.paperTapAt=w.real;window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyJ',bubbles:true}));window.dispatchEvent(new KeyboardEvent('keyup',{code:'KeyJ',bubbles:true}));}

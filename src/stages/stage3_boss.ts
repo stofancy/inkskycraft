@@ -1,99 +1,145 @@
 import type { Co,G } from '../game/api';
 import type { Enemy,EnemyDef } from '../game/enemy';
-import { PI,clamp } from './stage3_enemies';
-import { LightningPillar } from './stage3_extra';
+import type { World } from '../game/world';
 import { director } from './dialogue1';
-const Node:EnemyDef={sprite:'s3_node',hp:80,score:1000,noCollide:true,drops:'ink'};
-const Eye:EnemyDef={sprite:'b_kun_eye',hp:140,score:2500,noCollide:true,drops:'ink'};
-const Fin:EnemyDef={sprite:'b_kun_fin',hp:180,score:3000,noCollide:true,drops:'ink'};
-function mark(n:Enemy,root:Enemy,weapon:string,label:string,phase:string){n.data.contentRole='part';n.data.weakWeapon=weapon;n.data.weakLabel=label;n.data.bodyPhase=phase;n.data.linkTo=root.id;}
-export const Kun:EnemyDef={sprite:'b_kun_body',hp:1,score:60000,noCollide:true,boss:{name:'鲲鹏 · 鲲',phases:4,music:'boss-kun'},hits:[[0,250,65]],*ai(e,g){
- const start=e.data.startPhase??1;
- e.invulnerable=true;yield* g.present(e.moveTo(450,80,2));e.data.weakWeapon='blue';e.data.bodyPhase='负城';
-    if(start <= 1){
- yield* director(g).conversation('C3.kunArrive');
- const eyes=[g.attach(e,Eye,'eyeL'),g.attach(e,Eye,'eyeL',{mirror:true})];eyes.forEach(n=>mark(n,e,'red','刃 · 独立眼裂','eye'));
- yield* g.phase(e,{hp:1000,time:32,name:'鲲张口 · 破眼改变吸口'},function*(){e.invulnerable=false;for(let k=0;;k++){const side=eyes[0].dead?-1:eyes[1].dead?1:k%2?1:-1;e.data.mouthSide=-side;if(eyes.every(n=>n.dead)){e.hp=0;return;}for(let i=0;i<2;i++)if(!eyes[i].dead)g.shoot(eyes[i].x,eyes[i].y,g.aim(eyes[i].x,eyes[i].y),170,{color:'cyan',shape:'rice'});g.fx.charge(450+e.data.mouthSide*160,440,65,1,[.2,1,1]);yield* g.wait(1);g.force({x:450+e.data.mouthSide*160,y:440,radius:540,strength:85,duration:1.4,mode:'attract'});g.laser(450+e.data.mouthSide*160,430,PI/2,{warn:1,duration:.4,width:10,color:'cyan'});yield* g.wait(1.4/g.difficulty.aggression);}});
- e.data.eyeBreaks=eyes.map(n=>n.dead);if(eyes.every(n=>n.dead))e.data.mouthSide=0;for(const n of eyes)if(!n.dead)g.remove(n);
-    }
-    if(start <= 2){
- const fins=[g.attach(e,Fin,'finL'),g.attach(e,Fin,'finL',{mirror:true})];fins.forEach(n=>mark(n,e,'blue','流 · 射鳍或引雷','fin'));
- yield* g.phase(e,{hp:1000,time:32,name:'引雷卸鳍 · 靠柱再撤离'},function*(){e.invulnerable=true;for(let k=0;;k++){if(fins.every(n=>n.dead)){e.hp=0;return;}const p=g.spawn(LightningPillar,k%2?205:695,520,n=>{n.data.contentRole='prop';n.data.linkTo=e.id;});for(const n of fins.filter(n=>!n.dead))g.shoot(n.x,n.y,PI/2,100,{color:'cyan',shape:'big'});const x=450+(e.data.mouthSide??0)*140;g.fx.charge(x,440,80,1,[.2,1,1]);yield* g.wait(1);g.force({x,y:440,radius:520,strength:95-fins.filter(n=>n.dead).length*20,duration:1.5,mode:'attract'});yield* g.wait(4/g.difficulty.aggression);if(!p.dead)g.remove(p);}});
- e.data.finBreaks=fins.filter(n=>n.dead).length;for(const n of fins)if(!n.dead)g.remove(n);
-    }
-    if(start <= 3){
- const sigs=[220,450,680].map(x=>g.attach(e,Node,[x-e.x,415]));const labels=['曜雀 · 先拆甲','青璃 · 先回墨','墨鸢 · 先压阵'];sigs.forEach((n,i)=>mark(n,e,'purple',labels[i],'revoke'));let first=-1;
- yield* g.phase(e,{hp:900,time:35,name:'三处节点 · 顺序决定资源'},function*(){e.invulnerable=true;const rewarded=new Set<number>();for(;;){for(let i=0;i<3;i++)if(sigs[i].dead&&!rewarded.has(i)){rewarded.add(i);if(first<0){first=i;e.data.firstNode=i;}if(i===0){e.data.armorBroken=true;}if(i===1){g.player.ink=1;g.drop('ink',450,620);}if(i===2){e.data.suppressed=true;g.clearBullets(true);g.drop('ink',680,620);}g.caption('','',.01);}if(rewarded.size===3){e.hp=0;return;}for(const n of sigs.filter(n=>!n.dead))g.shoot(n.x,n.y,PI/2,85,{color:'magenta',shape:'orb'});yield* g.wait(e.data.suppressed?3:2);}});for(const n of sigs)if(!n.dead)g.remove(n);
-    }
- g.caption('','',.01);g.clearBullets();const focus=yield* g.challenge({action:'focus',title:'顶住吸口',hint:'顶住吸口；失手后从两侧离开',duration:2.6});
- yield* g.phase(e,{hp:focus?650:900,time:28,name:focus?'反制成功 · 口心开放':'反制恢复 · 两侧出口'},function*(){e.invulnerable=false;e.data.weakWeapon='blue';e.data.bodyPhase='mouth';for(;;){const x=450+(e.data.mouthSide??0)*120;g.fx.charge(x,430,80,1,[.2,1,1]);yield* g.wait(1);g.force({x,y:430,radius:480,strength:(90-(e.data.finBreaks??0)*20)*(focus?.3:1),duration:1.5,mode:'attract'});if(!focus)g.laser(x,440,PI/2,{warn:1,duration:.4,width:e.data.finBreaks?8:15,color:'cyan'});g.fan(x,440,PI/2,3,.65,110,{color:'cyan',shape:'orb'});yield* g.wait(3/g.difficulty.aggression);}});
- // 三拍轮廓解构合计2.1秒；阶段外停火，部件已撤。
- g.clearBullets();e.invulnerable=true;e.data.bodyPhase='transform';g.caption('','',.01);yield* g.present((function*():Co{g.fx.charge(e.x,400,180,.7,[.3,1,1]);yield* g.wait(.7);e.scaleX=.65;e.scaleY=.6;g.fx.burst(450,360,18,90,[.3,1,1]);yield* g.wait(.7);e.alpha=.15;yield* g.wait(.7);})());
-}};
-/** 多边形面积（点列 [x0,y0,...]）。 */
-function polyArea(p: number[]): number {
-  let a = 0;
-  const n = p.length / 2;
-  for (let i = 0, j = n - 1; i < n; j = i++) a += p[j * 2] * p[i * 2 + 1] - p[i * 2] * p[j * 2 + 1];
-  return Math.abs(a) / 2;
-}
-function pointInPoly(x: number, y: number, p: number[]): boolean {
-  let c = false;
-  const n = p.length / 2;
-  for (let i = 0, j = n - 1; i < n; j = i++) {
-    const xi = p[i * 2], yi = p[i * 2 + 1], xj = p[j * 2], yj = p[j * 2 + 1];
-    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c;
-  }
-  return c;
-}
-function segX(ax: number, ay: number, bx: number, by: number, cx: number, cy: number, dx: number, dy: number): number {
-  const rx = bx - ax, ry = by - ay, sx = dx - cx, sy = dy - cy;
-  const den = rx * sy - ry * sx;
-  if (Math.abs(den) < 1e-9) return -1;
-  const t = ((cx - ax) * sy - (cy - ay) * sx) / den, u = ((cx - ax) * ry - (cy - ay) * rx) / den;
-  return t >= 0 && t <= 1 && u >= 0 && u <= 1 ? t : -1;
-}
-/** 一笔（点列）是否围成面积 ≥1500 的闭环且圈住 (px,py)。判定规则与引擎封印一致（自交闭环，或首尾相距 <55）。 */
-export function strokeEncloses(pts: readonly number[], px: number, py: number): boolean {
-  const n = pts.length / 2;
-  for (let i = 0; i < n - 3; i++) {
-    for (let j = n - 2; j >= i + 2; j--) {
-      const t = segX(pts[i * 2], pts[i * 2 + 1], pts[i * 2 + 2], pts[i * 2 + 3], pts[j * 2], pts[j * 2 + 1], pts[j * 2 + 2], pts[j * 2 + 3]);
-      if (t < 0) continue;
-      const poly = [pts[i * 2] + (pts[i * 2 + 2] - pts[i * 2]) * t, pts[i * 2 + 1] + (pts[i * 2 + 3] - pts[i * 2 + 1]) * t];
-      for (let k = i + 1; k <= j; k++) poly.push(pts[k * 2], pts[k * 2 + 1]);
-      if (polyArea(poly) >= 1500 && pointInPoly(px, py, poly)) return true;
-    }
-  }
-  if (n > 12 && Math.hypot(pts[0] - pts[(n - 1) * 2], pts[1] - pts[(n - 1) * 2 + 1]) < 55) {
-    const p = pts.slice();
-    if (polyArea(p) >= 1500 && pointInPoly(px, py, p)) return true;
-  }
-  return false;
-}
+import { openTianmen } from './stage3';
+import { KunpengLettering } from './stage3_lettering';
 
-const Wing:EnemyDef={sprite:'b_peng_wing',hp:220,score:5000,noCollide:true,drops:'ink'};
-export const Peng:EnemyDef={sprite:'b_peng_body',hp:1,score:200000,noCollide:true,hits:[[0,20,55]],boss:{name:'鲲鹏 · 鹏',phases:3,music:'boss-peng'},*ai(e,g){
- const start=e.data.startPhase??1;
- e.invulnerable=true;e.x=450;e.y=250;
- if(start<=1)yield* director(g).conversation('C3.pengTransform');
- const wings=[g.attach(e,Wing,'wingL'),g.attach(e,Wing,'wingL',{mirror:true})];wings.forEach(n=>mark(n,e,'red','刃 · 断翼永久削风','wing'));g.caption('','',.01);
- if(start<=1)yield* g.phase(e,{hp:1700,time:38,name:'鹏展翼 · 断翼选择风路'},function*(){e.invulnerable=false;e.data.weakWeapon='red';for(let k=0;;k++){const n=wings[k%2];if(!n.dead){g.fx.charge(n.x,n.y,60,1,[1,.4,.2]);yield* g.wait(1);g.force({x:n.x,y:660,radius:300,strength:60,duration:1.2,mode:'wind',vx:k%2?-1:1,vy:0});g.laser(n.x,n.y,PI/2+(k%2?.2:-.2),{warn:1,duration:.7,width:14,color:'amber',follow:n});}else{g.fx.burst(n.x,n.y,4,30,[.2,1,1]);yield* g.wait(1);}if(wings.every(n=>n.dead)){e.hp=0;return;}yield* g.wait(1.4/g.difficulty.aggression);}});
- const broken=wings.map(n=>n.dead);for(let i=0;i<2;i++)if(!wings[i].dead)wings[i].invulnerable=true;e.data.brokenWings=broken;
-    if(start <= 2){
- g.clearBullets();const blast=yield* g.challenge({action:'bomb',title:'同舟九万里',hint:'爆发卸去审判甲；失手可射协同点',duration:2.4});
- const ns=[220,680,450].map(x=>g.attach(e,Node,[x-e.x,245]));ns.forEach((n,i)=>{mark(n,e,['red','blue','purple'][i],['曜雀 · 近点拆甲','青璃 · 守回墨区','墨鸢 · 定阵眼'][i],'ally');if(blast)n.hp*=.5;});
- yield* g.phase(e,{hp:900,time:38,name:'同舟协同 · 近发光节点射击'},function*(){e.invulnerable=true;let next=0;for(;;){for(let i=0;i<3;i++)ns[i].invulnerable=i!==next||Math.hypot(g.player.x-ns[i].x,g.player.y-ns[i].y)>360;if(ns[next]?.dead){g.player.ink=Math.min(1,g.player.ink+.35);g.drop('ink',ns[next].x,660);next++;g.clearBullets();if(next===3){e.hp=0;return;}g.caption('','',.01);}const side=next===1?0:1;if(!broken[side]){const x=side?730:170;g.fx.charge(x,530,55,1,[1,.4,.2]);yield* g.wait(1);g.force({x,y:660,radius:300,strength:50,duration:1.2,mode:'wind',vx:side?-1:1,vy:0});g.laser(x,440,PI/2,{warn:1,duration:.4,width:8,color:'amber'});}yield* g.wait(2.5/g.difficulty.aggression);}});
- for(const n of [...ns,...wings])if(!n.dead)g.remove(n);
-    }
- for(const wing of wings)if(!wing.dead)g.remove(wing);
- // 终局在无时限的Boss作用域：输入及圈住可见核心共同完成才结束。
- e.data.phase=3;e.invulnerable=true;e.data.bodyPhase='seal';e.data.weakWeapon='purple';e.y=210;const core=g.attach(e,{...Node,sprite:'b_peng_core',hp:1,invulnerable:true},'core');mark(core,e,'purple','印 · 一笔封天闭环','final');
- for(;;){g.clearBullets();g.player.ink=1;let last:number[]=[];let was=false,enclosed=false,watching=true;
- g.fork((function*():Co{while(watching){if(g.brush.active){last=g.brush.pts.slice();was=true;}else if(was){enclosed ||=strokeEncloses(last,core.x,core.y);was=false;}yield;}})());
- const pressed=yield* g.challenge({action:'brush',title:'一笔封天',hint:'落笔圈住墨金核心；失手后射三阵眼再试',duration:3});
- if(pressed&&g.brush.active){yield* g.until(()=>!g.brush.active,5);yield;}watching=false;
- if(pressed&&enclosed){g.remove(core);e.sealed=3;g.fx.shockwave(450,460,650,15,.8);g.caption('','',.01);g.bg(3,0,3);return;}
- const retry=[210,450,690].map(x=>g.attach(e,Node,[x-e.x,340]));retry.forEach(n=>mark(n,e,'purple','印 · 射或圈封后重试','retry'));g.player.ink=1;let k=0;while(retry.some(n=>!n.dead)){if(k++%120===0)for(const n of retry.filter(n=>!n.dead))g.shoot(n.x,n.y,PI/2,65,{color:'magenta',shape:'orb'});yield;}g.player.ink=1;
+const PI=Math.PI,clamp=(n:number,a=0,b=1)=>Math.max(a,Math.min(b,n));
+// 30 / 30 / 50 秒为普通火力的调参目标；全部阶段必须击破，题字不限时。
+const HP={eye:1000,fin:360,wing:240,core:600};
+interface Rig {head:Enemy;fins:Enemy[];wings:Enemy[];eyes:Enemy[];roots:Enemy[];core:Enemy;spread:number;roll:number;fold:number;board:KunpengLettering;peng:boolean}
+const boards=new WeakMap<G,KunpengLettering>();
+function* wait(g:G,seconds:number,pose?:(t:number)=>void):Co{const at=g.t;while(g.t-at<seconds){pose?.(clamp((g.t-at)/seconds));yield;}pose?.(1);}
+function deco(e:Enemy,g:G,sprite:string,x:number,y:number,order=0):Enemy{return g.attach(e,{sprite,hp:1,decorative:true,noCollide:true,drawOrder:order},[x,y]);}
+function target(e:Enemy,g:G,x:number,y:number,hp:number,label:string,sprite='kp-joint'):Enemy {
+ const p=g.attach(e,{sprite,hp,noCollide:true,radius:27,score:1200,drawOrder:6,hitPriority:30},[x,y]);
+ p.hp=p.maxHp=hp;p.phaseLock=true;p.data.bossOwner=e;p.data.contentRole='part';p.data.damageTarget=p;p.data.hitArmor=false;p.data.weakLabel=label;p.data.targetDisabled=true;return p;
+}
+function rig(e:Enemy,g:G,peng=false):Rig {
+ const board=boards.get(g)??new KunpengLettering(g);if(peng)boards.delete(g);else boards.set(g,board);
+ const r:Rig={head:deco(e,g,'kp-head',0,203,3),fins:[],wings:[],eyes:[],roots:[],core:target(e,g,0,104,HP.core,'回升露胸时，集中火力','kp-core'),spread:0,roll:0,fold:0,board,peng};
+ for(const side of [-1,1]){
+  const f=target(e,g,side*79,138,HP.fin,'打亮起的鳍根');f.data.side=side;r.fins.push(f);
+  const fin=deco(f,g,'kp-fin',side*12,0,-1);fin.mirror=side>0;f.data.fin=fin;
+  const wing=deco(e,g,'kp-wing-root',side*82,95,-2);wing.mirror=side<0;
+  const middle=deco(wing,g,'kp-wing-tip',392/6-34.7,0,-2);middle.mirror=side<0;middle.frame=1;
+  const tip=deco(middle,g,'kp-wing-tip',392/3,0,-2);tip.mirror=side<0;tip.frame=2;
+  wing.data.segments=[middle,tip];r.wings.push(wing);
+  r.roots.push(target(e,g,side*112,95,HP.wing,'拆翼根，停这侧风'));
+  r.eyes.push(target(e,g,side*43,190,HP.eye,'破眼减吸力'));
  }
+ r.core.alpha=0;e.data.kunpengRig=r;e.data.paperEffects=board;e.data.copperSimple=true;e.data.weakCustom=true;e.data.targetDisabled=true;
+ g.fork((function*():Co{for(;;){
+  e.angle=r.roll;const t=g.t;
+  r.head.frame=(r.peng&&r.spread>.4)||e.data.action==='偏侧吸流'||e.data.action==='吐三颗慢弹'?1:0;
+  r.head.offY=203+Math.sin(t*1.7)*3;
+  for(let i=0;i<2;i++){
+   const side=i?1:-1,f=r.fins[i],fin=f.data.fin as Enemy,wing=r.wings[i];
+   f.scaleX=f.scaleY=1-r.fold*.93;f.offX=side*(79-r.fold*40);if(!f.data.sweeping)fin.offRot=side*(.2+Math.sin(t*1.8+i)*.1)+r.roll*.5;
+   f.alpha=!r.peng&&e.data.phaseIndex===2&&!f.data.targetDisabled&&f.hp>0?1:0;fin.alpha=1-r.fold;
+   // 根部先抬起，中段铺开，再伸展翼尖；左右错半拍，始终连着同一副躯体。
+   const u=clamp((r.spread-i*.12)/.88),root=clamp(u*3),mid=clamp(u*3-1),tip=clamp(u*3-2);
+   wing.alpha=root;wing.scaleX=.15+.85*root;wing.scaleY=.5+.5*root;wing.offRot=side*(-1.05*(1-root)+Math.sin(t*2)*.045);
+   const segments=wing.data.segments as Enemy[];for(let j=0;j<2;j++){const v=j?tip:mid,p=segments[j];p.alpha=v;p.scaleX=.1+.9*v;p.scaleY=wing.scaleY;p.offRot=side*-.6*(1-v);}
+   r.roots[i].alpha=r.peng&&r.spread>.4?1:0;r.roots[i].offX=side*82;
+   if(r.roots[i].hp<=0){r.roots[i].alpha*=.25;wing.tint=[.6,.7,.7];for(const p of wing.data.segments as Enemy[])p.tint=wing.tint;}
+   const eye=r.eyes[i];eye.alpha=r.peng?0:eye.hp<=0?.2:1;
+   for(const p of [eye,f,r.roots[i]])if(p.hp<=0){p.data.targetDisabled=true;p.glow=.1;}
+  }
+  if(e.data.phaseIndex===1&&!r.peng)e.hp=r.eyes.reduce((s,p)=>s+p.hp,0);
+  if(e.data.phaseIndex===2&&!r.peng)e.hp=r.fins.reduce((s,p)=>s+p.hp,0);
+  if(r.peng)e.hp=r.core.hp;
+  yield;
+ }} )());return r;
+}
+function enable(parts:Enemy[],on:boolean):void{for(const p of parts){p.data.targetDisabled=!on||p.hp<=0;p.glow=on?1.7:.25;}}
+function volley(g:G,x:number,y:number,n:number,angle:number,spread:number,speed:number,big=false):void {
+ if(g.bulletCount()+n>112)return;
+ const scale=g.difficulty.speed*(1+((g as World).player.power-1)*.05);
+ for(let i=0;i<n;i++)g.shoot(x,y,angle+(n===1?0:i/(n-1)-.5)*spread,speed/scale,{color:big?'cyan':'gold',shape:big?'big':'rice',life:6});
+}
+// 部件拆掉当帧停止施力；作用域取消后没有残留风场。
+function flow(g:G,x:number,y:number,radius:number,strength:number,wind?:number):void {
+ const p=(g as World).player,dx=x-p.x,dy=y-p.y,d=Math.hypot(dx,dy);if(!p.alive||d>=radius)return;
+ const k=clamp((radius-d)/(radius*.25))*strength*g.dt;
+ p.x=clamp(p.x+(wind??dx/Math.max(1,d))*k,26,874);
+ p.y=clamp(p.y+(wind===undefined?dy/Math.max(1,d):0)*k,50,1164);
+}
+function* roam(e:Enemy,g:G,k:number):Co {
+ const pts=[[245,340],[650,560],[270,660],[640,300]];e.data.action='游弋';const [x,y]=pts[k%4];yield* e.moveTo(x,y,1.6,'inOutQuad');
+}
+function phase(e:Enemy,index:number,title:string):void{e.data.phaseIndex=index;e.data.phaseTitle=title;e.invulnerable=false;}
+function* mouth(e:Enemy,g:G,r:Rig):Co {
+ for(let k=0;;k++){
+  yield* roam(e,g,k);enable(r.eyes,true);
+  const side=k%2?1:-1,x=clamp(e.x+side*100,180,720),y=e.y+255;
+  e.data.action='抬头';g.fx.charge(x,y,75,1.2,[.3,1,1]);yield* wait(g,1.2,t=>r.head.offRot=-side*.15*t);
+  e.data.action='偏侧吸流';yield* wait(g,1.35,()=>flow(g,x,y,370,r.eyes.filter(p=>p.hp>0).length*38));
+  e.data.action='吐三颗慢弹';volley(g,x,y,3,PI/2,.68,105,true);
+  // 薄疏云滴铺在两侧，正下方留 160 像素通路。
+  for(const s of [-1,1])volley(g,x+s*100,y-30,28,PI/2+s*.85,.62,135);
+  e.data.action='吐息收招';yield* wait(g,2,t=>r.head.offRot=-side*.15*(1-t));
+ }
+}
+function* fins(e:Enemy,g:G,r:Rig):Co {
+ for(let k=0;;k++){
+  yield* roam(e,g,k+1);yield* e.moveTo(450,e.y,.6,'inOutQuad');const i=k%2,p=r.fins[i],side=i?1:-1;if(p.hp<=0)continue;
+  enable(r.fins,false);e.data.action='侧翻预告';g.fx.charge(p.x,p.y,85,1.2,[.4,1,1]);yield* wait(g,1.2,t=>r.roll=side*.45*t);
+  e.data.action='摆鳍扫过';
+  // 鳍始终挂在根部摆动；居中侧翻时，计入鳍尖与碰撞半径仍留 150 像素。
+  const fin=p.data.fin as Enemy;p.data.sweeping=true;
+  try {yield* wait(g,.75,t=>{
+   if(p.hp<=0)return;
+   fin.offRot=side*(-.9+1.8*t);r.roll=side*(.45-.9*t);
+   const w=g as World,tip=fin.local(0,110);if(Math.hypot(w.player.x-tip.x,w.player.y-tip.y)<55)w.player.hit();
+  });}finally{p.data.sweeping=false;fin.offRot=0;}
+  if(p.hp>0)volley(g,p.x,p.y,36,PI/2,PI*1.35,140);
+  e.data.action='收鳍露根';enable([p],true);yield* wait(g,2,t=>r.roll=-side*.45*(1-t));
+ }
+}
+export const Kun:EnemyDef={sprite:'kp-body',hp:1,radius:0,noCollide:true,score:60000,boss:{name:'鲲鹏 · 鲲',phases:2,music:'boss-kun',defeat:'disable'},*ai(e,g):Co{
+ boards.delete(g);const r=rig(e,g),start=e.data.startPhase??1;e.invulnerable=true;e.x=450;e.y=1060;e.data.action='云海升鲲';
+ yield* g.present(e.moveTo(450,350,3,'outCubic'));
+ if(start<=1)yield* director(g).conversation('C3.kunArrive');
+ if(start<=1){phase(e,1,'鲲 · 张口');yield* g.phase(e,{hp:HP.eye*2/g.difficulty.hp,time:Infinity,transitionTime:0,complete:()=>r.eyes.every(p=>p.hp<=0)},()=>mouth(e,g,r));yield* r.board.award(0);}
+ else{r.board.count=1;for(const p of r.eyes)p.hp=0;}
+ enable(r.eyes,false);phase(e,2,'鲲 · 翻身');
+ yield* g.phase(e,{hp:HP.fin*2/g.difficulty.hp,time:Infinity,transitionTime:0,complete:()=>r.fins.every(p=>p.hp<=0)},()=>fins(e,g,r));
+ yield* r.board.award(1);e.invulnerable=true;r.roll=0;yield* e.moveTo(450,350,1.4,'inOutQuad');
+}};
+function* pengAttack(e:Enemy,g:G,r:Rig):Co {
+ for(let k=0;;k++){
+  enable([r.core],false);r.core.alpha=.2;yield* roam(e,g,k);yield* e.moveTo(450,Math.min(e.y,440),.8,'inOutQuad');enable(r.roots,true);
+  e.data.action='拍翼预告';g.fx.charge(e.x,e.y+100,170,1.2,[.5,1,1]);yield* wait(g,1.2);
+  e.data.action='拍翼侧风';
+  for(let i=0;i<2;i++)if(r.roots[i].hp>0){const p=r.roots[i],side=i?1:-1;volley(g,p.x,p.y,42,PI/2+side*.55,1.1,155);}
+  yield* wait(g,1.4,()=>{for(let i=0;i<2;i++)if(r.roots[i].hp>0)flow(g,r.roots[i].x,e.y+320,300,65,i?1:-1);});e.data.action='拍翼收招';yield* wait(g,2);
+  // 固定旧位，窄身俯冲；最靠边时仍留下 150 像素通路。
+  const x=clamp(g.player.x,250,650),y=clamp(g.player.y,650,940),sx=e.x,sy=e.y;
+  e.data.action='锁线俯冲';const line=g.laser(sx,sy,Math.atan2(y-sy,x-sx),{warn:1.25/g.difficulty.warn,duration:.01,width:25,color:'gold'});
+  try{yield* wait(g,1.2);line.kill();e.data.action='俯冲';
+   e.def.noCollide=false;e.radius=85;
+   yield* wait(g,.8,t=>{const u=t*t;e.x=sx+(x-sx)*u;e.y=sy+(y-sy)*u;r.spread=1-.7*Math.sin(t*PI);const w=g as World;if(Math.hypot(w.player.x-e.x,w.player.y-e.y-180)<85)w.player.hit();});
+  }finally{line.kill();e.def.noCollide=true;e.radius=0;}
+  e.data.action='回升露胸';r.spread=1;r.core.alpha=1;enable([r.core],true);e.data.weak={until:g.real+3,claimed:false};
+  yield* e.moveTo(450,340,2,'inOutQuad');yield* wait(g,1);enable([r.core],false);
+ }
+}
+export const Peng:EnemyDef={sprite:'kp-body',hp:1,radius:0,noCollide:true,score:200000,boss:{name:'鲲鹏 · 鹏',phases:2,music:'boss-peng',defeat:'disable'},*ai(e,g):Co{
+ const r=rig(e,g,true),start=e.data.startPhase??1;r.board.count=2;e.x=450;e.y=350;e.invulnerable=true;
+ for(const p of [...r.eyes,...r.fins])p.hp=0;
+ if(start<=1){
+  e.data.action='鲲化鹏';yield* director(g).conversation('C3.pengTransform');
+  yield* wait(g,3.6,t=>{r.fold=clamp(t*2);r.spread=clamp((t-.22)/.78);e.y=350-35*Math.sin(t*PI);});
+  r.fold=1;r.spread=1;phase(e,1,'鹏 · 展翼');
+  yield* g.phase(e,{hp:HP.core/g.difficulty.hp,time:Infinity,transitionTime:0,complete:()=>r.core.hp<=0},()=>pengAttack(e,g,r));
+ }
+ r.core.frame=1;r.core.data.targetDisabled=true;enable(r.roots,false);enable(r.eyes,false);enable(r.fins,false);e.invulnerable=true;
+ g.clearBullets();yield* r.board.award(2);e.data.action='收翼停火';
+ yield* wait(g,2,t=>{r.spread=1-.85*t;e.x+=(450-e.x)*.08;e.y+=(270-e.y)*.08;});
+ phase(e,2,'执笔 · 题局开门');e.invulnerable=true;e.data.action='写局';
+ yield* r.board.write(e);
+ openTianmen(g);g.bgFlash(.4);yield* director(g).conversation('C3.gateOpen');
+ const sign=g.scene('kp-sign',450,134);sign.layer='front';
 }};
