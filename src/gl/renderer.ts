@@ -6,6 +6,7 @@ import { ALL_SPRITES } from '../art/index';
 import { BG_HEADER, FRAME_HEADER, type BgDef, type Vec4 } from '../bg/header';
 import { BACKGROUNDS, FRAME_FRAG } from '../bg/index';
 import { SkyGroundLayer } from '../bg/sky-scene';
+import { STAGE3_SCENERY, drawThunderIslands } from '../bg/stage3-scroll';
 import { PLAY_H, PLAY_W, type Rect, type Settings } from '../types';
 import { Atlas } from './atlas';
 import { BulletRenderer } from './bullets';
@@ -143,7 +144,7 @@ export class Renderer {
     // 公共图集固定两倍密度，小机体通过textureScale保留原帧。
     // DPR提升渲染缓冲分辨率；整套文字和素材同步超采样会占用数倍显存。
     const texScale = 2;
-    await this.atlas.build(ALL_SPRITES, texScale, (p) => onProgress(p * 0.85));
+    await this.atlas.build([...ALL_SPRITES, ...STAGE3_SCENERY], texScale, (p) => onProgress(p * 0.85));
     this.sprites = new SpriteRenderer(gl, this.atlas);
     this.bullets = new BulletRenderer(gl);
     this.ribbons = new RibbonRenderer(gl);
@@ -313,6 +314,7 @@ precision highp float;uniform float dim;out vec4 o;void main(){o=vec4(vec3(dim),
     // 先压暗背景；随后绘制的战斗对象、亮芯、敌弹保持本身亮度。
     if(this.mantraDim<1){this.scene.bind();gl.enable(gl.BLEND);gl.blendFunc(gl.ZERO,gl.SRC_COLOR);this.mantraWash.use().set('dim',this.mantraDim);fullscreen(gl);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);}
     // 2. 地面单位 → 3. 空中单位投影 → 4. 墨流体 → 5. 低层粒子
+    if (this.bgId === 'stage3') drawThunderIslands(this, scroll, time);
     S.draw(this.ground.scenery);
     // 天气盖过背景景物，玩家、敌机及双方子弹随后绘制。
     if (P.fg) {
