@@ -1,4 +1,4 @@
-// 能量弹：我方纯加色亮芯；敌方彩色实体与柔光，取消描边和长尾。
+// 朱弹和敌弹采用预乘实体色，亮芯局部加色。
 import { PLAY_H, PLAY_W } from '../types';
 import { Program, type GL } from './util';
 
@@ -22,11 +22,14 @@ void main() {
   int sh = int(aB.x + 0.5) % 16;
   bool lng = sh == 1 || sh == 2 || sh == 5 || sh == 7 || sh == 8;
   float ext = (lng ? 3.4 : 3.0) * max(grow, 1.0);       // 四边形半径 = size * ext，留出光晕与符纹环
-  vec2 local = corner * aA.w * ext;
+  bool red = int(aB.x + 0.5) == 9 && aB.y > aB.z * 2.0 && aB.y > aB.w * 2.0;
+  // 朱弹尾焰向后延伸两个弹身长度，包围框只扩展飞行轴。
+  vec2 unit = red ? vec2(mix(-12.5, 3.0, corner.x * 0.5 + 0.5), corner.y * 1.1) : corner * ext;
+  vec2 local = unit * aA.w;
   float c = cos(aA.z), s = sin(aA.z);
   vec2 p = aA.xy + vec2(local.x * c - local.y * s, local.x * s + local.y * c);
   gl_Position = vec4(p.x / uView.x * 2.0 - 1.0, 1.0 - p.y / uView.y * 2.0, 0.0, 1.0);
-  vP = corner * ext;                      // 以 size 为单位的局部坐标，+x 为飞行方向
+  vP = unit;                      // 以 size 为单位的局部坐标，+x 为飞行方向
   vB = aB;
   vC = vec4(aC.x, aC.y * mix(0.25, 1.0, spawn), aC.z, grow);
   vTrail = aC.w;
@@ -53,6 +56,25 @@ void main() {
   vec2 p=vP/(enemy?vC.w:1.0);
   vec3 col=vB.yzw;
   if(!enemy && shape==9) {
+    if(col.r > col.g * 2.0 && col.r > col.b * 2.0) {
+      // 5.2 单位半径对应约 26×8 像素实体，尾焰约 52 像素。
+      float back=clamp((-p.x-2.5)/10.0,0.0,1.0);
+      float width=.77*mix(.7,1.0,smoothstep(-2.5,.5,p.x));
+      float head=sqrt(max(0.0,1.0-pow(max(p.x-1.65,0.0)/.85,2.0)));
+      float body=(1.0-smoothstep(width*head-.08,width*head+.08,abs(p.y)))
+        * (1.0-smoothstep(2.4,2.5,p.x))*smoothstep(-2.6,-2.3,p.x);
+      float flicker=sin(p.x*2.4+vC.x*28.0)*.04*back;
+      float tailWidth=.54*pow(1.0-back,.8);
+      float tail=(1.0-smoothstep(max(0.0,tailWidth-.09),tailWidth+.09,abs(p.y+flicker)))
+        * pow(1.0-back,1.4)*(1.0-smoothstep(-2.5,-1.9,p.x));
+      float alpha=max(body,tail)*vC.y;
+      vec3 shell=mix(vec3(.69,.048,.004),vec3(1.0,.255,.01),smoothstep(-3.0,2.0,p.x));
+      float coreWidth=mix(.09,.36,smoothstep(-2.4,1.2,p.x));
+      float core=exp(-pow(p.y/coreWidth,2.0)*1.7)
+        * smoothstep(-2.5,-.6,p.x)*(1.0-smoothstep(2.0,2.6,p.x))*body;
+      o=vec4(shell*alpha+vec3(2.0,1.8,1.15)*core*vC.y,alpha);
+      return;
+    }
     // 短梭形亮芯与橙/青/紫软辉；alpha=0，在现有预乘混合中纯加色。
     vec2 q=vec2(p.x/2.4,p.y/.65);
     float body=exp(-dot(q,q)*2.4);
@@ -62,12 +84,13 @@ void main() {
     o=vec4((col*(body*.9+halo*.3+tail)+vec3(1.8,1.65,1.4)*core)*vC.y*uIntensity,0.0);
     return;
   }
-  // 对称轮廓保留圆、椭圆、针、星、环、菱晶差异；所有敌弹取消黑边与长尾。
+  // 对称轮廓保留圆、椭圆、针、星、菱晶差异；所有敌弹取消黑边与长尾。
   float d;
   if(shape==1)d=(length(p/vec2(1.45,.62))-1.0)*.62;
   else if(shape==2)d=(length(p/vec2(2.3,.34))-1.0)*.34;
   else if(shape==3){float a=vC.x*3.0+vC.z*6.28;d=star(mat2(cos(a),-sin(a),sin(a),cos(a))*p);}
-  else if(shape==4)d=abs(length(p)-.8)-.22;
+  else if(shape==4)d=length(p)-1.02;
+  else if(shape==5)d=(length(vec2(p.x/1.25,p.y/(.7-.15*clamp(p.x,-1.0,1.0))))-1.0)*.6;
   else if(shape==7)d=diamond(p,vec2(1.3,.72));
   else if(shape==8)d=(length(p/vec2(1.7,.58))-1.0)*.58;
   else d=length(p)-1.0;
@@ -76,16 +99,18 @@ void main() {
   float core=1.0-smoothstep(-.38,-.09,d);
   if(shape==2||shape==4)core=1.0-smoothstep(-.16,-.035,d);
   if(!enemy){o=vec4((col*(body+exp(-max(d,0.0)*4.0)*.3)+vec3(1.8)*core)*vC.y*uIntensity,0.0);return;}
-  vec3 base=clamp(col,0.0,1.0);
-  // 饱和彩色实体在淡纸背景上保持对比；外辉采用同色浅光。
-  vec3 color=mix(base*.82,vec3(1.7,1.65,1.5),core*.78);
-  float halo=exp(-max(d,0.0)*5.5)*(1.0-body)*.32;
-  vec3 emit=mix(base,vec3(1.0),.25)*halo;
-  if(shape==6){
-    float ring=exp(-pow((length(p)-1.5)*24.0,2.0));
-    emit+=mix(base,vec3(1.0),.2)*ring*.65;
-  }
-  o=vec4((color*body+emit)*vC.y,body*vC.y);
+  // 将 HDR 色板归一后转为线性色，淡云背景上保留饱和色与窄白芯。
+  vec3 base=pow(clamp(col/max(1.0,max(col.r,max(col.g,col.b))),0.0,1.0),vec3(2.2));
+  float edge=1.0-smoothstep(-aa*2.0,-aa*.5,d);
+  vec2 coreP=p;
+  if(shape==1||shape==5||shape==8)coreP/=vec2(1.3,.55);
+  if(shape==2)coreP/=vec2(2.0,.28);
+  if(shape==7)coreP/=vec2(1.1,.55);
+  float white=exp(-dot(coreP,coreP)*24.0);
+  vec3 color=mix(base*.48,base,edge);
+  color=mix(color,vec3(1.0,.94,.78),white);
+  o=vec4(color*body*vC.y,body*vC.y);
+
 }`;
 
 const FLOATS = 12;

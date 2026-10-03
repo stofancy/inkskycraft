@@ -50,7 +50,7 @@ export class FxSystem implements Fx {
 
   /** 按粒子类型自动选择层：墨/烟/花瓣/碎片在低层，其余在高层。 */
   emit(p: ParticleSpec): void {
-    const lowKind = p.kind === PK.Ink || p.kind === PK.Smoke || p.kind === PK.SmokeShape || p.kind === PK.Shard || p.kind === PK.Petal;
+    const lowKind = p.kind === PK.Ink || p.kind === PK.Smoke || p.kind === PK.SmokeShape || p.kind === PK.Shard || p.kind === PK.Debris || p.kind === PK.Petal;
     (lowKind ? this.low : this.high).emit(p);
   }
 
@@ -82,13 +82,13 @@ export class FxSystem implements Fx {
     const color:RGB=cold?[.18,1.1,.85]:electric?[.95,.3,1.5]:[1.8,.65,.12];
     // 六层粒子：短闪、翻卷火球、上浮软烟、径向火星、坠落碎片、扩散光环。
     // 火焰与烟团复用 ParticleSystem 构造时上传的软边图集。
-    this.emitHigh({x,y,life:.09+.01*k,size:radius*.7,sizeEnd:radius*1.3,r:2.4,g:1.7,b:.8,a:.65,kind:PK.FlareTex});
-    this.radial(x,y,this.n(4+1.5*k),35*sk,150*sk,{life,drag:3,size:radius*.45,sizeEnd:radius*.6,spin:1.5,r:.95,g:.85,b:.7,r1:.5,g1:.24,b1:.08,a:.52,kind:PK.FlameTex},radius*.4,.45);
-    this.radial(x,y,this.n(3+3*k),25*sk,85*sk,{life:life+1.1,delay:.02,drag:2.4,grav:-28,size:radius*.4,sizeEnd:radius*.92,spin:.45,r:.28,g:.25,b:.23,r1:.15,g1:.16,b1:.18,a:chapterInk?.63:.55,kind:PK.SmokeShape},radius*.25,.4);
-    this.radial(x,y,this.n(18*k),220*sk,650*sk,{life:.48+.06*k,drag:2.6,grav:70,size:2.6,sizeEnd:.5,r:color[0],g:color[1],b:color[2],r1:.5,g1:.12,b1:.03,kind:PK.Spark},radius*.12);
-    this.radial(x,y,this.n(8*k),50*sk,170*sk,{life:1.1,drag:1.6,grav:-30,size:2.2,sizeEnd:.4,r:1.6,g:.42,b:.05,r1:.35,g1:.06,b1:.01,kind:PK.Ember});
-    this.radial(x,y,this.n(5*k),110*sk,330*sk,{life:.75+.13*k,drag:1.2,grav:280,size:3.5*sk,sizeEnd:1.5,spin:9,r:.32,g:.23,b:.15,kind:PK.Shard},radius*.12);
-    this.emitHigh({x,y,life:.25+.035*k,size:8,sizeEnd:radius*1.9,r:color[0],g:color[1],b:color[2],a:.4,kind:PK.Ring});
+    this.radial(x,y,this.n(4+1.5*k),35*sk,150*sk,{life,drag:3,size:radius*.45,sizeEnd:radius*.6,spin:1.5,r:1,g:.23,b:.009,r1:.48,g1:.038,b1:.003,a:1,kind:PK.Fireball},radius*.4,.45);
+    this.radial(x,y,this.n(3+3*k),25*sk,85*sk,{life:life+1.1,delay:.02,drag:2.4,grav:-28,size:radius*.4,sizeEnd:radius*.92,spin:.45,r:.28,g:.25,b:.23,r1:.15,g1:.13,b1:.11,a:chapterInk?.63:.55,kind:PK.SmokeShape},radius*.25,.4);
+    this.radial(x,y,this.n(18*k),220*sk,650*sk,{life:.48+.06*k,drag:2.6,grav:70,size:2.6,sizeEnd:.5,r:2.2,g:1.65,b:.22,r1:.75,g1:.3,b1:.015,kind:PK.FireSpark},radius*.12);
+    this.radial(x,y,this.n(8*k),50*sk,170*sk,{life:1.1,drag:1.6,grav:-30,size:2.2,sizeEnd:.4,r:1.8,g:1.25,b:.12,r1:.45,g1:.15,b1:.01,kind:PK.FireSpark});
+    this.radial(x,y,this.n(5*k),110*sk,330*sk,{life:.75+.13*k,drag:1.2,grav:280,size:3.5*sk,sizeEnd:1.5,spin:9,r:.18,g:.075,b:.025,r1:.075,g1:.03,b1:.008,kind:PK.Debris},radius*.12);
+    this.emitHigh({x,y,life:.25+.035*k,size:8,sizeEnd:radius*1.9,r:.7,g:.25,b:.035,a:.65,kind:PK.ShockRing});
+    this.emitHigh({x,y,life:.09+.01*k,size:radius*.7,sizeEnd:radius*1.3,r:3,g:2.6,b:1.6,a:.85,kind:PK.Dot});
     this.shockwave(x,y,radius*2.1,2.0*sk,.32+.04*k);
     this.r.lights.pulse(x,y,radius*3.5,color[0]*sk*.35,color[1]*sk*.35,color[2]*sk*.35,.35);
     this.shake([.04,.14,.32,.6][['s','m','l','xl'].indexOf(size)]);

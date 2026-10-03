@@ -28,9 +28,13 @@ export enum PK {
   TwirlTex = 21, // 翻卷灵气
   StarTex = 22, // 金色碎光
   OilFlameTex = 23, // 向上的贴地火舌
+  Fireball = 24, // 爆炸火球：饱和橙红实体
+  Debris = 25, // 爆炸纸片、铜片：有棱角的实体
+  ShockRing = 26, // 爆炸细冲击环
+  FireSpark = 27, // 爆炸亮黄短线
 }
 
-const ADDITIVE = new Set([PK.Dot, PK.Spark, PK.Leaf, PK.Ring, PK.Ember, PK.Flame, PK.FlameTex, PK.EmberTex, PK.FireShape, PK.SparkTex, PK.FlareTex, PK.TraceTex, PK.TwirlTex, PK.StarTex]);
+const ADDITIVE = new Set([PK.Dot, PK.Spark, PK.Leaf, PK.Ring, PK.Ember, PK.Flame, PK.FlameTex, PK.EmberTex, PK.FireShape, PK.SparkTex, PK.FlareTex, PK.TraceTex, PK.TwirlTex, PK.StarTex, PK.FireSpark]);
 
 const VS = `#version 300 es
 layout(location=0) in vec4 aA; // x0 y0 vx vy
@@ -64,10 +68,10 @@ void main() {
   vec2 corner = vec2(float(gl_VertexID & 1), float(gl_VertexID >> 1)) * 2.0 - 1.0;
   vec2 local;
   float vFaceV = 1.0;
-  if (kind == 1.0 || kind == 17.0 || kind == 20.0) {
+  if (kind == 1.0 || kind == 17.0 || kind == 20.0 || kind == 27.0) {
     float sp = length(vel);
     vec2 dir = sp > 0.001 ? vel / sp : vec2(1.0, 0.0);
-    float len = size + sp * (kind == 1.0 ? 0.05 : 0.025);
+    float len = size + sp * (kind == 27.0 ? 0.009 : kind == 1.0 ? 0.05 : 0.025);
     local = dir * corner.x * len + vec2(-dir.y, dir.x) * corner.y * size * (kind == 1.0 ? 0.35 : 0.55);
   } else {
     float r = aC.z + aC.w * t;
@@ -129,7 +133,7 @@ void main() {
   vec3 extra = vec3(0.0);
   vec3 shard = vec3(0.0);
   vec3 tint = vCol.rgb;
-  bool add = (k == 0 || k == 1 || k == 4 || k == 5 || k == 8 || k == 9 || k == 12 || k == 13 || (k >= 15 && k != 16 && k != 19 && k != 23));
+  bool add = (k == 0 || k == 1 || k == 4 || k == 5 || k == 8 || k == 9 || k == 12 || k == 13 || (k >= 15 && k <= 22 && k != 16 && k != 19) || k == 27);
   if (k == 0 || k == 8) a = exp(-r * r * 5.0);
   else if (k == 9) {
     vec2 q = vQ;
@@ -153,6 +157,28 @@ void main() {
     float ang = atan(vQ.y, vQ.x);
     float n = 0.6 + 0.2 * sin(ang * 4.0 + vSeed * 20.0 + vU * 3.0);
     a = smoothstep(n + 0.3, n - 0.3, r) * 0.6;
+  }
+  else if (k == 24) {
+    float cell=floor(vSeed*2.0);
+    vec4 tx=texture(uShapes,(vec2(cell,0.0)+vQ*.49+.5)*.25);
+    float edge=smoothstep(1.0,.82,max(abs(vQ.x),abs(vQ.y)));
+    a=max(smoothstep(.008,.08,tx.a),1.0-smoothstep(.3,.65,r))*edge;
+    float folds=smoothstep(.02,.6,tx.r);
+    tint=mix(vec3(.48,.018,.002),vCol.rgb,folds);
+  }
+  else if (k == 25) {
+    // 斜切的四边形纸片，铜片保留窄折痕；无花瓣曲线和橙色自发光。
+    vec2 q=vQ;
+    float d=max(abs(q.x+q.y*.28)-.68,max(abs(q.y)-.4,(q.x-q.y)*.7-.68));
+    a=1.0-smoothstep(-.035,.035,d);
+    if(vSeed<.5)tint=vec3(.028,.02,.014);
+    tint*=.65+.35*step(.0,q.x+q.y*.35);
+  }
+  else if (k == 26) {
+    a=1.0-smoothstep(fwidth(r),fwidth(r)*2.0,abs(r-.85));
+  }
+  else if (k == 27) {
+    a=(1.0-smoothstep(.45,1.0,abs(vQ.x)))*exp(-vQ.y*vQ.y*24.0);
   }
   else if (k >= 15) {
     float cell = k == 15 ? floor(vSeed * 2.0) : k == 16 ? 4.0 + floor(vSeed * 2.0)
