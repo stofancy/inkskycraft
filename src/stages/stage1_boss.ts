@@ -323,9 +323,9 @@ function paperSpine(e:Enemy,r:PaperRig,dt:number,reset:boolean):void {
  }
  P[0]={...T[0]};
  {
-  // 龙头偏头盯人时颈点离开路，头两节跟着弯过去，脖子不拉开缝。
-  const inv=P.map((_,k)=>k===0?0:k<SPINE_PIN?[0,.6,.2][k]:1-pull(k)),last=drive?SPINE_PIN:n;
-  for(let it=0;it<6;it++)for(let k=1;k<=last;k++){
+  // 龙头偏头盯人时颈点离开路，头三节跟着弯过去，脖子不拉开缝；甩尾时 3 号关节是尾段支点，不动。
+  const inv=P.map((_,k)=>k===0?0:k<SPINE_PIN?[0,.6,.35][k]:k===SPINE_PIN&&!drive?.15:1-pull(k)),last=drive?SPINE_PIN:n;
+  for(let it=0;it<10;it++)for(let k=1;k<=last;k++){
    const a=P[k-1],c=P[k],ia=inv[k-1],ic=inv[k];if(ia+ic<=0)continue;
    const dx=c.x-a.x,dy=c.y-a.y,d=Math.hypot(dx,dy)||1,m=(d-s.len[k-1])/d/(ia+ic);
    a.x+=dx*m*ia;a.y+=dy*m*ia;c.x-=dx*m*ic;c.y-=dy*m*ic;
