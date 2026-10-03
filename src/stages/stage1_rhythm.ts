@@ -11,7 +11,7 @@ function run(g:G){const key=(g as World).root;let r=runs.get(key);if(!r){r={seri
 export function formation(g:G,family:string){const r=run(g),n=r.families.get(family)??0;r.families.set(family,n+1);return {variant:[0,3,1,2][n%4],volleyGroup:`${family}:${++r.serial}`};}
 /** 一组占区、一组瞄准；占用时间覆盖预告及弹体寿命，异类首发至少错开 0.6 秒。 */
 export function volley(e:Enemy,g:G,lane:Lane,life:number,warn=0):boolean{
- if(!normal(g))return true;
+ if(!normal(g)&&(g as World).stageIndex!==3)return true;
  const r=run(g),group=String(e.data.volleyGroup??e.id),slot=r.slots[lane],other=r.slots[lane==='area'?'aim':'area'];
  if(slot&&slot.until>g.t&&slot.group!==group)return false;
  const fire=g.t+warn;

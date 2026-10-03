@@ -17,4 +17,4 @@ function draw(c:C,k:number){c.fillStyle='#173740';c.strokeStyle='#d6b779';c.line
 }
 export const stage3ExtraSprites:SpriteDef[]=names.map((n,k)=>({id:`e_${n}`,w:110,h:100,radius:k===7?32:22,draw:c=>draw(c,k),glow:c=>{c.fillStyle=k===8?'#fc608f':'#40d9d5';c.fillRect(-3,-3,6,6);}}));
 stage3ExtraSprites.push({id:'s3_node',w:56,h:56,radius:17,anchors:{root:[0,0]},draw:c=>{c.strokeStyle='#e9bd64';c.fillStyle='#2b1836';c.lineWidth=3;path(c,[[0,-19],[19,0],[0,19],[-19,0]]);c.strokeRect(-7,-7,14,14);},glow:c=>{c.strokeStyle='#e7b862';c.lineWidth=2;c.strokeRect(-12,-12,24,24);}});
-stage3ExtraSprites.push({id:'s3_pillar',w:70,h:110,radius:24,draw:c=>{c.fillStyle='#213b43';c.strokeStyle='#78e4e4';c.lineWidth=2;path(c,[[-19,45],[-11,-35],[0,-48],[11,-35],[19,45]]);for(let i=0;i<4;i++)c.strokeRect(-17,-20+i*17,34,9);},glow:c=>{c.fillStyle='#62dded';c.fillRect(-3,-30,6,67);}});
+stage3ExtraSprites.push({id:'s3_pillar',w:70,h:140,radius:24,image:'art/props/ch3/lightning-pillar.png'});

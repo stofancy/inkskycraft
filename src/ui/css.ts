@@ -414,7 +414,7 @@ const RAW = /* css */ `
 .compact .c-no,.compact .w-en{font-size:12px;margin:0}.compact .c-t,.compact .w-name{font-size:24px}.compact .c-s,.compact .w-sub{font-size:13px;margin:0}
 .compact .portrait{width:96px;height:104px}.compact .communication-copy{display:block}.compact .speaker{margin:0 0 4px;gap:12px;flex-direction:row;align-items:center}
 .compact .speaker b{font-size:22px}.compact .speaker span{font-size:20px}.compact .dialogue-text{font-size:22px;line-height:1.5;min-height:0}
-.compact .host.c .hud{top:12u}.compact.bs .host.c .hud{top:354px}.compact .boss.c2{top:306px}
+.compact .host.c .hud{top:12u}.compact.bs .host.c .hud{top:116u}.compact .boss.c2{top:10u}
 .compact .qte{top:430px;left:260u;right:130u}.compact .qte-action{font-size:21u}
 
 

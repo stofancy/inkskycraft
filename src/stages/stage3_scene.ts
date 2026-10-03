@@ -10,7 +10,7 @@ STAGE3_SCENERY.push(
   {id:'c3_lock-line',w:8,h:128,draw(c){c.strokeStyle='#609da9';c.lineWidth=2;c.setLineDash([10,10]);c.beginPath();c.moveTo(0,-64);c.lineTo(0,64);c.stroke();}},
   {id:'c3_gun',w:38,h:48,radius:15,draw(c){c.fillStyle='#325b65';c.strokeStyle='#e5d5a2';c.lineWidth=3;c.beginPath();c.roundRect(-13,-19,26,31,7);c.fill();c.stroke();c.fillStyle='#46636b';c.fillRect(-8,4,16,17);c.strokeRect(-8,4,16,17);c.fillStyle='#c4edf0';c.fillRect(-6,16,12,4);}},
   {id:'c3_web-end',w:34,h:40,radius:13,draw(c){c.fillStyle='#294e5b';c.strokeStyle='#9bced6';c.lineWidth=3;c.fillRect(-9,-18,18,36);for(const y of [-11,11]){c.beginPath();c.ellipse(0,y,12,5,0,0,Math.PI*2);c.fill();c.stroke();}c.lineWidth=2;for(const y of [-5,0,5]){c.beginPath();c.moveTo(-8,y);c.lineTo(8,y+3);c.stroke();}}},
-  {id:'c3_thunderstone',w:44,h:48,draw(c){c.fillStyle='#5c7582';c.strokeStyle='#c5dce3';c.lineWidth=2;c.beginPath();c.moveTo(-17,-9);c.lineTo(-7,-19);c.lineTo(12,-15);c.lineTo(18,7);c.lineTo(6,19);c.lineTo(-14,14);c.closePath();c.fill();c.stroke();c.strokeStyle='#c5fcff';c.lineWidth=3;c.beginPath();c.moveTo(3,-12);c.lineTo(-4,1);c.lineTo(4,0);c.lineTo(-2,12);c.stroke();}},
+  {id:'c3_thunderstone',w:44,h:44,image:'art/bosses/ch3/leigong/core.png'},
 );
 
 export function showTianmen(g:G):Scenery {

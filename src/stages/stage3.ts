@@ -7,6 +7,7 @@ import { Kun,Peng } from './stage3_boss';
 import { Leigong } from './stage3_leigong';
 import type { World } from '../game/world';
 import { ChapterDialogue,director } from './dialogue1';
+import { Chapter3Air } from './stage3_air';
 import { CH3_LINES } from './dialogue3_data';
 import { showTianmen,openTianmen } from './stage3_scene';
 export { openTianmen } from './stage3_scene';
@@ -20,7 +21,7 @@ export const STAGE3_ENCOUNTERS=[
  {id:'PENG',label:'展鹏',seconds:50},
  {id:'C3.LETTERING',label:'题字开门',seconds:60},
 ];
-type Cue=readonly [seconds:number,type:EnemyDef,x:number,y?:number];
+type Cue=readonly [seconds:number,type:EnemyDef,x:number,y?:number,group?:string,fodder?:boolean];
 // 每次只有一组占区和一组瞄准；组合首招相隔 0.6 秒，数量不乘旧刷怪倍率。
 const ENTRY:Cue[]=[
  [0,Hornet,310],[3,Hornet,590],[6,Lancer,260],[9,Lancer,640],
@@ -36,21 +37,32 @@ const DRUMS:Cue[]=[
  [26,ThunderRay,240],[26.6,CloudSpider,630],
  [32,Wingfort,450],[40,Hornet,250],[40.15,Lancer,650],
 ];
-const GATE:Cue[]=[[8,WhaleCalf,330],[14,JadeShuttle,640],[19,WhaleCalf,610],[19.7,JadeShuttle,260]];
+const GATE:Cue[]=[];
+for(const [at,type,count] of [[8,WhaleCalf,3],[14,JadeShuttle,5],[19,WhaleCalf,3],[19.7,JadeShuttle,5]] as const)
+ for(let i=0;i<count;i++)GATE.push([at,type,200+i*500/(count-1),80,`gate:${at}`]);
+// 六机小队左右交替穿插，出生表固定，不随旧刷怪倍率翻倍。
+function fill(cues:Cue[],gap:number){
+ for(let wave=0,at=.8;at<45;wave++,at+=gap){
+  const type=wave%3===2?Lancer:Hornet,center=[240,650,450,260,640][wave%5];
+  for(let i=0;i<6;i++)cues.push([at,type,center+(i%3-1)*76,50-Math.floor(i/3)*90,`fodder:${at}`,true]);
+ }
+ cues.sort((a,b)=>a[0]-b[0]);
+}
+fill(ENTRY,2);fill(DRUMS,2.1);
 function clearField(g:G):void{
  for(const e of g.liveEnemies())if(!e.def.boss)g.remove(e);
- g.clearBullets();
+ g.clearBullets();(g as World).chapter3Air?.clear();
 }
 function* runCues(g:G,cues:readonly Cue[],seconds:number,start=g.t):Co{
- for(const [at,type,x,y=80] of cues){
+ for(const [at,type,x,y=80,group,fodder] of cues){
   while(g.t-start<at)yield;
   if(type===LightningPillar)for(const e of g.liveEnemies())if(e.def===LightningPillar)g.remove(e);
-  g.spawn(type,x,y,e=>{e.data.contentRole=type===LightningPillar?'prop':'normal';e.data.noSupplementFire=true;});
+  g.spawn(type,x,y,e=>{e.data.contentRole=type===LightningPillar?'prop':'normal';e.data.noSupplementFire=true;e.data.volleyGroup=group;e.data.c3Fodder=fodder;});
  }
  while(g.t-start<seconds)yield;
  clearField(g);
 }
-function init(g:G):void{const w=g as World;w.chapterDialogue=new ChapterDialogue(w,CH3_LINES);}
+function init(g:G):void{const w=g as World;w.chapterDialogue=new ChapterDialogue(w,CH3_LINES);w.chapter3Air=new Chapter3Air(w);w.density.normalLimitOverride=27;}
 export const STAGE3:StageDef={index:3,title:'第三章 · 天门',subtitle:'闯过雷场，飞过天门',name:'雷场',bg:'stage3',music:'stage3',content:{baselineBodies:100,normalBodies:[...ENTRY,...DRUMS,...GATE].filter(c=>c[1]!==LightningPillar).length,baselineTypes:5,enemyTypes:TYPES.map(t=>t.name!),encounters:7,chapters:STAGE3_ENCOUNTERS.map(s=>s.label)},
  *script(g:G){
   init(g);

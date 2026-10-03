@@ -1,4 +1,5 @@
 import { drawCh1Attack,chainHit,chainExtent,shieldBlocks } from '../stages/stage1_attacks';
+import type { Chapter3Air } from '../stages/stage3_air';
 import type { FodderChapter } from '../stages/fodder1';
 import { drawSkyStones, drawFalls } from '../bg/sky-scene';
 import { drawLowPass } from '../stages/stage1_low';
@@ -112,6 +113,7 @@ export class World implements G {
   sceneState: unknown = null;
   escort:EscortShip|null=null;
   chapter2:Chapter2|null=null;
+  chapter3Air:Chapter3Air|null=null;
   chapterDialogue:ChapterDialogue|null=null;
   fodder:FodderChapter|null=null;
   root = new Scope();
@@ -192,6 +194,7 @@ export class World implements G {
     this.scenery = [];
     this.density.reset();
     this.fodder?.dispose();this.fodder=null;
+    this.chapter3Air?.dispose();this.chapter3Air=null;
     this.chapter2?.dispose();this.chapter2=null;this.sceneState=null;this.escort=null;this.chapterDialogue=null;this.ui.resetCommunications();
     this.lastWeaponTarget=null;
     this.lasers = [];
@@ -407,6 +410,7 @@ export class World implements G {
     this.collide();
     this.fodder?.update();
     this.chapter2?.update();
+    this.chapter3Air?.update();
 
     this.items.tick(dt, p.x, p.y, p.alive, p.alive && p.y < 330, (it) => this.pickup(it), realDt);
 
@@ -859,6 +863,7 @@ export class World implements G {
     this.bossCaps.draw();
     this.fodder?.draw();
     this.chapter2?.draw();
+    this.chapter3Air?.draw();
     this.player.draw(r, this.real);
     this.companions.draw(r, this.real);this.bossCombat.draw();
     this.progression.draw(r);
