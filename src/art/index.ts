@@ -40,4 +40,5 @@ export const ALL_SPRITES: SpriteDef[] = [
   ...CH1_BOSS_SPRITES,
   ...LETTER_SPRITES,
 ];
+import { CH3_BOSS_SPRITES } from './sprites_boss_ch3'; ALL_SPRITES.push(...CH3_BOSS_SPRITES);
 applyCh1Art(ALL_SPRITES);applyCh2Art(ALL_SPRITES);applyCh3Art(ALL_SPRITES);
