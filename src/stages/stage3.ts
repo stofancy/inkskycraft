@@ -22,7 +22,7 @@ function* encounter(g:G,index:number):Co{
  yield* g.wait(5.7);
  if(prop&&!prop.dead)g.remove(prop);
 }
-export const STAGE3:StageDef={index:3,title:'第三章 · 雷场',subtitle:'从雷底下钻过去',name:'雷场',bg:'stage3',music:'stage3',content:{baselineBodies:100,normalBodies:400,baselineTypes:5,enemyTypes:TYPES.map(t=>t.name!),encounters:48,chapters:CHAPTERS},
+export const STAGE3:StageDef={index:3,title:'第三章 · 天门',subtitle:'闯过雷场，飞过天门',name:'雷场',bg:'stage3',music:'stage3',content:{baselineBodies:100,normalBodies:400,baselineTypes:5,enemyTypes:TYPES.map(t=>t.name!),encounters:48,chapters:CHAPTERS},
  *script(g:G){if(!g.seekingCheckpoint){g.card(this.title,this.subtitle);yield* g.wait(3);while(g.cardActive)yield;}let growthSlot=0;for(let c=0;c<4;c++){if(c===2)g.music('stage4',1);g.bg(0,c/3,5);g.bg(2,c/3,8);g.bg(4,1+c*.2,4);if(!g.seekingCheckpoint){g.caption('',CHAPTERS[c],2);g.caption('','',.01);}for(let i=0;i<12;i++){if(!g.checkpoint(waveCheckpoint(c*12+i)))continue;g.scrollSpeed([80,80,150,60][i%4],1.8);yield* encounter(g,c*12+i);if(growthSlot<3&&g.t>=[60,180,300][growthSlot])yield* g.growthChoice(++growthSlot);}if(!g.seekingCheckpoint)yield* g.waitClear(8);if(c===1 && g.checkpoint('LEIGONG')){g.scrollSpeed(25,2);yield* g.boss(Leigong,450,-180,{startPhase:g.testBossPhase('LEIGONG')});}if(!g.seekingCheckpoint)yield* g.milestone(CHAPTERS[c]);}
  if(g.checkpoint('KUN')){g.scrollSpeed(25,2);g.caption('','',.01);yield* g.boss(Kun,450,-420,{subtitle:'鲲鹏 · 天门守卫',transition:true,startPhase:g.testBossPhase('KUN')});}if(g.checkpoint('PENG'))yield* g.boss(Peng,450,250,{warning:false,startPhase:g.testBossPhase('PENG')});g.bg(0,0,4);g.bg(3,0,4);g.bg(4,.6,4);g.caption('','',.01);yield* g.wait(2);
  }};

@@ -12,7 +12,7 @@ import { STAGE2_ENEMIES } from './stage2_enemies';
 import { Mirage } from './stage2_boss';
 import { beaconWave } from './stage2_beacon';
 const PI=Math.PI;
-const names=['灯河夜航','护送云梭·下游','打灭假航灯','屿长说来历','闸楼炮大场面','镜鱼突袭','急行横扫','云闸前九灯','蜃','章末'];
+const names=['灯河夜航','护送云梭·下游','打灭假航灯','打听墨鸢','闸楼炮大场面','镜鱼突袭','急行横扫','云闸前九灯','蜃','章末'];
 export const C2_PARTS=names.map((label,i)=>({id:`C2.P${i+1}`,label}));
 function clear(w:World){for(const e of [...w.enemies])w.remove(e);w.clearBullets(false);}
 function* untilPart(c:Chapter2,start:number,seconds:number):Co{while(c.w.real-start<seconds)yield;}
@@ -66,11 +66,11 @@ function* part(c:Chapter2,n:number):Co{const w=c.w,start=w.real;c.part=n;
  case 8:w.scrollSpeed(45,1.5);c.changeBackground('cloud-town-real');yield* batch(c,'lantern',3,i=>[200+i*220,-60]);yield* untilPart(c,start,12);clear(w);yield* c.conversation('C2.P8.belowCloud');c.changeBackground('cloud-town-false');yield* w.milestone('云闸前补给');yield* c.conversation('C2.MR.arrival');yield* untilPart(c,start,36);break;
  case 9:clear(w);c.mission(3);w.scrollSpeed(25,2);c.fleet.visible=true;c.fleet.protected=false;c.fleet.scene.x=450;c.fleet.scene.y=900;yield* w.boss(Mirage,450,290,{startPhase:w.testBossPhase('MIRAGE'),warning:false,resumeMusic:'stage2'});w.clearBullets(false);break;
  case 10:clear(w);w.scrollSpeed(45,1.5);c.changeBackground('cloud-town-real');yield* c.conversation('C2.MR.reveal');w.unlockSkill('shenying');c.log('skill.shenying');yield* untilPart(c,start,20);
- for(const strength of [.6,.8,1]){w.bgFlash(strength);w.sfx('warning');c.log(`end.flash.${strength}`);yield* c.wait(2);}c.endScene=w.scene('c2_enforcement-ship',730,260);c.endScene.layer='air';c.lockedBird=w.scene('companion_chiyan',729.52,346.19);c.lockedBird.layer='air';c.lockedBird.sx=c.lockedBird.sy=.4;
- yield* c.wait(6);yield* c.conversation('C2.end.thunderCall');const end=w.real;while(w.real-end<8){const k=(w.real-end)/8;c.endScene.x=730+k*180;c.endScene.y=260-k*180;c.endScene.sx=c.endScene.sy=1-k*.6;c.endScene.alpha=1-k;c.lockedBird.x=c.endScene.x;c.lockedBird.y=c.endScene.y+86.19*(1-k*.6);c.lockedBird.alpha=1-k;yield;}c.endScene.dead=c.lockedBird.dead=true;const mo=w.companions.team.find(s=>s.kind==='moyuan'),flight=w.real,ox=w.player.x,oy=w.player.y;if(mo){mo.penFlight=true;mo.angle=0;}while(w.real-start<45){const k=Math.min(1,(w.real-flight)/Math.max(.1,45-(flight-start)));w.player.x=ox+(450-ox)*k;w.player.y=oy+(-90-oy)*k;if(mo){mo.x=w.player.x+82;mo.y=w.player.y-60;}yield;}break;
+ for(const strength of [.6,.8,1]){w.bgFlash(strength);w.sfx('warning');c.log(`end.flash.${strength}`);yield* c.wait(2);}c.endScene=w.scene('c2_enforcement-ship',730,260);c.endScene.layer='air';
+ yield* c.wait(6);yield* c.conversation('C2.end.thunderCall');const end=w.real;while(w.real-end<8){const k=(w.real-end)/8;c.endScene.x=730+k*180;c.endScene.y=260-k*180;c.endScene.sx=c.endScene.sy=1-k*.6;c.endScene.alpha=1-k;yield;}c.endScene.dead=true;const mo=w.companions.team.find(s=>s.kind==='moyuan'),flight=w.real,ox=w.player.x,oy=w.player.y;if(mo){mo.penFlight=true;mo.angle=0;}while(w.real-start<45){const k=Math.min(1,(w.real-flight)/Math.max(.1,45-(flight-start)));w.player.x=ox+(450-ox)*k;w.player.y=oy+(-90-oy)*k;if(mo){mo.x=w.player.x+82;mo.y=w.player.y-60;}yield;}break;
  }
 }
-export const STAGE2:StageDef={index:2,title:'第二章 · 拆开太平画',subtitle:'认清真灯，揭开云里的小镇',name:'蜃海',bg:'stage2',music:'stage2',
+export const STAGE2:StageDef={index:2,title:'第二章 · 蜃海',subtitle:'跟着真灯，穿过蜃海',name:'蜃海',bg:'stage2',music:'stage2',
  content:{baselineBodies:0,normalBodies:135,baselineTypes:13,enemyTypes:[...Object.keys(STAGE2_ENEMIES),'gatetower'],encounters:10,chapters:names},
  *script(g:G):Co{const w=g as World;w.chapterDialogue=new ChapterDialogue(w,CH2_LINES);const c=w.chapter2=new Chapter2(w);w.sceneState=c;c.roster(['chiyan','laodun']);
  if(!g.seekingCheckpoint){g.card(this.title,this.subtitle);yield* c.wait(3);}if(w.checkpointTarget&&/^C2.P(?:[6-9]|10)$|MIRAGE/.test(w.checkpointTarget)){c.roster(['laodun','moyuan']);}if(w.checkpointTarget&&/^C2.P(?:[3-9]|10)$|MIRAGE/.test(w.checkpointTarget)){c.fleet.visible=true;c.fleet.protected=false;}

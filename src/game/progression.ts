@@ -76,7 +76,7 @@ export class Progression {
   if(id==='jifeng')this.w.roll.charges=Math.min(3,this.w.roll.charges+1);
   if(id==='monang')this.supplyInk();
   this.pendingChoices--;this.offers=[];
-  const t=TALENTS.find(t=>t.id===id)!;this.w.say('算盘','得意',`选好${t.name}了，按说明行动就会生效。`,3);return true;
+  return true;
  }
  /** 首次实际生效仅提示一次，跨章也不重复。战斗特效由各机制持续显示。 */
  trigger(id:string,x=this.w.player.x,y=this.w.player.y):void {

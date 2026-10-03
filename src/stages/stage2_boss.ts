@@ -79,7 +79,7 @@ export const Mirage:EnemyDef={name:'蜃',sprite:'c2_mirage-body',hp:1,score:8000
      if(clock(g)>=rain){g.fan(450,370,PI/2,3,1.4,100,{shape:'rice',color:'amber'});rain=clock(g)+3;}
      yield;
     }},()=>e.hp<=0);
-   remove(g,r.lights);for(const n of w.enemies.filter(n=>n.data.c2Master))w.remove(n);yield* scene(e,g,10,'向山门报信',[18,19,20],t=>{const x=450+t*500,y=300-t*350;w.r.ribbonTop.line(x-40,y+28,x,y,5,1,1.2,.3,2,.9);if(t>.65&&!e.data.signalled){e.data.signalled=true;w.bgFlash(.8);}});
+   remove(g,r.lights);for(const n of w.enemies.filter(n=>n.data.c2Master))w.remove(n);yield* scene(e,g,10,'向雷公报信',[18,19,20],t=>{const x=450+t*500,y=300-t*350;w.r.ribbonTop.line(x-40,y+28,x,y,5,1,1.2,.3,2,.9);if(t>.65&&!e.data.signalled){e.data.signalled=true;w.bgFlash(.8);}});
   }
   e.data.targetDisabled=true;e.invulnerable=true;r.closure=new ClosureModel();e.data.closure=r.closure;c.fleet.scene.x=450;c.fleet.scene.y=963; // 船首(.8×130)距闸线319，约14.5秒。
   say(g,21);g.caption('','打坏两只壳铰 · 壳缝才不会合拢',5);for(const x of [-290,290]){const n=g.attach(e,{sprite:'c2_mirage-hinge',hp:MIRAGE_HP.hinges/2/g.difficulty.hp,radius:45,noCollide:true,score:0},[x,210]);n.phaseLock=true;n.data.bossOwner=e;n.data.contentRole='part';n.data.manualFrame=true;n.data.weakWeapon='red';n.data.weakLabel='壳铰';r.hinges.push(n);}

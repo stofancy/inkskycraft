@@ -39,7 +39,7 @@ export class Chapter2 {
  readonly times:Record<string,number>={};events:string[]=[];segments:{id:string;seconds:number;dialogueSeconds:number}[]=[];
  readonly flights:{kind:CompanionKind;event:string;at:number;roster:string[]}[]=[];
  fleet:BatteryFleet;part=0;maxEnemies=0;maxBullets=0;beaconLabel=false;beaconActive=false;
- assisted=false;endScene:Scenery|null=null;lockedBird:Scenery|null=null;
+ assisted=false;endScene:Scenery|null=null;
  bossResults:Record<string,unknown>={};background='lantern-canyon';private oldBg='lantern-canyon';private bgAt=0;private bubbles:Bubble[]=[];private bubbleAt=new Map<string,number>();private overlay:HTMLDivElement;briefUntil=0;brief=0;
  constructor(readonly w:World){this.fleet=new BatteryFleet(w);w.escort=this.fleet;this.overlay=document.createElement('div');this.overlay.className='chapter2-scenes';Object.assign(this.overlay.style,{position:'fixed',pointerEvents:'none',zIndex:'13',fontFamily:'InkskyFangsong,serif',color:'#f2e6cb'});document.body.append(this.overlay);}
  dispose(){if(this.bubbles.some(b=>b.voice?.state==='playing'||b.voice?.state==='loading'))this.w.audio.stopDialogue();this.overlay.remove();}
@@ -80,7 +80,6 @@ export class Chapter2 {
   if(this.part===9&&!this.times['MR.passed'])for(let x=30;x<870;x+=30)r.ribbonTop.line(x,540,x+20,540,5,RS.Glow,.5,1.1,1.5,.7);
   for(const e of w.enemies){if(e.dead)continue;if(e.data.beaconTether&&this.beaconActive){const p=this.fleet.scene;r.ribbonMid.line(e.x,e.y,p.x,p.y,2,RS.Brush,1.3,.85,.25,.75);}if(e.def.sprite==='c2_gate-tower'&&e.charging){for(const dx of [-1,1])r.ribbonTop.line(e.x+dx*140,e.y-190,e.x+dx*140,e.y+190,5,RS.Warn,1.6,.25,.15,.8);for(const dy of [-1,1])r.ribbonTop.line(e.x-140,e.y+dy*190,e.x+140,e.y+dy*190,5,RS.Warn,1.6,.25,.15,.8);}if(e.data.c2True&&e.frame===2)for(let i=0;i<32;i++){const a=i/32*Math.PI*2,b=(i+1)/32*Math.PI*2;r.ribbonTop.line(e.x+Math.cos(a)*85,e.y+Math.sin(a)*85,e.x+Math.cos(b)*85,e.y+Math.sin(b)*85,3,RS.Glow,1.2,.4,2,1);}}
   for(const b of this.bubbles){const o=b.pos??b.owner,x=o.x,y=o.y-65;if(Math.hypot(w.player.x-x,w.player.y-y)<100||w.bullets.list.some(v=>!v.dead&&Math.abs(v.x-x)<130&&Math.abs(v.y-y)<30))continue;html+=`<div style="position:absolute;left:${Math.max(2,Math.min(60,x/9-10))}%;top:${y/12}%;background:#191d26ce;border:1px solid #b56f67;padding:5px;font-size:16px">${b.text}</div>`;}
-  if(this.lockedBird&&!this.lockedBird.dead){const b=this.lockedBird;r.ribbonTop.line(b.x-15,b.y,b.x+15,b.y,4,RS.Brush,.6,.5,.4,1);r.ribbonTop.line(b.x,b.y-15,b.x,b.y+15,3,RS.Brush,.6,.5,.4,1);}
   this.overlay.innerHTML=w.ui.dialogueState().active?"":html;
  }
 }
