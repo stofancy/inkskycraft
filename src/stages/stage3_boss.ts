@@ -7,7 +7,7 @@ import { KunpengLettering } from './stage3_lettering';
 
 const PI=Math.PI,clamp=(n:number,a=0,b=1)=>Math.max(a,Math.min(b,n));
 // 30 / 30 / 50 秒为普通火力的调参目标；全部阶段必须击破，题字不限时。
-const HP={eye:1000,fin:360,wing:240,core:600};
+const HP={eye:4600,fin:1656,wing:1188,core:2970};
 interface Rig {head:Enemy;fins:Enemy[];wings:Enemy[];eyes:Enemy[];roots:Enemy[];core:Enemy;spread:number;roll:number;fold:number;board:KunpengLettering;peng:boolean}
 const boards=new WeakMap<G,KunpengLettering>();
 function* wait(g:G,seconds:number,pose?:(t:number)=>void):Co{const at=g.t;while(g.t-at<seconds){pose?.(clamp((g.t-at)/seconds));yield;}pose?.(1);}

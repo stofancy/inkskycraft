@@ -7,8 +7,8 @@ import { storyFrame } from '../art/ch2_story_assets';
 import { beaconWave,spawnBeacon } from './stage2_beacon';
 const PI=Math.PI;
 // P6-14 暂定值：flow power=4。壳/真身延长打血，壳铰保持原流程；只调血量。
-export const MIRAGE_HP={shell:1800,trueBody:3200,lamp:2700,hinges:360,body:2000};
-const VALVE_HP=220;
+export const MIRAGE_HP={shell:1890,trueBody:3360,lamp:2835,hinges:378,body:2100};
+const VALVE_HP=231;
 export class ClosureModel {
  closure=0;elapsed=0;pause=0;bow=859;passed=false;failed=false;
  step(dt:number,broken:number){this.elapsed+=dt;if(this.pause>0)this.pause=Math.max(0,this.pause-dt);else this.closure=Math.min(1,this.closure+dt*.05*Math.pow(.5,broken));this.bow-=22*dt;if(this.bow<=540&&!this.passed&&!this.failed){this.passed=420*(1-this.closure)>=240;this.failed=!this.passed;}}
@@ -35,14 +35,14 @@ function shadow(e:Enemy,g:G,r:Rig,i:number,trueOne:boolean):Enemy{
 }
 export const Mirage:EnemyDef={name:'蜃',sprite:'c2_mirage-body',hp:1,score:80000,noCollide:true,radius:100,boss:{name:'蜃 · 吐影蚌龙',music:'boss-shen',phases:4,defeat:'disable'},
  *ai(e,g):Co{
- const w=g as World,c=w.chapter2!,start=e.data.startPhase??1,r=rig(e,g);e.stop();let hitPhase=0;e.data.bossCombat=true;e.data.c2Mirage=true;e.data.weakCustom=true;e.data.manualFrame=true;e.data.guides=[{x:450,y:540}];w.bossCombat.beginBattle(e);e.data.battleHardDeadline=w.real+300;
+ const w=g as World,c=w.chapter2!,start=e.data.startPhase??1,r=rig(e,g);e.stop();let hitPhase=0;e.data.bossCombat=true;e.data.c2Mirage=true;e.data.weakCustom=true;e.data.manualFrame=true;e.data.guides=[{x:450,y:540}];w.bossCombat.beginBattle(e);e.data.battleHardDeadline=Infinity;
  const render=g.fork((function*():Co{for(;;){if(e.data.playerHits&&hitPhase!==e.data.phaseIndex&&e.data.phaseIndex<=2){hitPhase=e.data.phaseIndex;e.data.playerHits=0;say(g,e.data.phaseIndex===2?12:4);}const open=r.closure?1-r.closure.closure:r.open;r.shells.forEach((s,i)=>{s.offX=(i?1:-1)*(open*210+34);frame(s,'mirage-valve',open>.75?'open':open>.2?'half-open':'closed',g);});r.bay.alpha=Math.min(1,r.open*1.5);frame(r.bay,'battery-bay',e.data.phaseIndex===4?'empty':r.open>.8?'full':'pried',g);frame(e,'mirage-body',e.data.truth?'truth':e.data.phaseIndex===4?'uneasy':'polite',g);yield;}})());
  try {
   e.invulnerable=true;r.open=0;mode(g,'蜃浮出云面','对白演出');yield* scene(e,g,start===1?16:1,'蜃登场',[1,2,3],t=>{e.alpha=t;for(const s of r.shells)s.alpha=t;});e.alpha=1;
   // 部件没打掉前锁住本体血量；部件伤害会同步扣本体，这里每帧还原。
   const gate=(lock:number,open:boolean)=>{if(!open){e.invulnerable=true;e.hp=lock;}else e.invulnerable=false;};
   if(start<=1){e.data.weakWeapon='red';let lock=0,opened=false,nextWeak=0;
-   yield* phase(e,g,1,MIRAGE_HP.shell,60,20,'拆开壳甲',function*():Co{let fire=0,beam=0,ring=0;lock=e.hp;for(;;){const t=clock(g)-e.data.phaseStartedClock,k=t%21;mode(g,'M1 壳甲','打血时间');e.data.attackRounds=t>=21?2:1;
+   yield* phase(e,g,1,MIRAGE_HP.shell,Infinity,0,'拆开壳甲',function*():Co{let fire=0,beam=0,ring=0;lock=e.hp;for(;;){const t=clock(g)-e.data.phaseStartedClock,k=t%21;mode(g,'M1 壳甲','打血时间');e.data.attackRounds=t>=21?2:1;
     const broken=r.shells.filter(n=>n.hp<=0).length;r.open=opened?1:broken*.3;
     for(const n of r.shells)if(n.hp<=0&&!n.data.targetDisabled){n.data.targetDisabled=true;n.data.weakLabel=undefined;n.alpha=.35;w.fx.explosion(n.x,n.y,'m');}
     if(broken===2&&!opened){opened=true;nextWeak=clock(g)+10;w.bossCaps.openWeak(e,'壳阀已破');e.data.weakLabel='蜃身';}
@@ -56,7 +56,7 @@ export const Mirage:EnemyDef={name:'蜃',sprite:'c2_mirage-body',hp:1,score:8000
    e.invulnerable=true;remove(g,r.shells);r.open=1;yield* scene(e,g,3,'壳甲张开',[8]);c.short(16);
   }else{r.open=1;remove(g,r.shells);}
   if(start<=2){e.data.targetDisabled=true;e.data.weakWeapon=undefined;e.data.weakLabel=undefined;const trueOne=shadow(e,g,r,0,true);for(let i=1;i<4;i++)shadow(e,g,r,i,false);say(g,9);c.short(19);
-   yield* phase(e,g,2,MIRAGE_HP.trueBody,60,20,'识别真身',function*():Co{let shots=0,shuffle=0,second=false,pinUntil=0,sealed=trueOne.data.lastSealedAt??0,weakAt=0;for(;;){const t=clock(g)-e.data.phaseStartedClock;mode(g,'M2 真假影','打血时间');e.data.attackRounds=t>=15?2:1;
+   yield* phase(e,g,2,MIRAGE_HP.trueBody,Infinity,0,'识别真身',function*():Co{let shots=0,shuffle=0,second=false,pinUntil=0,sealed=trueOne.data.lastSealedAt??0,weakAt=0;for(;;){const t=clock(g)-e.data.phaseStartedClock;mode(g,'M2 真假影','打血时间');e.data.attackRounds=t>=15?2:1;
     const pinned=clock(g)<pinUntil;trueOne.data.pinned=pinned;
     if((trueOne.data.lastSealedAt??0)!==sealed){sealed=trueOne.data.lastSealedAt;pinUntil=clock(g)+9;trueOne.frame=2;trueOne.data.weakLabel='真影被钉住';w.bossCaps.openWeak(e,'真影被钉住');weakAt=pinUntil;for(const n of r.shadows.filter(n=>n.data.c2Fake&&!n.dead))n.data.c2FrozenUntil=pinUntil;}
     const period=second?5:4,lit=(t%period)<(second?.6:.8);if(!pinned){trueOne.frame=lit?2:1;trueOne.data.weakLabel=lit?'闪紫的真影 · 执笔圈住':undefined;}
@@ -69,7 +69,7 @@ export const Mirage:EnemyDef={name:'蜃',sprite:'c2_mirage-body',hp:1,score:8000
    remove(g,r.shadows);e.data.targetDisabled=false;e.invulnerable=true;yield* scene(e,g,3,'假景收拢',[14]);
   }
   if(start<=3){e.invulnerable=true;c.fleet.scene.x=450;c.fleet.scene.y=900;
-   yield* phase(e,g,3,MIRAGE_HP.lamp,60,20,'打灭假航灯',function*():Co{let lock=e.hp,master:Enemy|null=null,ring=0,rain=0,stage=0,nextWeak=0;e.data.weakLabel=undefined;
+   yield* phase(e,g,3,MIRAGE_HP.lamp,Infinity,0,'打灭假航灯',function*():Co{let lock=e.hp,master:Enemy|null=null,ring=0,rain=0,stage=0,nextWeak=0;e.data.weakLabel=undefined;
     for(;;){const t=clock(g)-e.data.phaseStartedClock;mode(g,'M3 航灯引船',master?'打血时间':'机制段');
      if(stage<2){say(g,15);const pts:[number,number][]=stage===0?[[70,380],[830,600]]:[[70,380],[70,600]];const ok=yield* beaconWave(w,pts,true);c.fleet.scene.x=450;stage++;if(!ok)stage--;if(stage===2||t>26)stage=2;yield* waitClock(g,.8);continue;}
      if(!master){master=spawnBeacon(w,450,250,true);master.hp=master.maxHp=100000;master.data.bossOwner=e;master.data.weakLabel='总航灯';master.phaseLock=true;e.invulnerable=true;w.bossCaps.openWeak(e,'总航灯露出');nextWeak=clock(g)+10;}
@@ -83,7 +83,7 @@ export const Mirage:EnemyDef={name:'蜃',sprite:'c2_mirage-body',hp:1,score:8000
   }
   e.data.targetDisabled=true;e.invulnerable=true;r.closure=new ClosureModel();e.data.closure=r.closure;c.fleet.scene.x=450;c.fleet.scene.y=963; // 船首(.8×130)距闸线319，约14.5秒。
   say(g,21);g.caption('','打坏两只壳铰 · 壳缝才不会合拢',5);for(const x of [-290,290]){const n=g.attach(e,{sprite:'c2_mirage-hinge',hp:MIRAGE_HP.hinges/2/g.difficulty.hp,radius:45,noCollide:true,score:0},[x,210]);n.phaseLock=true;n.data.bossOwner=e;n.data.contentRole='part';n.data.manualFrame=true;n.data.weakWeapon='red';n.data.weakLabel='壳铰';r.hinges.push(n);}
-  let finished=false;yield* phase(e,g,4,MIRAGE_HP.body,70,20,'撑开壳缝',function*():Co{let attempts=0,last=clock(g),shot=clock(g),lock=e.hp,opened=false,nextWeak=0,passedAt=0;const model=r.closure!;for(;;){const now=clock(g),dt=now-last;last=now;mode(g,'M4 合拢与壳铰',opened?'打血时间':'机制段');const broken=r.hinges.filter(n=>n.hp<=0).length;
+  let finished=false;yield* phase(e,g,4,MIRAGE_HP.body,Infinity,0,'撑开壳缝',function*():Co{let attempts=0,last=clock(g),shot=clock(g),lock=e.hp,opened=false,nextWeak=0,passedAt=0;const model=r.closure!;for(;;){const now=clock(g),dt=now-last;last=now;mode(g,'M4 合拢与壳铰',opened?'打血时间':'机制段');const broken=r.hinges.filter(n=>n.hp<=0).length;
     r.hinges.forEach(n=>{frame(n,'mirage-hinge',n.hp<=0?'broken':n.hp<n.maxHp*.5?'smoke':'intact',g);if(n.hp<=0)n.data.targetDisabled=true;});if(broken)say(g,22);
     if(broken===2&&!opened){opened=true;nextWeak=now+10;e.data.targetDisabled=false;e.data.weakLabel='蜃身';w.bossCaps.openWeak(e,'壳铰已断');}
     if(opened&&now>=nextWeak){nextWeak=now+10;w.bossCaps.openWeak(e,'壳铰已断');}

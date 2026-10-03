@@ -7,7 +7,7 @@ import { director } from './dialogue1';
 
 const PI=Math.PI;
 // 普通档实血：双链 1800、四鼓 600、雷芯 450。25 秒为输出目标，击破才转段。
-const HP={hammer:900,drum:150,core:450};
+const HP={hammer:4050,drum:675,core:2025};
 const decorative=(sprite:string,drawOrder=0):EnemyDef=>({sprite,hp:1,decorative:true,noCollide:true,drawOrder});
 interface Hammer { part:Enemy; chain:Enemy; side:number; broken:boolean; fall:number; x:number; y:number; bolt?:Laser }
 interface Rig { hammers:Hammer[]; drums:Enemy[]; core:Enemy; wings:Enemy[]; threads:Enemy[]; spread:number; tilt:number; stopped:boolean }
