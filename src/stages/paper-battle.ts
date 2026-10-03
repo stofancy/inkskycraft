@@ -14,18 +14,22 @@ interface Cover {part:Enemy;rx:number;ry:number;broken:boolean}
 const PI=Math.PI,clamp=(n:number,a=0,b=1)=>Math.max(a,Math.min(b,n));
 const mix=(a:Point,b:Point,t:number):Point=>({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t});
 const smooth=(t:number)=>{t=clamp(t);return t*t*(3-2*t);};
+const wrap=(a:number)=>Math.atan2(Math.sin(a),Math.cos(a));
+const cubic=(a:Point,b:Point,c:Point,d:Point,t:number):Point=>{const u=1-t;return {x:u*u*u*a.x+3*u*u*t*b.x+3*u*t*t*c.x+t*t*t*d.x,y:u*u*u*a.y+3*u*u*t*b.y+3*u*t*t*c.y+t*t*t*d.y};};
 const names:Record<Move,string>={bite:'龙口吞噬',claw:'龙爪拍山',tail:'龙尾横扫',fire:'灯节吐火',cloud:'潜云扑食',wall:'游龙断路',coil:'盘身收圈'};
 
 /** 纸龙的身体招式与战场掩体；绘制只复用图集与 SVG。 */
 export class PaperBattle {
  move:Move='claw';age=0;round=0;phase=0;enabled=false;shadow=false;
  target:Point={x:450,y:760};from:Point={x:450,y:250};launch:Point={x:450,y:250};
- gap=450;warn=1.15;wind=1.5;strike=1.4;rest=2.2;fired=false;slammed=false;
+ gap=450;dir=1;tailSet=false;warn=1.15;wind=1.5;strike=1.4;rest=2.2;fired=false;slammed=false;
  claw:Enemy|null=null;covers:Cover[]=[];rubble:{part:Enemy;at:number;x:number;y:number;vx:number}[]=[];
  victim:Victim|null=null;grip:Grip|null=null;clawTurn=0;reboundAt=-9;struggleAt=-9;
  private restoreInput:()=>void;
  private barrageAt=0;private barrageStep=0;private fireAt=0;private emberAt=0;
  peakBullets=0;
+ private c1:Point|null=null;private r1:Point|null=null;
+ private heading=PI/2;private speed=0;private lastGoal:Point|null=null;
  release:Enemy[]=[];releaseT=0;
  impacts:{x:number;y:number;at:number}[]=[];blocked=0;destroyed=0;clock=0;
  constructor(readonly w:World,readonly head:Enemy,readonly rig:Rig){
@@ -63,7 +67,7 @@ export class PaperBattle {
   this.releaseGrip(false);
   this.phase=phase;this.age=0;this.fired=false;this.slammed=false;this.shadow=false;
   const sequence:Move[]=phase===1?['claw','fire','bite','tail','cloud']:phase===2?['claw','wall','tail','coil','cloud','fire','bite']:['coil','wall','cloud','fire','bite','tail'];
-  this.move=sequence[this.round++%sequence.length];
+  this.move=sequence[this.round++%sequence.length];this.dir=this.round%2?1:-1;this.tailSet=false;this.c1=this.r1=null;
   this.from={x:this.head.x,y:this.head.y};this.gap=this.round%2?330:590;
   const ship=this.w.escort?.vessels[0],p=this.round%2===0&&ship?ship:this.w.player;
   this.target={x:clamp(p.x,120,780),y:clamp(p.y,580,1040)};
@@ -74,7 +78,7 @@ export class PaperBattle {
    this.victim=choices[this.clawTurn++%choices.length];this.target={x:this.victim.body.x,y:this.victim.body.y};
   }
   this.launch=this.move==='cloud'?{x:this.round%2?50:850,y:1280}:
-   this.move==='wall'?{x:-130,y:230}:this.move==='tail'?{x:780,y:490}:
+   this.move==='wall'?{x:-130,y:230}:this.move==='tail'?{x:450-this.dir*120,y:250}:
    this.move==='coil'?{x:760,y:650}:{x:clamp(this.target.x+(this.round%2?-180:180),160,740),y:240};
   this.claw=this.rig.claws.find(c=>!c.broken)?.part??null;
   this.strike=this.move==='wall'?2.7:this.move==='coil'?3.5:this.move==='tail'?2:this.move==='claw'?6.7:1.4;
@@ -83,7 +87,8 @@ export class PaperBattle {
  tick(dt:number){
   this.clock=this.w.bossCombat.clock;
   this.updateTerrain();
-  if(!this.enabled||dt<=0)return;
+  if(!this.enabled){this.lastGoal=null;return;}
+  if(dt<=0)return;
   const phase=this.head.data.phaseIndex??1;
   if(this.phase!==phase||this.age>=this.wind+this.warn+this.strike+this.rest)this.start(phase);
   this.age+=dt;
@@ -91,27 +96,29 @@ export class PaperBattle {
   this.updateGrip();
   const h=this.head,old={x:h.x,y:h.y},mouthBefore=h.anchor('mouth'),t=this.age,p=this.progress;
   let pos:Point;
+  const ahead=(n:number):Point=>({x:h.x-Math.sin(h.angle)*n,y:h.y+Math.cos(h.angle)*n});
   if(t<this.wind){
-   const k=smooth(t/this.wind),control={x:clamp((this.from.x+this.launch.x)/2+(this.round%2?210:-210),30,870),y:Math.min(1080,Math.max(this.from.y,this.launch.y)+230)};
-   pos=mix(mix(this.from,control,k),mix(control,this.launch,k),k);
+   // 各段首尾方向相接：先顺着龙头朝向飞出，到起手点时已经朝着出招方向，路线不原地折返。
+   this.c1??=ahead(260);
+   const lead=this.lead(),c2={x:this.launch.x-lead.x*(this.move==='tail'?750:300),y:this.launch.y-lead.y*(this.move==='tail'?750:300)};
+   pos=cubic(this.from,this.c1,c2,this.launch,smooth(t/this.wind));
   }
   else if(t<this.wind+this.warn)pos=this.launch;
   else if(this.active){
    if(this.move==='bite'||this.move==='cloud')pos=mix(this.launch,this.target,smooth(p));
    else if(this.move==='wall')pos={x:-130+1160*p,y:230+620*p};
-   else if(this.move==='coil'){const a=p*PI*1.8,r=310-105*p;pos={x:450+Math.cos(a)*r,y:650+Math.sin(a)*r};}
-   else if(this.move==='tail')pos={x:780-600*p,y:490-170*Math.sin(p*PI)};
+   else if(this.move==='coil'){const q=smooth(p),a=q*PI*1.8,r=310-105*q;pos={x:450+Math.cos(a)*r,y:650+Math.sin(a)*r};}
    else pos=this.launch;
   }else{
-   const k=smooth((t-this.wind-this.warn-this.strike)/this.rest);
-   const dest={x:this.round%2?230:670,y:260},end=this.finish();
-   const control={x:this.round%2?40:860,y:Math.max(480,end.y+180)};
-   pos=mix(mix(end,control,k),mix(control,dest,k),k);
+   // 收招顺着出招方向再飞一段，绕大弯回到画面上方。
+   const end=this.finish();this.r1??=ahead(260);
+   pos=cubic(end,this.r1,{x:this.round%2?40:860,y:Math.max(480,end.y+180)},{x:this.round%2?230:670,y:260},smooth((t-this.wind-this.warn-this.strike)/this.rest));
   }
-  h.x=pos.x;h.y=pos.y;
-  const d=Math.hypot(h.x-old.x,h.y-old.y);
-  if(d>.3){const angle=Math.atan2(h.y-old.y,h.x-old.x)-PI/2;h.angle+=clamp(Math.atan2(Math.sin(angle-h.angle),Math.cos(angle-h.angle))*(1-Math.exp(-dt*9)),-3.5*dt,3.5*dt);}
-  if(this.warning&&(this.move==='bite'||this.move==='cloud')){const a=Math.atan2(this.target.y-h.y,this.target.x-h.x)-PI/2;h.angle+=clamp(Math.atan2(Math.sin(a-h.angle),Math.cos(a-h.angle))*(1-Math.exp(-dt*5)),-3.5*dt,3.5*dt);}
+  this.steer(pos,dt);
+  // 龙头朝航向；张口预告时最多偏转 1.1 弧度盯住目标，不原地掉头。
+  let face=this.heading-PI/2;
+  if(this.warning&&(this.move==='bite'||this.move==='cloud'))face+=clamp(wrap(Math.atan2(this.target.y-h.y,this.target.x-h.x)-PI/2-face),-1.1,1.1);
+  h.angle+=wrap(face-h.angle)*(1-Math.exp(-dt*10));
   this.rig.open=(this.move==='bite'||this.move==='cloud')&&(this.warning||this.active);
   h.frame=this.rig.open?2:0;h.mirror=false;
   this.shadow=this.move==='cloud'&&t<this.wind+this.warn-.35;
@@ -126,6 +133,30 @@ export class PaperBattle {
   }else if(this.active&&this.move==='wall'){this.crash(h.x,h.y,80);this.hitSegment(old,h,64);}
   this.barrage();
   this.peakBullets=Math.max(this.peakBullets,this.w.bullets.list.filter(b=>!b.dead&&b.x>=0&&b.x<=900&&b.y>=0&&b.y<=1200).length);
+ }
+ /** 出招开头的飞行方向，起手前的路线按它收尾。 */
+ private lead():Point {
+  const d=this.move==='wall'?{x:1160,y:620}:this.move==='coil'?{x:0,y:1}:this.move==='tail'?{x:0,y:-1}:{x:this.target.x-this.launch.x,y:this.target.y-this.launch.y};
+  const l=Math.hypot(d.x,d.y)||1;return {x:d.x/l,y:d.y/l};
+ }
+ /** 龙头追着招式路线飞：转弯半径不小于一节龙身，不原地掉头；路线上的急弯被绕成圆弧，龙身经过时不会对折。 */
+ private steer(goal:Point,dt:number){
+  const h=this.head;
+  if(!this.lastGoal){this.heading=h.angle+PI/2;this.speed=0;}
+  const last=this.lastGoal??goal;this.lastGoal={...goal};
+  const gx=(goal.x-last.x)/dt,gy=(goal.y-last.y)/dt,vx=gx+(goal.x-h.x)*6,vy=gy+(goal.y-h.y)*6,want=Math.min(1500,Math.hypot(vx,vy));
+  // 招式点停住、龙头已在附近：不再转向，顺着航向减速滑停；冲过了就停在原地，不倒退，龙身不会在停点对折。
+  if(Math.hypot(gx,gy)<80&&Math.hypot(goal.x-h.x,goal.y-h.y)<120){
+   const dx=goal.x-h.x,dy=goal.y-h.y,along=dx*Math.cos(this.heading)+dy*Math.sin(this.heading);
+   this.speed=Math.max(0,this.speed+clamp(Math.max(0,along)*6-this.speed,-4000*dt,1000*dt));
+   if(along>0){const r=Math.min(9,this.speed/100);this.heading=wrap(this.heading+clamp(wrap(Math.atan2(dy,dx)-this.heading),-r*dt,r*dt));}
+   h.x+=Math.cos(this.heading)*this.speed*dt;h.y+=Math.sin(this.heading)*this.speed*dt;return;
+  }
+  const turn=wrap(Math.atan2(vy,vx)-this.heading);
+  this.speed+=clamp(Math.max(want*(.5+.5*Math.cos(turn)),Math.min(want,240))-this.speed,-3000*dt,3000*dt);
+  const rate=Math.min(9,this.speed/100);
+  this.heading=wrap(this.heading+clamp(turn,-rate*dt,rate*dt));
+  h.x+=Math.cos(this.heading)*this.speed*dt;h.y+=Math.sin(this.heading)*this.speed*dt;
  }
  grab(){
   if(!this.victim||!this.claw)return;
@@ -194,11 +225,22 @@ export class PaperBattle {
    for(let i=-6;i<=6;i++)if(Math.abs(i-gap)>1)this.bullet(m.x,m.y,a+i*.13,150+this.phase*12,{shape:'flame',color:'amber',size:12,life:5.5,attack:'龙口留隙扇火'});
   }
  }
+ /** 龙尾横扫的发力：angle 是尾段相对支点处龙身延长线的摆角，lag 让越靠尾尖越落后，k 是尾段自己发力的刚度（越靠尾尖越大），0 表示撒手只剩惯性。 */
+ tailDrive():{angle:number;lag:number;k:number}|null {
+  if(!this.enabled||this.move!=='tail'||this.age<this.wind||this.age>=this.wind+this.warn+this.strike)return null;
+  // 尾巴在延长线哪一侧就往哪一侧收，出招时经延长线扫到另一侧。
+  if(!this.tailSet){const {o,root}=this.tailPivot(),t=this.rig.tail;this.tailSet=true;this.dir=wrap(Math.atan2(t.x-o.x,t.y-o.y)-root)<0?1:-1;}
+  const d=this.dir;
+  if(this.warning){const k=smooth((this.age-this.wind)/this.warn);return {angle:-d*1.4,lag:d*.4*k,k:8+22*k};}
+  const p=this.progress/.55;
+  return p<1?{angle:d*(-1.4+2.8*smooth(p)),lag:d*(.4+.2*smooth(p*2.5)),k:90}:{angle:0,lag:0,k:0};
+ }
+ /** 甩尾支点：第 4 节龙身的入口关节；root 是支点处龙身往尾巴方向的延长线，从正下方量起。 */
+ tailPivot(){const o=this.rig.bodies[3].anchor('jointIn'),q=this.rig.bodies[2].anchor('jointIn');return {o,root:Math.atan2(o.x-q.x,o.y-q.y)};}
  finish():Point {
   if(this.move==='bite'||this.move==='cloud')return this.target;
   if(this.move==='wall')return {x:1030,y:850};
   if(this.move==='coil')return {x:450+Math.cos(PI*1.8)*205,y:650+Math.sin(PI*1.8)*205};
-  if(this.move==='tail')return {x:180,y:490};
   return this.launch;
  }
  /** 骨架同步后调用，让爪、尾和长身的危险范围与画面一致。 */
@@ -305,8 +347,9 @@ export class PaperBattle {
    }else if(this.move==='wall'||this.move==='coil')s+=`<path d="${this.move==='wall'?'M0 230L900 850':'M760 650A310 310 0 1 1 450 340'}" fill="none" stroke="#dd9a61" stroke-width="90" opacity=".2"/>`+text(450,570,'龙身将合 · 看准云中缺口');
   }
   if(this.move==='tail'&&(this.warning||this.active)){
-   s+=`<path d="M0 860H${this.gap-75}M${this.gap+75} 860H900" stroke="#ee9c65" stroke-width="92" opacity=".16"/><path d="M${this.gap-75} 740V1000M${this.gap+75} 740V1000" stroke="#a8e6d6" stroke-width="3" stroke-dasharray="12 9"/>`+text(this.gap,1025,'从云隙穿过','#bdebdc');
-   if(this.active)s+=`<path d="M${Math.max(0,80+740*this.progress-190)} 870Q${80+740*this.progress-80} 900 ${80+740*this.progress} 860" fill="none" stroke="#ffe5b4" stroke-width="12" opacity=".65"/>`;
+   // 尾巴扫过的扇面：以支点处龙身的延长线为中线。
+   const {o,root}=this.tailPivot(),r=440,end=(a:number)=>`${o.x+Math.sin(root+a)*r} ${o.y+Math.cos(root+a)*r}`;
+   s+=`<path d="M${end(-1.45)}A${r} ${r} 0 0 0 ${end(1.45)}" fill="none" stroke="#ee9c65" stroke-width="240" opacity=".14"/><path d="M${this.gap-75} 700V1150M${this.gap+75} 700V1150" stroke="#a8e6d6" stroke-width="3" stroke-dasharray="12 9"/>`+text(this.gap,1170,'躲进云隙','#bdebdc');
   }
   if((this.move==='wall'||this.move==='coil')&&this.active){const b=this.rig.bodies[4];s+=`<circle cx="${b.x}" cy="${b.y}" r="74" fill="#a5dace15" stroke="#bdebdc" stroke-width="3" stroke-dasharray="9 9"/>`+text(b.x,b.y,'云隙','#bdebdc');}
   for(const i of this.impacts){const age=this.clock-i.at;s+=`<ellipse cx="${i.x}" cy="${i.y}" rx="${Math.max(1,age*260)}" ry="${Math.max(1,age*260)}" fill="none" stroke="#ffe1a1" stroke-width="${8*(1-clamp(age))}" opacity="${1-clamp(age)}"/>`;}

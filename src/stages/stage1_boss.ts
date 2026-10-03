@@ -175,7 +175,11 @@ interface PaperRig {
  seal:{active:boolean;row:number;x:number;y:number;start:number;lit:number}; sealed:boolean[]; taught:boolean; stampHp:number; stampH:number; lockShip:{i:number;x:number;y:number}|null; struggleAt:number;
  shipHp:number[];
  fly:{on:boolean;posed:boolean};
+ spine:PaperSpine;
 }
+type Pt={x:number;y:number};
+/** 龙身骨架：path 是颈点走过的路，p/q 是 11 个关节本帧与上帧位置（verlet）。 */
+interface PaperSpine { path:Pt[]; p:Pt[]; q:Pt[]; len:number[]; fin:number; last:number; ang:number[]; av:number[] }
 function paperRig(e:Enemy,g:G):PaperRig {
  const surface=(sprite:string,order=0,priority=0):EnemyDef=>({sprite,hp:1e9,radius:0,noCollide:true,drawOrder:order,hitPriority:priority});
  const bodies=Array.from({length:10},(_,i)=>g.attach(e,surface('pd-body',-3-i),[0,0],{followRot:false}));
@@ -183,7 +187,7 @@ function paperRig(e:Enemy,g:G):PaperRig {
  const tail=g.attach(bodies[9],surface('pd-tail',-14),'tail');
  const stamp=g.spawn({...decorative('pd-stamp',7)},450,160);stamp.scaleX=stamp.scaleY=4.2;stamp.alpha=0;
  const claws=[1,5].flatMap(i=>[-1,1].map(side=>({side,part:g.attach(bodies[i],surface('pd-claw',-2,20),side<0?'clawL':'clawR'),broken:false,at:0,x:0,y:0})));
- const r:PaperRig={bodies,exposure:{selected:[],at:0,phase:0,state:'rest'},eye,tail,stamp,claws,rows:[],burns:[],chains:[],wings:[],core:eye,get controller(){return this.rows.find(a=>a.part.hp>0)?.part??e;},open:false,bare:0,stampProgress:0,seal:{active:false,row:-1,x:450,y:900,start:0,lit:-1},sealed:[false,false],taught:false,stampHp:1,stampH:1,lockShip:null,struggleAt:-9,fly:{on:false,posed:false},shipHp:[100]};
+ const r:PaperRig={bodies,exposure:{selected:[],at:0,phase:0,state:'rest'},eye,tail,stamp,claws,rows:[],burns:[],chains:[],wings:[],core:eye,get controller(){return this.rows.find(a=>a.part.hp>0)?.part??e;},open:false,bare:0,stampProgress:0,seal:{active:false,row:-1,x:450,y:900,start:0,lit:-1},sealed:[false,false],taught:false,stampHp:1,stampH:1,lockShip:null,struggleAt:-9,fly:{on:false,posed:false},shipHp:[100],spine:{path:[],p:[],q:[],len:[],fin:0,last:0,ang:[],av:[]}};
  for(const p of [e,...bodies,eye,tail,...claws.map(a=>a.part)]){
   p.scaleX=p.scaleY=PAPER_SCALE;
   p.phaseLock=true;p.data.contentRole='part';p.data.bossOwner=e;p.data.copperPart=true;p.data.damageTarget=e;p.data.damageBonus=1;p.data.hitArmor=true;p.data.noSupplementFire=true;
@@ -267,29 +271,89 @@ function paperDamage(e:Enemy,w:World,r:PaperRig):()=>void {
  };
  return ()=>{w.damage=original;for(const undo of restore)undo();};
 }
-function smoothTail(age:number,begin:number,strike:number,rest:number){const t=clamp(age/begin,0,1),u=clamp((age-begin-strike)/rest,0,1);return t*t*(3-2*t)*(1-u*u*(3-2*u));}
+/** 龙身只跟龙头：前四个关节钉在龙头走过的路上（龙头偏头时头两节跟着弯），往后越来越松、带惯性；甩尾时后半身脱开路，由尾段自己发力。
+ * 路记的是龙头中心，龙头原地转向不会在路上画圈。 */
+const SPINE_PIN=3;
+function paperSpine(e:Enemy,r:PaperRig,dt:number,reset:boolean):void {
+ const s=r.spine,b=r.bodies,n=b.length,neck=e.anchor('neck'),lead={x:e.x,y:e.y},reach=Math.abs(e.info.anchors.neck[1])*e.scaleY;
+ if(reset||!s.len.length){
+  s.len=b.map(p=>{const [ax,ay]=p.info.anchors.jointIn,[bx,by]=p.info.anchors.jointOut;return Math.hypot(bx-ax,by-ay)*p.scaleY;});
+  // 入场时沿龙头背后铺一条直路，长身从画外顺着拖进来。
+  const back={x:Math.sin(e.angle),y:-Math.cos(e.angle)},total=reach+s.len.reduce((a,v)=>a+v,0)+80;
+  s.path=[];for(let d=0;d<=total;d+=5)s.path.push({x:lead.x+back.x*d,y:lead.y+back.y*d});
+  s.p=[];s.q=[];s.fin=0;s.last=b[n-1].angle;
+ }
+ const path=s.path;
+ if(Math.hypot(lead.x-path[1].x,lead.y-path[1].y)>5)path.unshift(lead);else path[0]=lead;
+ // 第 k 个关节在路上离龙头 reach+D[k]；0 号关节就是颈点本身。
+ const D=[reach];for(let k=0;k<n;k++)D.push(D[k]+s.len[k]);
+ const marks=[0];for(let i=1;i<path.length;i++)marks.push(marks[i-1]+Math.hypot(path[i].x-path[i-1].x,path[i].y-path[i-1].y));
+ let keep=path.length;while(keep>3&&marks[keep-2]>D[n]+80)keep--;path.length=marks.length=keep;
+ const at=(d:number):Pt=>{let i=1;while(i<path.length-1&&marks[i]<d)i++;const a=path[i-1],c=path[i],t=(d-marks[i-1])/(marks[i]-marks[i-1]||1);return {x:a.x+(c.x-a.x)*t,y:a.y+(c.y-a.y)*t};};
+ const T=D.map((d,k)=>k?at(d):neck);
+ if(!s.p.length){s.p=T.map(v=>({...v}));s.q=T.map(v=>({...v}));}
+ const P=s.p,Q=s.q,drive=r.battle?.tailDrive()??null,free=drive?SPINE_PIN+1:n+1;
+ // 路径拉力：前段 1（严格跟路），尾端 0.5；甩尾段 0。
+ const pull=(k:number)=>k>=free?0:k<=SPINE_PIN?1:1-.5*(k-SPINE_PIN)/(n-SPINE_PIN);
+ const wrap=(v:number)=>Math.atan2(Math.sin(v),Math.cos(v)),swing=(a:Pt,c:Pt)=>Math.atan2(c.x-a.x,c.y-a.y);
+ if(drive&&!s.ang.length)for(let j=SPINE_PIN;j<n;j++){const a=swing(P[j],P[j+1]);s.ang[j]=a;s.av[j]=dt>0?clamp(wrap(a-swing(Q[j],Q[j+1]))/dt,-5,5):0;}
+ if(!drive){s.ang=[];s.av=[];}
+ if(dt<=0){if(!drive)for(let k=0;k<=n;k++){P[k]={...T[k]};Q[k]={...T[k]};}}
+ else{
+  const f=dt*60;
+  for(let k=1;k<free;k++){
+   const p=P[k],q=Q[k],damp=Math.pow(.9,f),vx=(p.x-q.x)*damp,vy=(p.y-q.y)*damp;
+   q.x=p.x;q.y=p.y;p.x+=vx;p.y+=vy;
+   const a=1-Math.pow(1-pull(k),f);p.x+=(T[k].x-p.x)*a;p.y+=(T[k].y-p.y)*a;
+  }
+  if(drive){
+   // 尾段按摆角算：尾段自己出力（越靠尾尖越大），相邻节互相带，撒手后靠惯性甩完再被阻尼停住。
+   const j0=SPINE_PIN,root=swing(T[j0-1],T[j0]),C=drive.k>0?4:3,sub=4,h=dt/sub;
+   for(let it=0;it<sub;it++){
+    for(let j=j0;j<n;j++){
+     const u=(j-j0+1)/(n-j0),aim=root+drive.angle-drive.lag*u*u;
+     let acc=drive.k*u*wrap(aim-s.ang[j])-C*s.av[j]+25*wrap((j>j0?s.ang[j-1]:root)-s.ang[j]);
+     if(j<n-1)acc+=25*wrap(s.ang[j+1]-s.ang[j]);
+     s.av[j]=clamp(s.av[j]+acc*h,-5,5);
+    }
+    for(let j=j0;j<n;j++)s.ang[j]+=s.av[j]*h;
+   }
+   for(let k=free;k<=n;k++){Q[k]={...P[k]};const a=s.ang[k-1];P[k]={x:P[k-1].x+Math.sin(a)*s.len[k-1],y:P[k-1].y+Math.cos(a)*s.len[k-1]};}
+  }
+ }
+ P[0]={...T[0]};
+ {
+  // 龙头偏头盯人时颈点离开路，头两节跟着弯过去，脖子不拉开缝。
+  const inv=P.map((_,k)=>k===0?0:k<SPINE_PIN?[0,.6,.2][k]:1-pull(k)),last=drive?SPINE_PIN:n;
+  for(let it=0;it<6;it++)for(let k=1;k<=last;k++){
+   const a=P[k-1],c=P[k],ia=inv[k-1],ic=inv[k];if(ia+ic<=0)continue;
+   const dx=c.x-a.x,dy=c.y-a.y,d=Math.hypot(dx,dy)||1,m=(d-s.len[k-1])/d/(ia+ic);
+   a.x+=dx*m*ia;a.y+=dy*m*ia;c.x-=dx*m*ic;c.y-=dy*m*ic;
+  }
+ }
+ // 甩尾期间把路的后段改成当前尾巴的姿态；收招后沿这条路接着走，尾巴不会弹回旧位置。
+ if(drive){
+  let i=1;while(i<path.length&&marks[i]<D[free-1]-1)i++;
+  path.length=i;path.push({...P[free-1]});
+  for(let k=free;k<=n;k++){const a=P[k-1],c=P[k],steps=Math.max(1,Math.round(s.len[k-1]/5));for(let j=1;j<=steps;j++)path.push({x:a.x+(c.x-a.x)*j/steps,y:a.y+(c.y-a.y)*j/steps});}
+  const a=P[n-1],c=P[n],l=Math.hypot(c.x-a.x,c.y-a.y)||1;for(let j=1;j<=16;j++)path.push({x:c.x+(c.x-a.x)/l*5*j,y:c.y+(c.y-a.y)/l*5*j});
+ }
+ b.forEach((p,i)=>{
+  const a=P[i],c=P[i+1];p.angle=Math.atan2(c.y-a.y,c.x-a.x)-PI/2;
+  p.x=a.x;p.y=a.y;const root=p.local(...p.info.anchors.jointIn);p.x+=a.x-root.x;p.y+=a.y-root.y;
+ });
+ // 尾鳍跟着尾节转速往反方向拖一点。
+ const a9=b[n-1].angle,da=Math.atan2(Math.sin(a9-s.last),Math.cos(a9-s.last));s.last=a9;
+ if(dt>0)s.fin+=(clamp(-da/dt*.08,-.8,.8)-s.fin)*(1-Math.exp(-dt*10));
+ r.tail.offRot=s.fin;
+}
 function* paperPose(e:Enemy,g:G,r:PaperRig):Co {
  let previous=clock(g);
  for(;;){
   const dt=world(g).dialoguePaused?0:Math.max(0,Math.min(.05,clock(g)-previous));previous=clock(g);
   const f=r.fly;
   if(f.on)r.battle?.tick(dt);
-  // 每节保留自己的朝向；折返时也从上一帧的关节连续转动。
-  let joint=e.anchor('neck'),parentAngle=e.angle;
-  r.bodies.forEach((b,i)=>{
-   if(!f.posed)b.angle=e.angle+PI;
-   const battle=r.battle,tail=battle?.enabled&&battle.move==='tail';
-   const swing=tail?smoothTail(battle.age,battle.wind+battle.warn,battle.strike,battle.rest)*Math.sin(battle.progress*PI*2-i*.22)*.2*(i/9):0;
-   const end=b.anchor('jointOut'),base=parentAngle+(i===0?PI:0);
-   const follow=f.posed?Math.atan2(end.y-joint.y,end.x-joint.x)-PI/2:base;
-   const bend=Math.atan2(Math.sin(follow-base),Math.cos(follow-base));
-   const desired=base+clamp(bend,-1.15,1.15)+swing;
-   const delta=Math.atan2(Math.sin(desired-b.angle),Math.cos(desired-b.angle));
-   b.angle+=clamp(delta*(1-Math.exp(-dt*10)),-2.8*dt,2.8*dt);
-   b.x=joint.x;b.y=joint.y;const root=b.local(...b.info.anchors.jointIn);
-   b.x+=joint.x-root.x;b.y+=joint.y-root.y;
-   joint=b.anchor('jointOut');parentAngle=b.angle;
-  });
+  paperSpine(e,r,dt,!f.posed);
   f.posed=true;
   r.tail.syncToParent();r.eye.syncToParent();
   for(const a of r.claws){if(!a.broken){
@@ -395,6 +459,8 @@ function paperSvg(e:Enemy,g:G,r:PaperRig):string {
  }
  return out;
 }
+/** 纸龙借用铜雀的碎件特效，但保留龙头朝向：铜雀那一下会把角度设成固定值，龙头和长身会瞬间甩开。 */
+function paperBreak(e:Enemy,g:G,p:Enemy):void {const a=e.angle;copperBreak(e,g,p);e.angle=a;}
 function* paper(e:Enemy,g:G):Co {
  const w=world(g),r=paperRig(e,g);e.data.rig=r;e.data.bossCombat=true;e.data.copperSimple=true;e.data.paperSimple=true;e.data.weakCustom=true;
  e.data.paperEffects={svg:()=>paperSvg(e,g,r),stats:{rows:2,chainShipHits:0,stampHits:0}};
@@ -413,7 +479,7 @@ function* paper(e:Enemy,g:G):Co {
  };
  const transition=function*(bare=false):Co{
   e.invulnerable=true;if(r.battle){r.battle.releaseGrip(false);r.battle.enabled=false;}g.clearBullets(false);r.exposure.state='rest';r.exposure.selected=[];for(const b of r.bodies){b.frame=0;b.glow=0;b.data.paperOpen=false;}r.open=false;r.eye.data.targetDisabled=true;r.burns=[];
-  for(const p of [e,...r.bodies])copperBreak(e,g,p);
+  for(const p of [e,...r.bodies])paperBreak(e,g,p);
   mode(g,'纸片烧落','对白演出');
   yield* presentWait(g,1.5,t=>{if(bare){r.bare=t;for(const p of [e,...r.bodies,r.tail])p.alpha=Math.max(.02,1-t);}});
   e.invulnerable=false;
@@ -439,7 +505,7 @@ function* paper(e:Enemy,g:G):Co {
    yield* g.phase(e,{hp:BOSS1_BALANCE.paper[1].hp/.85,time:Infinity,clock:'boss',transitionTime:0,complete:()=>r.claws.every(a=>a.broken)},function*(){
     for(const a of r.claws){a.part.hp=a.part.maxHp=e.maxHp/r.claws.length;a.part.alpha=1;a.part.data.damageTarget=a.part;a.part.data.targetDisabled=false;}
     let next=clock(g)+.5,index=0;
-    for(;;){paperExposure(e,g,r);for(const a of r.claws)if(!a.broken&&a.part.hp<=0){a.broken=true;w.bossCaps.openWeak(e,'龙爪被拆');a.at=g.presentationTime;a.x=a.part.x;a.y=a.part.y;a.part.parent=null;a.part.data.targetDisabled=true;copperBreak(e,g,a.part);for(const c of r.chains)if(c.claw===a)paperCut(g,c);event(e,a===r.claws[0]?'left-claw-off':'right-claw-off',g);}
+    for(;;){paperExposure(e,g,r);for(const a of r.claws)if(!a.broken&&a.part.hp<=0){a.broken=true;w.bossCaps.openWeak(e,'龙爪被拆');a.at=g.presentationTime;a.x=a.part.x;a.y=a.part.y;a.part.parent=null;a.part.data.targetDisabled=true;paperBreak(e,g,a.part);for(const c of r.chains)if(c.claw===a)paperCut(g,c);event(e,a===r.claws[0]?'left-claw-off':'right-claw-off',g);}
      const intact=r.claws.filter(a=>!a.broken);for(const p of surfaces)p.data.damageTarget=intact.reduce<PaperClaw|undefined>((a,b)=>!a||Math.abs(p.x-b.part.x)<Math.abs(p.x-a.part.x)?b:a,undefined)?.part??e;
      if(clock(g)>=next&&intact.length){for(const c of r.chains)if(!c.cut)paperCut(g,c);paperChain(e,g,r,intact[index++%intact.length]);next=clock(g)+5;}
 
@@ -507,7 +573,7 @@ function* paper(e:Enemy,g:G):Co {
        for(let k=0;k<ls.pts.length;k+=2)if(Math.abs(ls.pts[k+1]-ry)<=26){lo=Math.min(lo,ls.pts[k]);hi=Math.max(hi,ls.pts[k]);}
        const cover=hi>lo?(Math.min(hi,rx+half)-Math.max(lo,rx-half))/(2*half):0;if(cover>=bc){bc=cover;best=i;}});
       if(best>=0){const row=r.rows[best];
-       row.burnedAt=g.presentationTime;r.taught=true;copperBreak(e,g,row.part);event(e,`row-${row.ship+1}-burned`,g);
+       row.burnedAt=g.presentationTime;r.taught=true;paperBreak(e,g,row.part);event(e,`row-${row.ship+1}-burned`,g);
        g.fx.burst(row.part.x,row.part.y,26,160,[1.6,.7,.2]);g.fx.shake(.2);
        w.bossCaps.chunk(e,.2,`查封令·${row.name} 已划掉`);
        if(r.rows.every(a=>a.burnedAt!==Infinity)&&sl.active)shatter(false);
